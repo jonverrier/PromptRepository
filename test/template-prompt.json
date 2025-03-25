@@ -1,0 +1,35 @@
+[{
+  "id": "template-prompt-001",
+  "version": "1.0.0",
+  "name": "Template Prompt",
+  "systemPrompt": "You are a helpful assistant that {ROLE_DESCRIPTION}. Your task is to {TASK_DESCRIPTION}.",
+  "systemPromptParameters": [
+    {
+      "name": "ROLE_DESCRIPTION",
+      "description": "Description of the assistant's role",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "TASK_DESCRIPTION",
+      "description": "Description of the main task or objective",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "userPrompt": "Please help me with {USER_REQUEST}. Consider the following context: {CONTEXT}",
+  "userPromptsParameters": [
+    {
+      "name": "USER_REQUEST",
+      "description": "The specific request or question from the user",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "CONTEXT",
+      "description": "Additional context or background information",
+      "type": "string",
+      "required": false
+    }
+  ]
+}]

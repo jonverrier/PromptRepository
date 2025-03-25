@@ -1,0 +1,33 @@
+{
+  "name": "promptrepository",
+  "version": "0.1.0",
+  "description": "Managing Prompts and standardised Unit Evals ",
+  "main": "src/entry.ts",
+  "directories": {
+    "src": "src",
+    "test": "test"
+  },
+  "author": "Jon",
+  "license": "MIT",
+  "scripts": {
+    "start": "ts-node entry.ts",
+    "build": "tsc -b",
+    "make_prompt_ids": "ts-node src/MakePromptIds.ts",
+    "watch": "tsc -b -w",
+    "clean": "rimraf dist",
+    "test": "mocha --require ts-node/register --extensions ts,js test/**/*.test.ts --exit"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.13.8",
+    "axios": "^1.7.9",
+    "axios-retry": "^4.5.0",
+    "expect": "^29.7.0",
+    "mocha": "^11.0.1",
+    "rimraf": "^6.0.1",
+    "rimraff": "^0.0.1-security",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
+    "typescript": "^5.7.3"
+  }
+}
