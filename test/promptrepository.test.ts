@@ -110,7 +110,7 @@ describe('PromptRepository', function () {
       expect(result).toEqual("Hello Name");
    });
 
-   it('should throw an exception if there is a missing requiredparameter for a prompt', async function () {
+   it('should throw an exception if there is a missing required parameter for a prompt', async function () {
       // Initialize repository with test file
       const repo = new PromptFileRepository(samplePromptsFile);
 
@@ -150,7 +150,4 @@ describe('PromptRepository', function () {
       expect(result2).toContain("How do I say 'Hello' in French?");
       expect(result2).toContain("The user is a beginner to French");
    });
-
-
-
 });

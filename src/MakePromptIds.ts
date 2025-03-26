@@ -23,7 +23,7 @@ import path from 'path';
  * @param prompts - Array of prompt objects (each should have "name" and "id" properties).
  * @param outputPath - The file path where the JSON output will be written.
  */
-function generateJsonIds(prompts: any[], outputPath: string) {
+export function generateJsonIds(prompts: any[], outputPath: string) {
     const ids: Record<string, string> = {};
 
     for (const prompt of prompts) {
@@ -41,32 +41,35 @@ function generateJsonIds(prompts: any[], outputPath: string) {
 
     // Write the resulting JSON object to the specified output path with pretty printing
     fs.writeFileSync(outputPath, JSON.stringify(ids, null, 2), "utf-8");
-    console.log(`Generated prompt IDs JSON in ${outputPath}`);
 }
 
-// Parse command line arguments
-let inputFile = '';
-for (let i = 0; i < process.argv.length; i++) {
-    if (process.argv[i] === '-f' && i + 1 < process.argv.length) {
-        inputFile = process.argv[i + 1];
-        break;
+// Only run if this module is being run directly
+if (require.main === module) {
+    // Parse command line arguments
+    let inputFile = '';
+    for (let i = 0; i < process.argv.length; i++) {
+        if (process.argv[i] === '-f' && i + 1 < process.argv.length) {
+            inputFile = process.argv[i + 1];
+            break;
+        }
+    }
+
+    if (!inputFile) {
+        console.error('Please provide an input file using the -f parameter');
+    }
+    else {
+        // Read and parse the input file
+        const prompts = JSON.parse(fs.readFileSync(inputFile, 'utf-8'));
+
+        // Generate IDs in the same directory of the input file
+        const outputPath = path.join(
+            path.dirname(inputFile),
+            'promptIds.ts'
+        );
+
+        generateJsonIds(prompts, outputPath);
+        console.log(`Generated prompt IDs JSON in ${outputPath}`);        
     }
 }
-
-if (!inputFile) {
-    console.error('Please provide an input file using the -f parameter');
-    process.exit(1);
-}
-
-// Read and parse the input file
-const prompts = JSON.parse(fs.readFileSync(inputFile, 'utf-8'));
-
-// Generate IDs in the same directory of the input file
-const outputPath = path.join(
-    path.dirname(inputFile),
-    'promptIds.ts'
-);
-
-generateJsonIds(prompts, outputPath);
 
 

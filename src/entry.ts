@@ -21,7 +21,7 @@ export interface IPromptParameterSpec {
    name: string,
    description: string,
    required: boolean,
-   defaultValue: string | undefined
+   defaultValue?: string | undefined
 } 
 
 /**
@@ -39,9 +39,9 @@ export interface IPrompt {
    version: string,
    name: string,
    systemPrompt: string,
-   systemPromptParameters: IPromptParameterSpec[],
+   systemPromptParameters?: IPromptParameterSpec[] | undefined,
    userPrompt: string,
-   userPromptsParameters: IPromptParameterSpec[]
+   userPromptsParameters?: IPromptParameterSpec[] | undefined
 }
 
 /**

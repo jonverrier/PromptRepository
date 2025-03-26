@@ -28,8 +28,12 @@ import { IPromptParameterSpec, IPrompt, IPromptRepository } from "./entry";
  * @returns The prompt with placeholders replaced by actual values e.g. "Hello Jon"
  */
 export function replacePromptPlaceholders(template: string, 
-   paramSpec: IPromptParameterSpec[], 
+   paramSpec: IPromptParameterSpec[] | undefined, 
    params: { [key: string]: string }): string {
+
+   if (paramSpec === undefined) {
+      return template;
+   }
 
    for (const param of paramSpec) {
       // Check that all required parameters are provided      
