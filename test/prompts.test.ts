@@ -1,3 +1,7 @@
+/**
+ * Test module for prompt validation and verification.
+ * Contains utilities for validating prompt structures and their parameters.
+ */
 
 
 import { expect } from 'expect';
