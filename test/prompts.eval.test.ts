@@ -1,7 +1,11 @@
 /**
- * Test module for evaluating prompt template behavior.
- * Contains integration tests that verify prompt templates produce expected outputs
- * when expanded with different parameter values and processed by the LLM.
+ * Test module for evaluating prompt responses.
+ * Contains integration tests that verify prompts produce consistent and appropriate 
+ * responses when processed by the LLM. 
+ * Tests cover three cases: 
+ * 1) Simple input/output with known content, 
+ * 2) Similar input that should produce same output, and 
+ * 3) Variant input that should produce different output.
  */
 
 // Copyright (c) 2025 Jon Verrier
