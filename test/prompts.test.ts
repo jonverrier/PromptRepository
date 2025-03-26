@@ -137,7 +137,7 @@ describe('PromptValidator', () => {
         .toThrow(PromptValidationError);
     });
 
-    it('should require at least one required parameter', () => {
+    it('should require all required parameters', () => {
       const noRequiredParams = {
         ...validUnitTestPrompt,
         userPromptsParameters: [
