@@ -7,44 +7,82 @@
 // Copyright (c) 2025 Jon Verrier
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { IPrompt } from '../src/entry';
+import { IPrompt, IPromptRepository } from '../src/entry';
 import prompts from './template-prompt.json';
 import { getModelResponse } from '../src/Chat';
 import { PromptInMemoryRepository } from '../src/PromptRepository';
 
-describe('Template Prompt Evals', () => {
+describe('Motor Racing Welcome Prompt Tests', () => {
+
+   const TEST_TIMEOUT = 10000; // 10 seconds
    let prompt: IPrompt = prompts.find(p => p.id === "template-prompt-002")!;
-   const repo = new PromptInMemoryRepository(prompts);
+   const promptRepo : IPromptRepository= new PromptInMemoryRepository([prompt]);
 
-   it('should handle basic greeting with known content', async () => {
+    it('should generate appropriate welcome message for Monaco', async () => {
+        const prompt = promptRepo.getPrompt('template-prompt-002');
+        expect(prompt).toBeDefined();
+        
+        const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
+        const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Monaco' });
+        
+        const response = await getModelResponse(systemPrompt, userPrompt);
+        
+        // The response should contain 'Monaco' but not duplicate these words
+        expect(response).toContain('Monaco');
+        expect(response.toLowerCase()).toMatch(/welcome|greetings/);
+        expect(response.split('Monaco').length).toBe(2); // Only one occurrence
+        
+    }).timeout(TEST_TIMEOUT);
+
+    it('should generate same welcome pattern for Monaco Monaco', async () => {
+      const prompt = promptRepo.getPrompt('template-prompt-002');
+      expect(prompt).toBeDefined();
       
-      const expandedUserPrompt = repo.expandUserPrompt(prompt, { LOCATION: 'Monaco' });
+      const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
+      const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Monaco Monaco' });
+      
+      const response = await getModelResponse(systemPrompt, userPrompt);
+      
+      // Should follow same pattern as Monaco test since Monte Carlo is the same location
+      expect(response).toContain('Monaco');
+      expect(response.toLowerCase()).toMatch(/welcome|greetings/);
+      expect(response.split('Monaco').length).toBe(2); // Only one occurrence
+      
+  }).timeout(TEST_TIMEOUT);
 
-      const result = await getModelResponse(prompt.systemPrompt, expandedUserPrompt);
+    it('should generate same welcome pattern for Monaco Grand Prix', async () => {
+        const prompt = promptRepo.getPrompt('template-prompt-002');
+        expect(prompt).toBeDefined();
+        
+        const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
+        const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Monaco Grand Prix' });
+        
+        const response = await getModelResponse(systemPrompt, userPrompt);
+        
+        // Should follow same pattern as Monaco test since Monte Carlo is the same location
+        expect(response).toContain('Monaco');
+        expect(response.toLowerCase()).toMatch(/welcome|greetings/);
+        expect(response.split('Grand Prix').length).toBe(2); // Only one occurrence
+        
+    }).timeout(TEST_TIMEOUT);
 
-      expect(result).toContain('Welcome to the Monaco Grand Prix!');
+    it('should generate different welcome message for Silverstone', async () => {
 
-   }).timeout(10000);
+        const prompt = promptRepo.getPrompt('template-prompt-002');
+        expect(prompt).toBeDefined();
+        
+        const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
+        const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Silverstone' });
+        
+        const response = await getModelResponse(systemPrompt, userPrompt);
+        
+        // Should contain Silverstone-specific content
+        expect(response).toContain('Silverstone');
+        expect(response.toLowerCase()).toMatch(/welcome|greetings/);
+        expect(response.split('Silverstone').length).toBe(2); // Only one occurrence
+        // Verify it's different from Monaco/Monte Carlo responses
+        expect(response).not.toContain('Monaco');
+        expect(response).not.toContain('Monte Carlo');
 
-   it('should produce same output with minor difference', async () => {
-
-      const expandedUserPrompt = repo.expandUserPrompt(prompt, { LOCATION: 'Monaco Grand Prix' });
-
-      const result = await getModelResponse(prompt.systemPrompt, expandedUserPrompt);
-
-      expect(result).toContain('Welcome to the Monaco Grand Prix');
-
-   }).timeout(10000);
-
-   it('should produce different output with different location', async () => {
-
-      const expandedUserPrompt = repo.expandUserPrompt(prompt, { LOCATION: 'Spa' });
-
-      const result = await getModelResponse(prompt.systemPrompt, expandedUserPrompt);
-
-      expect(result).toContain('Welcome to the Spa Grand Prix');
-
-      expect(result).not.toContain('Monaco');
-
-   }).timeout(10000);
+    }).timeout(TEST_TIMEOUT);
 });

@@ -28,7 +28,7 @@
    "version": "0.1.0",
    "name": "PromptEvalGenerator",
    "systemPrompt": "You are a senior developer acting as a helpful developer assistant.",
-   "userPrompt": "Given the following prompt: <prompt>{prompt}</prompt>, generate a set of evals for the prompt in typescript using the 'mocha 'and 'expect' framework. Use the PromptInMemoryRespository API  to load the prompt and expand varables. Use the getModelResponse API to call the model. You should include three cases: 1) Very simple input and output containing known content. 2) A small change to the input that should return the same output, and 3) A small change to the input that should produce different output. Use the domain of motorsports to generate the cases.",
+   "userPrompt": "Given the following prompt: <prompt>{prompt}</prompt>, generate a set of evals for the prompt in {language} using the {framework} framework. Use the PromptInMemoryRespository API to load the prompt and expand varables. Use the getModelResponse API to call the model. You should include three cases: 1) Very simple input and output containing known content. 2) A small change to the input that should return the same output, and 3) A small change to the input that should produce different output. Use the domain of motorsports to generate the cases.",
    "userPromptsParameters": [
      {
        "name": "prompt",
