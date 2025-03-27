@@ -23,6 +23,9 @@ This approach has been described by Chris Benson, an AI Strategist for Lockheed 
 npm install /path/to/PromptRepository/
 ``` 
 
+Ensure you have set your OpenAI API key as an environment variable: OPENAI_API_KEY
+
+
 2. Create a JSON file containing your prompts
 
 ```json

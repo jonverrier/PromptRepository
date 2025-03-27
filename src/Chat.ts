@@ -21,6 +21,7 @@ export async function getModelResponse(systemPrompt: string, userPrompt: string)
       'instructions' : systemPrompt,
       'input' : userPrompt,
       'model' : 'gpt-4o', 
+      'temperature' : 0.25
     });
 
     if (!response.output_text) {

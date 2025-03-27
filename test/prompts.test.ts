@@ -28,27 +28,34 @@ export class PromptValidator {
          }
       }
 
-      // Validate parameters
-      if (!Array.isArray(prompt.userPromptsParameters)) {
-         throw new PromptValidationError('userPromptsParameters must be an array');
-      }
-
       // Check parameter structure
-      if (prompt.userPromptsParameters) {
-         for (const param of prompt.userPromptsParameters) {
+      if (prompt.userPromptParameters) {
+         if (!Array.isArray(prompt.userPromptParameters)) {
+            throw new PromptValidationError('userPromptParameters must be an array');
+         }
+         
+         // Ensure at least one required parameter exists
+         const hasRequiredParam = prompt.userPromptParameters.some(param => param.required);
+         if (!hasRequiredParam) {
+            throw new PromptValidationError('User prompt missing a required parameter');
+         }
+         for (const param of prompt.userPromptParameters) {
             this.validateParameter(param);
          }
       }
       if (prompt.systemPromptParameters) {
+         if (!Array.isArray(prompt.systemPromptParameters)) {
+            throw new PromptValidationError('systemPromptParameters must be an array');
+         }
+
+         // Ensure at least one required parameter exists
+         const hasRequiredParam = prompt.systemPromptParameters.some(param => param.required);
+         if (!hasRequiredParam) {
+            throw new PromptValidationError('System prompt missing a required parameter');
+         }
          for (const param of prompt.systemPromptParameters) {
             this.validateParameter(param);
          }
-      }
-
-      // Ensure at least one required parameter exists
-      const hasRequiredParam = prompt.userPromptsParameters.some(param => param.required);
-      if (!hasRequiredParam) {
-         throw new PromptValidationError('Prompt must have at least one required parameter');
       }
    }
 
@@ -91,10 +98,19 @@ describe('PromptValidator', () => {
             .toThrow(PromptValidationError);
       });
 
-      it('should fail when userPromptsParameters is not an array', () => {
+      it('should fail when userPromptParameters is not an array', () => {
          const invalidPrompt = {
             ...validUnitTestPrompt,
-            userPromptsParameters: 'not an array' as any
+            userPromptParameters: 'not an array' as any
+         };
+         expect(() => PromptValidator.validatePrompt(invalidPrompt))
+            .toThrow(PromptValidationError);
+      });
+
+      it('should fail when systemPromptParameters is not an array', () => {
+         const invalidPrompt = {
+            ...validUnitTestPrompt,
+            systemPromptParameters: 'not an array' as any
          };
          expect(() => PromptValidator.validatePrompt(invalidPrompt))
             .toThrow(PromptValidationError);
@@ -105,7 +121,7 @@ describe('PromptValidator', () => {
       it('should validate parameter structure when missing description', () => {
          const invalidParam = {
             ...validUnitTestPrompt,
-            userPromptsParameters: [{
+            userPromptParameters: [{
                name: "test",
                // missing description
                required: true
@@ -118,7 +134,7 @@ describe('PromptValidator', () => {
       it('should validate parameter structure when missing \'required\'', () => {
          const invalidParam = {
             ...validUnitTestPrompt,
-            userPromptsParameters: [{
+            userPromptParameters: [{
                name: "test",
                // missing required
                description: "test param"
@@ -131,7 +147,7 @@ describe('PromptValidator', () => {
       it('should require default values for optional parameters', () => {
          const missingDefault = {
             ...validUnitTestPrompt,
-            userPromptsParameters: [{
+            userPromptParameters: [{
                name: "test",
                description: "test param",
                required: false
@@ -144,7 +160,7 @@ describe('PromptValidator', () => {
       it('should require all required parameters', () => {
          const noRequiredParams = {
             ...validUnitTestPrompt,
-            userPromptsParameters: [
+            userPromptParameters: [
                {
                   name: "language",
                   description: "The language in which to generate tests.",

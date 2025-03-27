@@ -6,7 +6,9 @@
  * used throughout the application for managing and retrieving LLM prompts.
  */
 
-
+export { PromptFileRepository, PromptInMemoryRepository } from "./PromptRepository";
+export { getModelResponse } from "./Chat";
+export { throwIfUndefined, throwIfNull, throwIfFalse } from "./Asserts";
 
 /**
  * Interface representing a parameter used in prompt templates
@@ -41,7 +43,7 @@ export interface IPrompt {
    systemPrompt: string,
    systemPromptParameters?: IPromptParameterSpec[] | undefined,
    userPrompt: string,
-   userPromptsParameters?: IPromptParameterSpec[] | undefined
+   userPromptParameters?: IPromptParameterSpec[] | undefined
 }
 
 /**
@@ -71,10 +73,6 @@ export interface IPromptRepository {
     */
    expandUserPrompt(prompt: IPrompt, params: { [key: string]: string }): string;   
 }
-
-
-
-
 
 
 

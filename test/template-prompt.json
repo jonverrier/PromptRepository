@@ -16,7 +16,7 @@
     }
   ],
   "userPrompt": "Please help me with {USER_REQUEST}. Consider the following context: {CONTEXT}",
-  "userPromptsParameters": [
+  "userPromptParameters": [
     {
       "name": "USER_REQUEST",
       "description": "The specific request or question from the user",
@@ -35,7 +35,7 @@
    "name": "Template Prompt",
    "systemPrompt": "You are a helpful assistant that welcomes people to motor racing events. You are careful not to duplicate words in your answers",
    "userPrompt": "Say 'Welcome to the {LOCATION} Grand Prix'",
-   "userPromptsParameters": [
+   "userPromptParameters": [
      {
        "name": "LOCATION",
        "description": "The location of the race",

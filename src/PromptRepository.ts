@@ -73,7 +73,7 @@ export class PromptFileRepository implements IPromptRepository {
    }
 
    expandUserPrompt(prompt: IPrompt, userParams: { [key: string]: string }): string {
-      return replacePromptPlaceholders(prompt.userPrompt, prompt.userPromptsParameters, userParams);
+      return replacePromptPlaceholders(prompt.userPrompt, prompt.userPromptParameters, userParams);
    }
 }
 
@@ -96,6 +96,6 @@ export class PromptInMemoryRepository implements IPromptRepository {
    }
 
    expandUserPrompt(prompt: IPrompt, params: { [key: string]: string }): string {
-      return replacePromptPlaceholders(prompt.userPrompt, prompt.userPromptsParameters, params);
+      return replacePromptPlaceholders(prompt.userPrompt, prompt.userPromptParameters, params);
    }
 }
