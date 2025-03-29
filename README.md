@@ -4,7 +4,7 @@ A framework for managing, testing, and evaluating Large Language Model prompts. 
 
 Inspired by two main things:
 - [Anthropic's guidance on writing applications](https://www.anthropic.com/engineering/building-effective-agents) - which is in essence, 'keep it simple'. Use the API for as long as it works, and don't leap straight to heavy frameworks like LangChain, Rivet etc. "We suggest that developers start by using LLM APIs directly: many patterns can be implemented in a few lines of code."
-- Chris Benson/Practical AI's work on the equivalent of Unit Tests for prompts.
+- [Chris Benson/Practical AI's work](https://practicalai.fm/295) on the equivalent of Unit Tests for Prompts.
 
 ## Externalized Prompts - stored in JSON
 
