@@ -54,6 +54,16 @@ TEST opposite_sentiment:
     EXPECT RESULT = NEGATIVE
 ``` 
 
+The Eval prompt:
+```code
+Given the following prompt: <prompt>{prompt}</prompt>, generate a set of evaluations for the prompt in {language} using the {framework} framework. Use the PromptInMemoryRespository API to load the prompt and expand varables. Use the getModelResponse API to call the model. You should include three cases: 1) Very simple input and output containing known content. 2) A small change to the input that should return the same output, and 3) A small change to the input that should produce different output. Use the domain of motorsports to generate the evaluation cases."
+``` 
+
+The Test prompt:
+```code
+"Given the following prompt: <prompt>{prompt}</prompt>, generate a full set of unit tests for the prompt in {language} using the {framework} framework. Cover all permmutations of missing required parameters, and variant values for both required and optional parameters.",
+``` 
+
 ## Usage - Prompt Respository
 
 1. Install the package:
