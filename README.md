@@ -1,11 +1,16 @@
 # PromptRepository
 
-A framework for managing and testing LLM prompts. 
+A framework for managing, testing, and evaluating Large Language Model prompts. Built to help you create more reliable and robust AI applications through systematic prompt engineering, validation, and testing.
 
-## Externalised Prompts - stored in JSON
+Inspired by two main things:
+- [Anthropic's guidance on writing applications](https://www.anthropic.com/engineering/building-effective-agents) - which is in essence, 'keep it simple'. Use the API for as long as it works, and don't leap straight to heavy frameworks like LangChain, Rivet etc. "We suggest that developers start by using LLM APIs directly: many patterns can be implemented in a few lines of code."
+- Chris Benson/Practical AI's work on the equivalent of Unit Tests for prompts.
 
-- Simple JSON schema for prompts, initially for TypeScript but allowing portability for a Python client in future. 
-- Prompts can be loaded from JSON files at runtime or included as typescript variables at build time. 
+## Externalized Prompts - stored in JSON
+
+- The motivation is to easily allow your prompts to be separated from your code, so you can define a distinct lifecycle e.g. testing a prompt variant when you change the model is not the same as re-testing your code. It is a subset. (You do need to retest the whole thing at the end though...)
+- Simple JSON schema for prompts, initially for TypeScript but allowing portability for a Python client in future.
+- Prompts can be loaded from JSON files at runtime or included as TypeScript variables at build time.
 
 The Prompt format includes:
 - an ID and version for tracking changes
@@ -18,11 +23,11 @@ The Prompt format includes:
 
 - Standard prompts for generating unit tests (mainly presence of required parameters and permutations of optional ones) and unit evals for your prompts.
 - Unit testing is pretty standard, but Evals are quite new thinking. For a given prompt in your application, the 'generateEvals' prompt creates three evals:
-   - A base function eval. The simplist thing you can ask your model, and what you expect must be in the response. 
+   - A base function eval. The simplest thing you can ask your model, and what you expect must be in the response.
    - Amended input to the base function that provides the same output.
    - Amended input to the base function that should provide different output.
 
-These are all very basic tests - you expect them to work 100% of the time, like unit tests, so you run them as ferquently as you run unit tests. whenever you change your promps. 
+These are all very basic tests - you expect them to work 100% of the time, like unit tests, so you run them as frequently as you run unit tests whenever you change your prompts.
 
 This approach has been described by Chris Benson, an AI Strategist for Lockheed Martin, in the [Practical AI Podcast](https://practicalai.fm/295). It's about 40 minutes in.
 
