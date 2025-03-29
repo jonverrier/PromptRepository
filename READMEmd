@@ -2,9 +2,20 @@
 
 A framework for managing and testing LLM prompts. 
 
-## Features
+## Externalised Prompts - stored in JSON
 
 - Simple JSON schema for prompts, initially for TypeScript but allowing portability for a Python client in future. 
+- Prompts can be loaded from JSON files at runtime or included as typescript variables at build time. 
+
+The Prompt format includes:
+- an ID and version for tracking changes
+- validation for required and optional parameters
+- default values for optional parameters
+- user and system prompt values
+- automatic validation of required parameters during template expansion
+
+## Packaged prompts for generating Evals for your prompts
+
 - Standard prompts for generating unit tests (mainly presence of required parameters and permutations of optional ones) and unit evals for your prompts.
 - Unit testing is pretty standard, but Evals are quite new thinking. For a given prompt in your application, the 'generateEvals' prompt creates three evals:
    - A base function eval. The simplist thing you can ask your model, and what you expect must be in the response. 
@@ -15,7 +26,30 @@ These are all very basic tests - you expect them to work 100% of the time, like 
 
 This approach has been described by Chris Benson, an AI Strategist for Lockheed Martin, in the [Practical AI Podcast](https://practicalai.fm/295). It's about 40 minutes in.
 
-## Installation
+Example:
+```code
+PROMPT = "Given some text, classify it as POSITIVE or NEGATIVE"
+
+# Base Test (simplest possible test, must pass)
+TEST basic_sentiment:
+    INPUT = "I am happy"
+    RESULT = evaluate(INPUT)
+    EXPECT RESULT = POSITIVE
+
+# Same Result Test (different input, same expected output)
+TEST similar_sentiment:
+    INPUT = "I am joyful"
+    RESULT = evaluate(INPUT)
+    EXPECT RESULT = POSITIVE
+
+# Different Result Test (different input, different output)
+TEST opposite_sentiment:
+    INPUT = "I am sad"
+    RESULT = evaluate(INPUT)
+    EXPECT RESULT = NEGATIVE
+``` 
+
+## Usage - Prompt Respository
 
 1. Install the package:
 
@@ -92,6 +126,19 @@ expect(result2).toContain("How do I say 'Hello' in French?");
 expect(result2).toContain("The user is a beginner to French");
 ``` 
 
+## Usage - Eval Prompts
+
+for Cursor users:
+- Select your prompt and add it to the context.
+- Add your codebase to the context.
+- Cut and Paste the prompt. When Cursor supports MCP prompts I envisage moving the prompt to a tool. 
+
+You should see something like this: 
+- ![Cursor Example](Cursor-Prompt-Example.PNG)
+
+
 Copyright (c) 2025 Jon Verrier
+
+
 
 
