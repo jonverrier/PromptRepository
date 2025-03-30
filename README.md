@@ -14,9 +14,9 @@ Inspired by two main things:
 
 The Prompt format includes:
 - an ID and version for tracking changes
-- validation for required and optional parameters
-- default values for optional parameters
 - user and system prompt values
+- required and optional parameters
+- default values for optional parameters
 - automatic validation of required parameters during template expansion
 
 ## Packaged prompts for generating Evals for your prompts
