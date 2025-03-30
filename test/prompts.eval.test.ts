@@ -16,10 +16,12 @@ import prompts from './template-prompt.json';
 import { getModelResponse } from '../src/Chat';
 import { PromptInMemoryRepository } from '../src/PromptRepository';
 
+const typedPrompts = prompts as IPrompt[];
+
 describe('Motor Racing Welcome Prompt Tests', () => {
 
    const TEST_TIMEOUT = 10000; // 10 seconds
-   let prompt: IPrompt = prompts.find(p => p.id === "template-prompt-002")!;
+   let prompt: IPrompt = typedPrompts.find(p => p.id === "template-prompt-002")!;
    const promptRepo : IPromptRepository= new PromptInMemoryRepository([prompt]);
 
     it('should generate appropriate welcome message for Monaco', async () => {

@@ -18,21 +18,31 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { PromptFileRepository, replacePromptPlaceholders } from '../src/PromptRepository';
-import { IPrompt } from '../src/entry';
+import { IPrompt, IPromptParameterSpec, ParamTypeNumber, ParamTypeString } from '../src/entry';
 import { throwIfUndefined } from '../src/Asserts';
 
-let requiredNameParam = {
+let requiredNameParam : IPromptParameterSpec = {
    name: "name",
    description: "A person's name",
+   type: ParamTypeString,
    required: true,
    defaultValue: undefined
 }
 
-let optionalNameParam = {
+let optionalNameParam : IPromptParameterSpec = {
    name: "name",
    description: "A person's name",
+   type: ParamTypeString,
    required: false,
    defaultValue: "Name"
+}
+
+let optionalAgeParam : IPromptParameterSpec = {
+   name: "age",
+   description: "A person's age",
+   type: ParamTypeNumber,
+   required: false,
+   defaultValue: "20"
 }
 
 describe('PromptRepository', function () {
@@ -97,7 +107,7 @@ describe('PromptRepository', function () {
       const repo = new PromptFileRepository(samplePromptsFile);
 
       // Test loading a specific prompt
-      const prompt: IPrompt | undefined = await repo.getPrompt("test-prompt-1");
+      const prompt: IPrompt | undefined = repo.getPrompt("test-prompt-1");
 
       // Verify the prompt data
       expect(prompt).toBeDefined();
@@ -109,6 +119,25 @@ describe('PromptRepository', function () {
       throwIfUndefined(prompt);
       let result = replacePromptPlaceholders(prompt.userPrompt, [optionalNameParam], {});
       expect(result).toEqual("Hello Name");
+   });
+
+   it('should correctly replace optional numeric parameters for a prompt', async function () {
+      // Initialize repository with test file
+      const repo = new PromptFileRepository(samplePromptsFile);
+
+      // Test loading a specific prompt
+      let prompt: IPrompt | undefined = repo.getPrompt("test-prompt-1");
+
+      // Verify the prompt data
+      expect(prompt).toBeDefined();
+      throwIfUndefined(prompt);      
+      prompt.userPrompt = "Hello {age}";      
+      expect(prompt?.id).toEqual("test-prompt-1");
+      expect(prompt?.version).toEqual("1.0");
+      expect(prompt?.systemPrompt).toEqual("You are a test bot");
+
+      let result = replacePromptPlaceholders(prompt.userPrompt, [optionalAgeParam], { age: "30" });
+      expect(result).toEqual("Hello 30");
    });
 
    it('should throw an exception if there is a missing required parameter for a prompt', async function () {

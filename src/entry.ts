@@ -11,17 +11,26 @@ export { getModelResponse } from "./Chat";
 export { throwIfUndefined, throwIfNull, throwIfFalse } from "./Asserts";
 
 /**
+ * Enum representing parameter types as strings
+ */
+export const ParamTypeNumber = "kNumber";
+export const ParamTypeString = "kString";
+export type EType = "kNumber" | "kString";
+
+/**
  * Interface representing a parameter used in prompt templates
  * 
  * @interface IPromptParameter
  * @property {string} name - The name of the parameter used in placeholder substitution
  * @property {string} description - A description of what the parameter represents
+ * @property {EType} type - The type of the parameter
  * @property {boolean} required - Whether this parameter must be provided
  * @property {string} defaultValue - The default value to use if parameter is not provided
  */
 export interface IPromptParameterSpec {
    name: string,
    description: string,
+   type: EType,
    required: boolean,
    defaultValue?: string | undefined
 } 

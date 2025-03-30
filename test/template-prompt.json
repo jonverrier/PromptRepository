@@ -7,25 +7,36 @@
     {
       "name": "ROLE_DESCRIPTION",
       "description": "Description of the assistant's role",
+      "type": "kString",
       "required": true
     },
     {
       "name": "TASK_DESCRIPTION",
       "description": "Description of the main task or objective",
+      "type": "kString",
       "required": true
     }
   ],
-  "userPrompt": "Please help me with {USER_REQUEST}. Consider the following context: {CONTEXT}",
+  "userPrompt": "Please help me with {USER_REQUEST}. Consider the following context: {CONTEXT} and include {NUMBER} in your reply",
   "userPromptParameters": [
     {
       "name": "USER_REQUEST",
       "description": "The specific request or question from the user",
+      "type": "kString",
       "required": true
     },
     {
       "name": "CONTEXT",
       "description": "Additional context or background information",
+      "type": "kString",
       "required": false
+    },
+    {
+      "name": "NUMBER",
+      "description": "A number to include in the reply",
+      "type": "kNumber",
+      "required": false,
+      "defaultValue": "1"
     }
   ]
 },
@@ -39,6 +50,7 @@
      {
        "name": "LOCATION",
        "description": "The location of the race",
+       "type": "kString",
        "required": true
      }
    ]

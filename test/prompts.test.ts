@@ -7,7 +7,7 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { IPrompt, IPromptParameterSpec } from '../src/entry';
+import { IPrompt, IPromptParameterSpec, ParamTypeString, ParamTypeNumber } from '../src/entry';
 import prompts from '../src/Prompts.json';
 
 export class PromptValidationError extends Error {
@@ -61,7 +61,7 @@ export class PromptValidator {
 
    private static validateParameter(param: Partial<IPromptParameterSpec>): void {
       // Check required parameter fields
-      const requiredFields = ['name', 'description', 'required'];
+      const requiredFields = ['name', 'description', 'required', 'type'];
       for (const field of requiredFields) {
          if (param[field as keyof IPromptParameterSpec] === undefined) {
             throw new PromptValidationError(`Missing required field in parameter: ${field}`);
@@ -73,6 +73,11 @@ export class PromptValidator {
          throw new PromptValidationError(
             `Optional parameter "${param.name}" must have a default value`
          );
+      }
+
+      // Validate type is one of the allowed types
+      if (param.type !== ParamTypeString && param.type !== ParamTypeNumber) {
+         throw new PromptValidationError(`Invalid type for parameter "${param.name}": ${param.type}`);
       }
    }
 }
@@ -136,8 +141,9 @@ describe('PromptValidator', () => {
             ...validUnitTestPrompt,
             userPromptParameters: [{
                name: "test",
-               // missing required
-               description: "test param"
+               description: "test param",
+               type: ParamTypeString,
+               // missing required               
             }]
          };
          expect(() => PromptValidator.validatePrompt(invalidParam as unknown as Partial<IPrompt>))
@@ -150,10 +156,11 @@ describe('PromptValidator', () => {
             userPromptParameters: [{
                name: "test",
                description: "test param",
+               type: ParamTypeString,
                required: false
             }]
          };
-         expect(() => PromptValidator.validatePrompt(missingDefault))
+         expect(() => PromptValidator.validatePrompt(missingDefault as unknown as Partial<IPrompt>))
             .toThrow(PromptValidationError);
       });
 
@@ -164,12 +171,13 @@ describe('PromptValidator', () => {
                {
                   name: "language",
                   description: "The language in which to generate tests.",
+                  type: ParamTypeString,
                   required: false,
                   defaultValue: "typescript"
                }
             ]
          };
-         expect(() => PromptValidator.validatePrompt(noRequiredParams))
+         expect(() => PromptValidator.validatePrompt(noRequiredParams as unknown as Partial<IPrompt>))
             .toThrow(PromptValidationError);
       });
    });
