@@ -1,4 +1,10 @@
+/**
+ * @module chat.test
+ * 
+ * Unit tests for the Chat module which handles interactions with the LLM.
+ */
 
+// Copyright (c) 2025 Jon Verrier
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';

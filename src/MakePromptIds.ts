@@ -1,4 +1,3 @@
-
 /**
  * This script generates a TypeScript file containing prompt ID declarations.
  * It reads a JSON file with prompt data and creates a TypeScript file with
@@ -12,6 +11,7 @@
  */ 
 
 // Copyright (c) 2025 Jon Verrier
+
 import fs from 'fs';
 import path from 'path';
 

@@ -1,3 +1,11 @@
+/**
+ * Provides functionality for interacting with OpenAI's chat completion API.
+ * 
+ * @module Chat
+ */
+
+// Copyright (c) 2025 Jon Verrier
+
 import OpenAI from 'openai';
 
 /**
@@ -6,6 +14,7 @@ import OpenAI from 'openai';
  * @param userPrompt The user prompt to send to the OpenAI API
  * @returns The response from the OpenAI API
  */
+
 export async function getModelResponse(systemPrompt: string, userPrompt: string): Promise<string> {
 
   if (!process.env.OPENAI_API_KEY) {

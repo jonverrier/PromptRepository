@@ -10,7 +10,6 @@
  * Uses temporary test files to validate ID generation functionality.
  */
 
-
 // Copyright (c) 2025 Jon Verrier
 
 import { expect } from 'expect';
