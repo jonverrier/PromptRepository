@@ -8,7 +8,6 @@
  * - Replacing placeholder values in prompt templates
  * 
  * The module exports:
- * - IPromptRepository interface for prompt storage/retrieval
  * - PromptFileRepository implementation using JSON file-based storage
  * - PromptInMemoryRepository implementation using in-memory storage i.e. prompts are definined in a typescript array
  * - Helper function for prompt template placeholder replacement
