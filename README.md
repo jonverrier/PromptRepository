@@ -76,7 +76,7 @@ Given the following prompt: <prompt>{prompt}</prompt>, generate a full set of un
 variant values for both required and optional parameters.
 ``` 
 
-This appropach (bundling a framework with prompts to generate code to use the framework) is still work in progress. I am using the prompts to generate test cases for another LLM-based application I am building, and will continue to evolve the prompts. 
+This approach (bundling a framework with prompts to generate code to use the framework) is still work in progress. I am using the prompts to generate test cases for another LLM-based application I am building, and will continue to evolve the prompts. 
 
 ## Usage - Prompt Respository
 
