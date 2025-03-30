@@ -3,7 +3,7 @@
  * 
  * This module contains a collection of assertion functions that help verify
  * runtime conditions and provide TypeScript type narrowing. Each function
- * throws an AssertionFailedError when the condition is not met.
+ * throws an ReferenceError when the condition is not met.
  * 
  * @module Asserts
  */

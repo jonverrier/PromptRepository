@@ -13,9 +13,9 @@
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
 import { IPrompt, IPromptRepository } from '../src/entry';
-import prompts from './template-prompt.json';
 import { getModelResponse } from '../src/Chat';
 import { PromptInMemoryRepository } from '../src/PromptRepository';
+import prompts from './template-prompt.json';
 
 const typedPrompts = prompts as IPrompt[];
 
