@@ -21,6 +21,8 @@ The Prompt format includes:
 - default values for optional parameters
 - automatic validation of required parameters during template expansion
 
+The format is compatible with [Model Context Protocol (MCP)](https://modelcontextprotocol.io/), which I envisage using as soon as Cursor adds support for Prompts. 
+
 ## Packaged prompts for generating Evals for your prompts
 
 - Standard prompts for generating unit tests (mainly presence of required parameters and permutations of optional ones) and unit evals for your prompts.
