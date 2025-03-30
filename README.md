@@ -1,10 +1,12 @@
 # PromptRepository
 
-A framework for managing, testing, and evaluating Large Language Model prompts. Built to help you create more reliable and robust AI applications through systematic prompt engineering, validation, and testing.
+A framework for managing, testing, and evaluating Large Language Model (LLM) prompts. Built to help you create more reliable and robust AI applications through systematic prompt engineering, validation, and testing.
+
+The repo also demonstrates a technique I think will become much more common - bundling a framework with prompts to generate code to use the framework.
 
 Inspired by two main things:
-- [Anthropic's guidance on writing applications](https://www.anthropic.com/engineering/building-effective-agents) - which is in essence, 'keep it simple'. Use the API for as long as it works, and don't leap straight to heavy frameworks like LangChain, Rivet etc. "We suggest that developers start by using LLM APIs directly: many patterns can be implemented in a few lines of code."
-- [Chris Benson/Practical AI's work](https://practicalai.fm/295) on the equivalent of Unit Tests for Prompts.
+- [Anthropic's guidance on writing applications](https://www.anthropic.com/engineering/building-effective-agents) - which is in essence, 'keep it simple'. Use the basic API for as long as it works, and don't leap straight to heavy frameworks like LangChain, Rivet etc. "We suggest that developers start by using LLM APIs directly: many patterns can be implemented in a few lines of code.". The frameworks are great, but can divert you into learning the framework rather than learning more directly about how to productively use the LLM. 
+- [Chris Benson/Practical AI's work](https://practicalai.fm/295) on the equivalent of Unit Tests for Prompts. This gives you a solid base to build from as you build apps which contain many embeded prompts & target responses for which you need to assure quality.
 
 ## Externalized Prompts - stored in JSON
 
@@ -72,6 +74,8 @@ Given the following prompt: <prompt>{prompt}</prompt>, generate a full set of un
 variant values for both required and optional parameters.
 ``` 
 
+This appropach (bundling a framework with prompts to generate code to use the framework) is still work in progress. I am using the prompts to generate test cases for another LLM-based application I am building, and will continue to evolve the prompts. 
+
 ## Usage - Prompt Respository
 
 1. Install the package:
@@ -95,13 +99,13 @@ Ensure you have set your OpenAI API key as an environment variable: OPENAI_API_K
     {
       "name": "ROLE_DESCRIPTION",
       "description": "Description of the assistant's role",
-      "type": "string",
+      "type": "kString",
       "required": true
     },
     {
       "name": "TASK_DESCRIPTION",
       "description": "Description of the main task or objective",
-      "type": "string",
+      "type": "kString",
       "required": true
     }
   ],
@@ -110,13 +114,13 @@ Ensure you have set your OpenAI API key as an environment variable: OPENAI_API_K
     {
       "name": "USER_REQUEST",
       "description": "The specific request or question from the user",
-      "type": "string",
+      "type": "kString",
       "required": true
     },
     {
       "name": "CONTEXT",
       "description": "Additional context or background information",
-      "type": "string",
+      "type": "kString",
       "required": false
     }
   ]
@@ -158,6 +162,8 @@ for Cursor users:
 
 You should see something like this: 
 - ![Cursor Example](Cursor-Prompt-Example.PNG)
+
+Run the prompt & Cursor should generate a decent set of Unit-test level Evals for you. 
 
 
 Copyright (c) 2025 Jon Verrier
