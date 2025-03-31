@@ -2,9 +2,9 @@
   "name": "promptrepository",
   "version": "0.1.0",
   "description": "Managing Prompts and standardised Unit Evals ",
-  "main": "Src/entry.ts",
+  "main": "src/entry.ts",
   "directories": {
-    "src": "Src",
+    "src": "src",
     "test": "Test"
   },
   "author": "Jon Verrier",
@@ -12,7 +12,7 @@
   "scripts": {
     "start": "ts-node entry.ts",
     "build": "tsc -b",
-    "make_prompt_ids": "ts-node Src/MakePromptIds.ts",
+    "make_prompt_ids": "ts-node src/MakePromptIds.ts",
     "watch": "tsc -b -w",
     "clean": "rimraf dist",
     "test": "mocha --require ts-node/register --extensions ts,js Test/**/*.test.ts --exit"
