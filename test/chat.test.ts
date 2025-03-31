@@ -8,12 +8,15 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { getModelResponse } from '../src/Chat';
+import { ChatDriverFactory, EModelProvider, EModel } from '../src/entry';
 
 describe('getChatCompletion', () => {
 
+   const chatDriverFactory = new ChatDriverFactory();
+   const chatDriver = chatDriverFactory.create(EModel.kLarge, EModelProvider.kOpenAI);
+
   it('should successfully return chat completion', async () => {
-    const result = await getModelResponse('You are helpful', 'say Hi');
+    const result = await chatDriver.getModelResponse('You are helpful', 'say Hi');
     expect(result).toMatch(/(Hi|Hello)/);
     
   }).timeout(10000);

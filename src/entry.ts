@@ -7,7 +7,7 @@
  */
 
 export { PromptFileRepository, PromptInMemoryRepository } from "./PromptRepository";
-export { getModelResponse } from "./Chat";
+export { ChatDriverFactory } from "./Chat";
 export { throwIfUndefined, throwIfNull, throwIfFalse } from "./Asserts";
 
 /**
@@ -84,4 +84,39 @@ export interface IPromptRepository {
 }
 
 
+/**
+ * Enum representing model sizes
+ */
+export enum EModel {
+   kLarge = "kLarge",
+   kMini = "kMini"  
+}
 
+/**
+ * Enum representing model providers
+ */
+export enum EModelProvider {
+   kOpenAI = "kOpenAI"
+}
+
+/**
+ * Interface for a simple chat response
+ */
+export interface IChatDriver {
+
+   /**
+    * Retrieves a chat response from the model
+    * @param systemPrompt The system prompt to send to the model
+    * @param userPrompt The user prompt to send to the model
+    * @returns The response from the model
+    */
+   getModelResponse(systemPrompt: string, userPrompt: string): Promise<string>;
+}
+
+/**
+ * Interface for a simple factory class for creating chat drivers
+ */
+export interface IChatDriverFactory {
+
+   create(model: EModel, provider: EModelProvider): IChatDriver;
+}

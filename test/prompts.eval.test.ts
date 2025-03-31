@@ -12,8 +12,8 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { IPrompt, IPromptRepository } from '../src/entry';
-import { getModelResponse } from '../src/Chat';
+import { IPrompt, IPromptRepository, EModel, EModelProvider } from '../src/entry';
+import { ChatDriverFactory } from '../src/Chat';
 import { PromptInMemoryRepository } from '../src/PromptRepository';
 import prompts from './template-prompt.json';
 
@@ -24,6 +24,8 @@ describe('Motor Racing Welcome Prompt Tests', () => {
    const TEST_TIMEOUT = 10000; // 10 seconds
    let prompt: IPrompt = typedPrompts.find(p => p.id === "template-prompt-002")!;
    const promptRepo : IPromptRepository= new PromptInMemoryRepository([prompt]);
+   const chatDriverFactory = new ChatDriverFactory();
+   const chatDriver = chatDriverFactory.create(EModel.kLarge, EModelProvider.kOpenAI);
 
     it('should generate appropriate welcome message for Monaco', async () => {
         const prompt = promptRepo.getPrompt('template-prompt-002');
@@ -32,7 +34,7 @@ describe('Motor Racing Welcome Prompt Tests', () => {
         const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
         const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Monaco' });
         
-        const response = await getModelResponse(systemPrompt, userPrompt);
+        const response = await chatDriver.getModelResponse(systemPrompt, userPrompt);
         
         // The response should contain 'Monaco' but not duplicate these words
         expect(response).toContain('Monaco');
@@ -48,7 +50,7 @@ describe('Motor Racing Welcome Prompt Tests', () => {
       const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
       const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Monaco Monaco' });
       
-      const response = await getModelResponse(systemPrompt, userPrompt);
+      const response = await chatDriver.getModelResponse(systemPrompt, userPrompt);
       
       // Should follow same pattern as Monaco test since Monte Carlo is the same location
       expect(response).toContain('Monaco');
@@ -64,7 +66,7 @@ describe('Motor Racing Welcome Prompt Tests', () => {
         const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
         const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Monaco Grand Prix' });
         
-        const response = await getModelResponse(systemPrompt, userPrompt);
+        const response = await chatDriver.getModelResponse(systemPrompt, userPrompt);
         
         // Should follow same pattern as Monaco test since Monte Carlo is the same location
         expect(response).toContain('Monaco');
@@ -81,7 +83,7 @@ describe('Motor Racing Welcome Prompt Tests', () => {
         const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
         const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Silverstone' });
         
-        const response = await getModelResponse(systemPrompt, userPrompt);
+        const response = await chatDriver.getModelResponse(systemPrompt, userPrompt);
         
         // Should contain Silverstone-specific content
         expect(response).toContain('Silverstone');
