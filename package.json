@@ -2,10 +2,10 @@
   "name": "promptrepository",
   "version": "0.1.0",
   "description": "Managing Prompts and standardised Unit Evals ",
-  "main": "src/entry.ts",
+  "main": "dist/src/entry.js",
   "directories": {
     "src": "src",
-    "test": "Test"
+    "test": "test"
   },
   "author": "Jon Verrier",
   "license": "MIT",
