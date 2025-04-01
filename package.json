@@ -1,5 +1,5 @@
 {
-  "name": "promptrepository",
+  "name": "prompt-repository",
   "version": "0.1.0",
   "description": "Managing Prompts and standardised Unit Evals ",
   "main": "dist/src/entry.js",
