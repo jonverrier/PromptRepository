@@ -12,6 +12,7 @@
   "scripts": {
     "start": "ts-node entry.ts",
     "build": "tsc -b",
+    "install": "echo \"No local packages.\"",
     "make_prompt_ids": "ts-node src/MakePromptIds.ts",
     "watch": "tsc -b -w",
     "clean": "rimraf dist",
