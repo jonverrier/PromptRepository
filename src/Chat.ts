@@ -25,10 +25,10 @@ class OpenAIChatDriver implements IChatDriver {
 
    constructor(model: EModel) {
       if (model === EModel.kLarge) {
-         this.model = 'gpt-4o';
+         this.model = 'gpt-4.1';
       } else 
       if (model === EModel.kMini) {
-         this.model = 'gpt-4o-mini';
+         this.model = 'gpt-4.1-mini';
       }
    }
 
