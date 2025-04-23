@@ -13,9 +13,9 @@ export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError } fr
 /**
  * Enum representing parameter types as strings
  */
-export const ParamTypeNumber = "kNumber";
-export const ParamTypeString = "kString";
-export type EType = "kNumber" | "kString";
+export const ParameterTypeNumber = "kNumber";
+export const ParameterTypeString = "kString";
+export type EParameterType = "kNumber" | "kString";
 
 /**
  * Interface representing a parameter used in prompt templates
@@ -30,7 +30,7 @@ export type EType = "kNumber" | "kString";
 export interface IPromptParameterSpec {
    name: string,
    description: string,
-   type: EType,
+   type: EParameterType,
    required: boolean,
    defaultValue?: string | undefined
 } 
@@ -40,6 +40,7 @@ export interface IPromptParameterSpec {
  * 
  * @interface IPrompt
  * @property {string} name - The name of the prompt
+ * @property {string} description - The description of the prompt
  * @property {string} systemPrompt - The system prompt template
  * @property {IPromptParameter[]} systemPromptParameters - The parameters for the system prompt
  * @property {string} userPrompt - The user prompt template
@@ -49,6 +50,7 @@ export interface IPrompt {
    id: string,
    version: string,
    name: string,
+   description?: string,
    systemPrompt: string,
    systemPromptParameters?: IPromptParameterSpec[] | undefined,
    userPrompt: string,
@@ -69,18 +71,18 @@ export interface IPromptRepository {
    /**
     * Expands a prompt with given parameters
     * @param prompt The prompt to expand
-    * @param params The parameters to expand the prompt with
+    * @param params The parameters to expand the prompt with. Optional parameters may be undefined.
     * @returns The expanded prompt
     */
-   expandSystemPrompt(prompt: IPrompt, params: { [key: string]: string }): string;
+   expandSystemPrompt(prompt: IPrompt, params: { [key: string]: string | undefined }): string;
 
    /**
     * Expands a prompt with given parameters
     * @param prompt The prompt to expand
-    * @param params The parameters to expand the prompt with
+    * @param params The parameters to expand the prompt with. Optional parameters may be undefined.
     * @returns The expanded prompt
     */
-   expandUserPrompt(prompt: IPrompt, params: { [key: string]: string }): string;   
+   expandUserPrompt(prompt: IPrompt, params: { [key: string]: string | undefined }): string;   
 }
 
 

@@ -7,7 +7,7 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { IPrompt, IPromptParameterSpec, ParamTypeString, ParamTypeNumber } from '../src/entry';
+import { IPrompt, IPromptParameterSpec, ParameterTypeString, ParameterTypeNumber } from '../src/entry';
 import prompts from '../src/Prompts.json';
 
 export class PromptValidationError extends Error {
@@ -76,7 +76,7 @@ export class PromptValidator {
       }
 
       // Validate type is one of the allowed types
-      if (param.type !== ParamTypeString && param.type !== ParamTypeNumber) {
+      if (param.type !== ParameterTypeString && param.type !== ParameterTypeNumber) {
          throw new PromptValidationError(`Invalid type for parameter "${param.name}": ${param.type}`);
       }
    }
@@ -142,7 +142,7 @@ describe('PromptValidator', () => {
             userPromptParameters: [{
                name: "test",
                description: "test param",
-               type: ParamTypeString,
+               type: ParameterTypeString,
                // missing required               
             }]
          };
@@ -156,12 +156,33 @@ describe('PromptValidator', () => {
             userPromptParameters: [{
                name: "test",
                description: "test param",
-               type: ParamTypeString,
+               type: ParameterTypeString,
                required: false
             }]
          };
          expect(() => PromptValidator.validatePrompt(missingDefault as unknown as Partial<IPrompt>))
             .toThrow(PromptValidationError);
+      });
+
+      it('should use the default values for optional parameters', () => {
+         const missingDefault = {
+            ...validUnitTestPrompt,
+            userPromptParameters: [{
+               "name": "prompt",
+               "description": "A prompt for an LLM for which we want to generate test code.",
+               "required": true,
+               "type": ParameterTypeString
+             }, 
+             {
+               name: "test",
+               description: "test param",
+               type: ParameterTypeString,
+               required: false,
+               defaultValue: "testDefaultValue"
+            }]
+         };
+            expect(() => PromptValidator.validatePrompt(missingDefault as unknown as Partial<IPrompt>))
+               .not.toThrow(PromptValidationError);
       });
 
       it('should require all required parameters', () => {
@@ -171,7 +192,7 @@ describe('PromptValidator', () => {
                {
                   name: "language",
                   description: "The language in which to generate tests.",
-                  type: ParamTypeString,
+                  type: ParameterTypeString,
                   required: false,
                   defaultValue: "typescript"
                }
