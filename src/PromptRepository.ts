@@ -20,6 +20,32 @@ import fs from 'fs';
 
 import { IPromptParameterSpec, IPrompt, IPromptRepository } from "./entry";
 
+
+/**
+ * Validates that a parameter value matches its specified type
+ * @param paramName The name of the parameter to validate
+ * @param paramValue The value of the parameter to validate
+ * @param paramSpec Array of parameter specifications to check against
+ * @throws {TypeError} If the parameter value does not match its specified type
+ */
+
+function validateParameterType(paramName: string,
+   paramValue: string | undefined,
+   paramSpec: IPromptParameterSpec[]): void {
+   const foundParam = paramSpec.find(p => p.name === paramName);
+   if (foundParam) {
+      if (foundParam.type === "kString") {
+         if (typeof paramValue !== "string") {
+            throw new TypeError(`Parameter ${paramName} must be a string`);
+         }
+      } else if (foundParam.type === "kNumber") {
+         if (isNaN(Number(paramValue))) {
+            throw new TypeError(`Parameter ${paramName} must be a number`);
+         }
+      }
+   }
+}
+
 /**
  * Replaces placeholders in a prompt template with actual values
  * @param template The prompt template containing placeholders e.g. "Hello {name}"
@@ -27,9 +53,9 @@ import { IPromptParameterSpec, IPrompt, IPromptRepository } from "./entry";
  * @param params An object containing key-value pairs for placeholder replacements e.g. { name: "Jon" }, may be undefined for optional parameters
  * @returns The prompt with placeholders replaced by actual values e.g. "Hello Jon"
  */
-export function replacePromptPlaceholders(template: string, 
-   paramSpec: IPromptParameterSpec[] | undefined, 
-   params: { [key: string]: string | undefined}): string {
+export function replacePromptPlaceholders(template: string,
+   paramSpec: IPromptParameterSpec[] | undefined,
+   params: { [key: string]: string | undefined }): string {
 
    if (paramSpec === undefined) {
       return template;
@@ -38,17 +64,22 @@ export function replacePromptPlaceholders(template: string,
    for (const param of paramSpec) {
       // Check that all required parameters are provided      
       if (param.required) {
-         if (!params.hasOwnProperty(param.name)) {
+         if (!params.hasOwnProperty(param.name) || params[param.name] === undefined) {
             throw new TypeError(`Missing required parameter: ${param.name}`);
+         }
+         else {
+            validateParameterType(param.name, params[param.name], paramSpec);
          }
       }
       else {
-         // Use default value if parameter is optional and has default     
-         if (!params.hasOwnProperty(param.name) || !params[param.name]) {
+         // Use default value if parameter is optional, not provided, and has default     
+         if (!params.hasOwnProperty(param.name) || params[param.name] === undefined) {
             const foundParam = paramSpec.find(p => p.name === param.name);
-            if (foundParam) {            
+            if (foundParam) {
                params[param.name] = foundParam.defaultValue ?? "";
             }
+         } else {
+            validateParameterType(param.name, params[param.name], paramSpec);
          }
       }
    }
