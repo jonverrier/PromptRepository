@@ -8,19 +8,22 @@
     {
       "name": "prompt",
       "description": "A prompt for an LLM for which we want to generate test code.",
-      "required": true
+      "required": true,
+      "type": "kString"
     },
     {
       "name": "language",
       "description": "The language in which to generate tests. Default is typescript.",
       "required": false,
-      "defaultValue": "typescript"
+      "defaultValue": "typescript",
+      "type": "kString"
     },
     {
       "name": "framework",
       "description": "The framework to use for the tests. Default is mocha.",
       "required": false,
-      "defaultValue": "mocha"
+      "defaultValue": "mocha",
+      "type": "kString"
     }]
 },
 {
@@ -33,18 +36,21 @@
      {
        "name": "prompt",
        "description": "A prompt for an LLM for which we want to generate eval code.",
-       "required": true
+       "required": true,
+       "type": "kString"
      },
      {
        "name": "language",
        "description": "The language in which to generate tests. Default is typescript.",
        "required": false,
-       "defaultValue": "typescript"
+       "defaultValue": "typescript",
+       "type": "kString"
      },
      {
        "name": "framework",
        "description": "The framework to use for the tests. Default is mocha.",       
        "required": false,
-       "defaultValue": "mocha"
+       "defaultValue": "mocha",
+       "type": "kString"
      }]
  }]

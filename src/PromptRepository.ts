@@ -24,12 +24,12 @@ import { IPromptParameterSpec, IPrompt, IPromptRepository } from "./entry";
  * Replaces placeholders in a prompt template with actual values
  * @param template The prompt template containing placeholders e.g. "Hello {name}"
  * @param paramSpec The parameter specification for the prompt
- * @param params An object containing key-value pairs for placeholder replacements e.g. { name: "Jon" } 
+ * @param params An object containing key-value pairs for placeholder replacements e.g. { name: "Jon" }, may be undefined for optional parameters
  * @returns The prompt with placeholders replaced by actual values e.g. "Hello Jon"
  */
 export function replacePromptPlaceholders(template: string, 
    paramSpec: IPromptParameterSpec[] | undefined, 
-   params: { [key: string]: string }): string {
+   params: { [key: string]: string | undefined}): string {
 
    if (paramSpec === undefined) {
       return template;
@@ -39,19 +39,20 @@ export function replacePromptPlaceholders(template: string,
       // Check that all required parameters are provided      
       if (param.required) {
          if (!params.hasOwnProperty(param.name)) {
-            if (param.required) {
-               throw new TypeError(`Missing required parameter: ${param.name}`);
-            }
+            throw new TypeError(`Missing required parameter: ${param.name}`);
          }
       }
       else {
-         // Use default value if parameter is optional and has default         
-         if (!params.hasOwnProperty(param.name)) {
-            params[param.name] = param.defaultValue ?? "";
+         // Use default value if parameter is optional and has default     
+         if (!params.hasOwnProperty(param.name) || !params[param.name]) {
+            const foundParam = paramSpec.find(p => p.name === param.name);
+            if (foundParam) {            
+               params[param.name] = foundParam.defaultValue ?? "";
+            }
          }
       }
    }
-   return template.replace(/\{(.*?)}/g, (_, key) => params[key].toString());
+   return template.replace(/\{(.*?)}/g, (_, key) => params[key]?.toString() ?? "");
 }
 
 /**
@@ -68,11 +69,11 @@ export class PromptFileRepository implements IPromptRepository {
       return this.prompts.find(p => p.id === id);
    }
 
-   expandSystemPrompt(prompt: IPrompt, systemParams: { [key: string]: string }): string {
+   expandSystemPrompt(prompt: IPrompt, systemParams: { [key: string]: string | undefined }): string {
       return replacePromptPlaceholders(prompt.systemPrompt, prompt.systemPromptParameters, systemParams);
    }
 
-   expandUserPrompt(prompt: IPrompt, userParams: { [key: string]: string }): string {
+   expandUserPrompt(prompt: IPrompt, userParams: { [key: string]: string | undefined }): string {
       return replacePromptPlaceholders(prompt.userPrompt, prompt.userPromptParameters, userParams);
    }
 }
@@ -91,11 +92,11 @@ export class PromptInMemoryRepository implements IPromptRepository {
       return this.prompts.find(p => p.id === id);
    }
 
-   expandSystemPrompt(prompt: IPrompt, params: { [key: string]: string }): string {
+   expandSystemPrompt(prompt: IPrompt, params: { [key: string]: string | undefined }): string {
       return replacePromptPlaceholders(prompt.systemPrompt, prompt.systemPromptParameters, params);
    }
 
-   expandUserPrompt(prompt: IPrompt, params: { [key: string]: string }): string {
+   expandUserPrompt(prompt: IPrompt, params: { [key: string]: string | undefined }): string {
       return replacePromptPlaceholders(prompt.userPrompt, prompt.userPromptParameters, params);
    }
 }

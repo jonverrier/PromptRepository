@@ -18,13 +18,13 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { PromptFileRepository, replacePromptPlaceholders } from '../src/PromptRepository';
-import { IPrompt, IPromptParameterSpec, ParamTypeNumber, ParamTypeString } from '../src/entry';
+import { IPrompt, IPromptParameterSpec, ParameterTypeNumber, ParameterTypeString } from '../src/entry';
 import { throwIfUndefined } from '../src/Asserts';
 
 let requiredNameParam : IPromptParameterSpec = {
    name: "name",
    description: "A person's name",
-   type: ParamTypeString,
+   type: ParameterTypeString,
    required: true,
    defaultValue: undefined
 }
@@ -32,7 +32,7 @@ let requiredNameParam : IPromptParameterSpec = {
 let optionalNameParam : IPromptParameterSpec = {
    name: "name",
    description: "A person's name",
-   type: ParamTypeString,
+   type: ParameterTypeString,
    required: false,
    defaultValue: "Name"
 }
@@ -40,7 +40,7 @@ let optionalNameParam : IPromptParameterSpec = {
 let optionalAgeParam : IPromptParameterSpec = {
    name: "age",
    description: "A person's age",
-   type: ParamTypeNumber,
+   type: ParameterTypeNumber,
    required: false,
    defaultValue: "20"
 }
