@@ -42,22 +42,26 @@ export interface IPromptParameterSpec {
  * Interface representing a prompt template
  * 
  * @interface IPrompt
+ * @property {string} id - The unique identifier of the prompt
+ * @property {string} version - The version of the prompt
+ * @property {string} schemaVersion - The version of the prompt schema
  * @property {string} name - The name of the prompt
- * @property {string} description - The description of the prompt
+ * @property {string} [description] - The description of the prompt
  * @property {string} systemPrompt - The system prompt template
- * @property {IPromptParameter[]} systemPromptParameters - The parameters for the system prompt
+ * @property {IPromptParameterSpec[]} [systemPromptParameters] - The parameters for the system prompt
  * @property {string} userPrompt - The user prompt template
- * @property {IPromptParameter[]} userPromptsParameters - The parameters for the user prompt
+ * @property {IPromptParameterSpec[]} [userPromptParameters] - The parameters for the user prompt
  */
 export interface IPrompt {
    id: string,
    version: string,
+   schemaVersion?: string   
    name: string,
    description?: string,
-   systemPrompt: string,
+   systemPrompt?: string,
    systemPromptParameters?: IPromptParameterSpec[] | undefined,
    userPrompt: string,
-   userPromptParameters?: IPromptParameterSpec[] | undefined
+   userPromptParameters?: IPromptParameterSpec[] | undefined,
 }
 
 /**

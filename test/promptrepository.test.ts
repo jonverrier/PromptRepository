@@ -59,6 +59,7 @@ describe('PromptRepository', function () {
       const prompts = [{
          "id": "test-prompt-1",
          "version": "1.0",
+         "schemaVersion": "1.0",
          "personaName": "TestBot",
          "systemPrompt": "You are a test bot",
          "userPrompt": "Hello {name}"
@@ -73,7 +74,7 @@ describe('PromptRepository', function () {
       const repo = new PromptFileRepository(samplePromptsFile);
 
       // Test loading a specific prompt
-      const prompt = await repo.getPrompt("test-prompt-1");
+      const prompt = repo.getPrompt("test-prompt-1");
 
       // Verify the prompt data
       expect(prompt).toBeDefined();
@@ -81,6 +82,17 @@ describe('PromptRepository', function () {
       expect(prompt?.version).toEqual("1.0");
       expect(prompt?.systemPrompt).toEqual("You are a test bot");
       expect(prompt?.userPrompt).toEqual("Hello {name}");
+   });
+
+   it('should correctly load schema version from prompt', async function () {
+
+      // Test loading the prompt
+      const repo = new PromptFileRepository(samplePromptsFile);      
+      const prompt = repo.getPrompt("test-prompt-1");
+
+      // Verify schema version
+      expect(prompt).toBeDefined();
+      expect(prompt?.schemaVersion).toEqual("1.0");
    });
 
    it('should correctly replace required parameters for a prompt', async function () {
