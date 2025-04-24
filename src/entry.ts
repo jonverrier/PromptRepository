@@ -119,7 +119,7 @@ export interface IChatDriver {
     * @param userPrompt The user prompt to send to the model
     * @returns The response from the model
     */
-   getModelResponse(systemPrompt: string, userPrompt: string): Promise<string>;
+   getModelResponse(systemPrompt: string | undefined, userPrompt: string): Promise<string>;
 }
 
 /**

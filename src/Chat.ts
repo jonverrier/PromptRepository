@@ -32,7 +32,7 @@ class OpenAIChatDriver implements IChatDriver {
       }
    }
 
-   getModelResponse(systemPrompt: string, userPrompt: string): Promise<string> {
+   getModelResponse(systemPrompt: string | undefined, userPrompt: string): Promise<string> {
       return getModelResponse(this.model,systemPrompt, userPrompt);   
 }
 }
@@ -45,7 +45,7 @@ class OpenAIChatDriver implements IChatDriver {
  * @returns The response from the OpenAI API
  */
 
-async function getModelResponse(model: string, systemPrompt: string, userPrompt: string): Promise<string> {
+async function getModelResponse(model: string, systemPrompt: string | undefined, userPrompt: string): Promise<string> {
 
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY environment variable is not set');
@@ -57,10 +57,10 @@ async function getModelResponse(model: string, systemPrompt: string, userPrompt:
 
   try {
     const response = await openai.responses.create({
-      'instructions' : systemPrompt,
-      'input' : userPrompt,
-      'model' : model, 
-      'temperature' : 0.25
+      ...(systemPrompt && { 'instructions': systemPrompt }),
+      'input': userPrompt,
+      'model': model,
+      'temperature': 0.25
     });
 
     if (!response.output_text) {
