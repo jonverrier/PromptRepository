@@ -18,7 +18,7 @@
 
 import fs from 'fs';
 
-import { IPromptParameterSpec, IPrompt, IPromptRepository } from "./entry";
+import { IPromptParameterSpec, IPrompt, IPromptRepository, throwIfUndefined } from "./entry";
 
 
 /**
@@ -107,6 +107,8 @@ export class PromptFileRepository implements IPromptRepository {
    }
 
    expandSystemPrompt(prompt: IPrompt, systemParams: { [key: string]: string | undefined }): string {
+      
+      throwIfUndefined(prompt.systemPrompt);
       return replacePromptPlaceholders(prompt.systemPrompt, prompt.systemPromptParameters, systemParams);
    }
 
@@ -130,6 +132,7 @@ export class PromptInMemoryRepository implements IPromptRepository {
    }
 
    expandSystemPrompt(prompt: IPrompt, params: { [key: string]: string | undefined }): string {
+      throwIfUndefined(prompt.systemPrompt);      
       return replacePromptPlaceholders(prompt.systemPrompt, prompt.systemPromptParameters, params);
    }
 
