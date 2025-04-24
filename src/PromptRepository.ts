@@ -19,6 +19,10 @@ import fs from 'fs';
 
 import { IPromptParameterSpec, IPrompt, IPromptRepository, throwIfUndefined } from "./entry";
 
+// Use this to enable future upgrades on the fly. 
+// If the prompt author was using an old version, we may be able to patch. 
+const currentSchemaVersion = "0.1";
+
 
 /**
  * Validates that a parameter value matches its specified type
