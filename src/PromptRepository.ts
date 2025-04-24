@@ -41,6 +41,12 @@ function validateParameterType(paramName: string,
          if (isNaN(Number(paramValue))) {
             throw new TypeError(`Parameter ${paramName} must be a number`);
          }
+      } else if (foundParam.type === "kEnum") {
+         if (foundParam.allowedValues && paramValue) {
+            if (!foundParam.allowedValues.includes(paramValue)) {
+               throw new TypeError(`Parameter ${paramName} must be one of: ${foundParam.allowedValues.join(", ")}`);
+            }
+         }
       }
    }
 }
