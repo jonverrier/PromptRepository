@@ -7,7 +7,7 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { IPrompt, IPromptParameterSpec, ParameterTypeString, ParameterTypeNumber } from '../src/entry';
+import { IPrompt, IPromptParameterSpec, ParameterTypeString, ParameterTypeNumber, ParameterTypeEnum } from '../src/entry';
 import prompts from '../src/Prompts.json';
 
 export class PromptValidationError extends Error {
@@ -183,6 +183,21 @@ describe('PromptValidator', () => {
          };
             expect(() => PromptValidator.validatePrompt(missingDefault as unknown as Partial<IPrompt>))
                .not.toThrow(PromptValidationError);
+      });
+
+      it('should validate enum parameters', () => {
+         const invalidParam = {
+            ...validUnitTestPrompt,
+            userPromptParameters: [{
+               name: "test",
+               description: "test param",
+               type: ParameterTypeEnum,
+               required: true,
+               allowedValues: ["test1", "test2"]
+            }]
+         };
+         expect(() => PromptValidator.validatePrompt(invalidParam as unknown as Partial<IPrompt>))
+            .toThrow(PromptValidationError);
       });
 
       it('should require all required parameters', () => {

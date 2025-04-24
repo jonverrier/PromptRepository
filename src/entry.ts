@@ -15,7 +15,8 @@ export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError } fr
  */
 export const ParameterTypeNumber = "kNumber";
 export const ParameterTypeString = "kString";
-export type EParameterType = "kNumber" | "kString";
+export const ParameterTypeEnum = "kEnum";
+export type EParameterType = "kNumber" | "kString" | "kEnum";
 
 /**
  * Interface representing a parameter used in prompt templates
@@ -26,13 +27,15 @@ export type EParameterType = "kNumber" | "kString";
  * @property {EType} type - The type of the parameter
  * @property {boolean} required - Whether this parameter must be provided
  * @property {string} defaultValue - The default value to use if parameter is not provided
+ * @property {string[]} allowedValues - Array of allowed values for this parameter if type is enum
  */
 export interface IPromptParameterSpec {
    name: string,
    description: string,
    type: EParameterType,
    required: boolean,
-   defaultValue?: string | undefined
+   defaultValue?: string | undefined,
+   allowedValues?: string[] | undefined
 } 
 
 /**
