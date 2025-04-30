@@ -34,7 +34,11 @@ class OpenAIChatDriver implements IChatDriver {
 
    getModelResponse(systemPrompt: string | undefined, userPrompt: string): Promise<string> {
       return getModelResponse(this.model,systemPrompt, userPrompt);   
-}
+   }
+
+   getStreamedModelResponse(systemPrompt: string | undefined, userPrompt: string): AsyncIterator<string> {
+      return getStreamedModelResponse(this.model,systemPrompt, userPrompt);   
+   }
 }
 
 /**
@@ -75,3 +79,62 @@ async function getModelResponse(model: string, systemPrompt: string | undefined,
     throw new Error('Unknown error occurred while calling OpenAI API');
   }
 }
+
+function getStreamedModelResponse(model: string, systemPrompt: string | undefined, userPrompt: string): AsyncIterator<string> {
+   const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+   });
+
+   let streamPromise = openai.responses.create({
+      ...(systemPrompt && { 'instructions': systemPrompt }),
+      'input': userPrompt,
+      'model': model,
+      'temperature': 0.25,
+      'stream': true
+   });
+
+   let streamIterator: AsyncIterator<any> | null = null;
+
+   return {
+      async next(): Promise<IteratorResult<string>> {
+         try {
+            if (!streamIterator) {
+               const stream = await streamPromise;
+               streamIterator = stream[Symbol.asyncIterator]();
+            }
+            
+            let looking = true;
+            while (looking) {
+               const chunk = await streamIterator.next();
+               if (chunk.done) {
+                  streamIterator = null;
+                  return { value: '', done: true };
+               }
+            
+               if ('delta' in chunk.value && typeof chunk.value.delta === 'string') {
+                  looking = false;
+                  return { value: chunk.value.delta, done: false };
+               }
+            }
+         
+            // fali-safe terminate if we kept looking and never got a value
+            return { value:'', done: true };
+         } catch (error) {
+            streamIterator = null;
+            if (error instanceof Error) {
+               throw new Error(`Stream error: ${error.message}`);
+            }
+            throw error;
+         }
+      },
+      return(): Promise<IteratorResult<string>> {
+         streamIterator = null;
+         return Promise.resolve({ value: '', done: true });
+      },
+      throw(error: any): Promise<IteratorResult<string>> {
+         streamIterator = null;
+         return Promise.reject(error);
+      }
+   };
+}
+

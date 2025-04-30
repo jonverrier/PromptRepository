@@ -120,6 +120,14 @@ export interface IChatDriver {
     * @returns The response from the model
     */
    getModelResponse(systemPrompt: string | undefined, userPrompt: string): Promise<string>;
+
+   /**
+    * Retrieves a streamed chat response from the model
+    * @param systemPrompt The system prompt to send to the model
+    * @param userPrompt The user prompt to send to the model
+    * @returns The response from the model
+    */
+   getStreamedModelResponse(systemPrompt: string | undefined, userPrompt: string): AsyncIterator<string>;
 }
 
 /**
