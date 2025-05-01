@@ -10,6 +10,8 @@ import { expect } from 'expect';
 import { describe, it } from 'mocha';
 import { ChatDriverFactory, EModelProvider, EModel } from '../src/entry';
 
+const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
+
 describe('getChatCompletion', () => {
 
    const chatDriverFactory = new ChatDriverFactory();
@@ -18,12 +20,12 @@ describe('getChatCompletion', () => {
    it('should successfully return chat completion with system prompt', async () => {
       const result = await chatDriver.getModelResponse('You are helpful', 'say Hi');
       expect(result).toMatch(/(Hi|Hello)/);
-   }).timeout(10000);
+   }).timeout(TEST_TIMEOUT_MS);
 
    it('should successfully return chat completion without system prompt', async () => {
       const result = await chatDriver.getModelResponse(undefined, 'say Hi');
       expect(result).toMatch(/(Hi|Hello)/);
-   }).timeout(10000);
+   }).timeout(TEST_TIMEOUT_MS);
 
 });
 
@@ -38,14 +40,14 @@ describe('getStreamedModelResponse', () => {
 
       expect(result.value).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
       expect(result.value.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
-   }).timeout(10000);
+   }).timeout(TEST_TIMEOUT_MS);
 
    it('should successfully stream chat completion without system prompt', async () => {
       const iterator = chatDriver.getStreamedModelResponse(undefined, 'say Hi');
       const result = await iterator.next();
       expect(result.value).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
       expect(result.value.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
-   }).timeout(10000);
+   }).timeout(TEST_TIMEOUT_MS);
 
    it('should stream long-form content in multiple chunks', async () => {
       const prompt = 'Write a Shakespearean sonnet about artificial intelligence';
@@ -81,5 +83,112 @@ describe('getStreamedModelResponse', () => {
       // A sonnet should have 14 lines
       const lines = fullText.split('\n').filter(line => line.trim().length > 0);
       expect(lines.length).toBeGreaterThanOrEqual(14);
-   }).timeout(15000);
+   }).timeout(TEST_TIMEOUT_MS);
+});
+
+describe('Constrained Model Response Tests', () => {
+
+   const chatDriverFactory = new ChatDriverFactory();
+   const chatDriver = chatDriverFactory.create(EModel.kLarge, EModelProvider.kOpenAI);
+
+   it('should return constrained JSON response matching schema', async () => {
+      const schema = {
+         type: 'object',
+         properties: {
+            name: { type: 'string' },
+            age: { type: 'number' }
+         },
+         required: ['name', 'age'],
+         additionalProperties: false
+      };
+
+      const defaultValue = { name: 'default', age: 0 };
+      const result = await chatDriver.getConstrainedModelResponse(
+         'You are a helpful assistant that returns person data',
+         'Give me details about a person named Bob who is 42 years old',
+         schema,
+         defaultValue
+      );
+
+      expect(result).toHaveProperty('name');
+      expect(result).toHaveProperty('age');
+      expect(result.name).toBe('Bob');
+      expect(result.age).toBe(42);
+   }).timeout(TEST_TIMEOUT_MS);
+
+   it('should return default value when response parsing fails', async () => {
+      const schema = {
+         type: 'object',
+         properties: {
+            validKey: { type: 'boolean' }
+         },
+         required: ['validKey'],
+         additionalProperties: false
+      };
+
+      const defaultValue = { validKey: false };
+      const result = await chatDriver.getConstrainedModelResponse(
+         undefined,
+         'Give me an invalid response',
+         schema,
+         defaultValue
+      );
+
+      expect(result).toEqual(defaultValue);
+   }).timeout(TEST_TIMEOUT_MS);
+
+   it('should handle complex nested schema constraints', async () => {
+      const schema = {
+         type: 'object',
+         properties: {
+            user: {
+               type: 'object',
+               properties: {
+                  name: { type: 'string' },
+                  contacts: {
+                     type: 'array',
+                     items: {
+                        type: 'object',
+                        properties: {
+                           type: { type: 'string', enum: ['email', 'phone'] },
+                           value: { type: 'string' }
+                        },
+                        required: ['type', 'value'],
+                        additionalProperties: false
+                     }
+                  }
+               },
+               required: ['name', 'contacts'],
+               additionalProperties: false
+            }
+         },
+         required: ['user'],
+         additionalProperties: false
+      };
+
+      const defaultValue = {
+         user: {
+            name: 'default',
+            contacts: []
+         }
+      };
+
+      const result = await chatDriver.getConstrainedModelResponse(
+         'You are a helpful assistant that returns user contact information',
+         'Create a user named Alice with an email contact alice@example.com and phone contact 555-0123',
+         schema,
+         defaultValue
+      );
+
+      expect(result.user.name).toBe('Alice');
+      expect(result.user.contacts).toHaveLength(2);
+      expect(result.user.contacts).toContainEqual({
+         type: 'email',
+         value: 'alice@example.com'
+      });
+      expect(result.user.contacts).toContainEqual({
+         type: 'phone',
+         value: '555-0123'
+      });
+   }).timeout(TEST_TIMEOUT_MS);
 });

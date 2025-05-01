@@ -128,6 +128,22 @@ export interface IChatDriver {
     * @returns The response from the model
     */
    getStreamedModelResponse(systemPrompt: string | undefined, userPrompt: string): AsyncIterator<string>;
+
+
+   /**
+    * Retrieves a chat response from the model with JSON schema validation
+    * @param systemPrompt The system prompt to send to the model
+    * @param userPrompt The user prompt to send to the model 
+    * @param jsonSchema The JSON schema to constrain the model output
+    * @param defaultValue The default value to return if the model output does not match the schema
+    * @returns The response from the model as a validated JSON object
+    */
+   getConstrainedModelResponse<T>(
+      systemPrompt: string | undefined,
+      userPrompt: string,
+      jsonSchema: Record<string, unknown>,
+      defaultValue: T
+   ): Promise<T>;
 }
 
 /**

@@ -39,6 +39,10 @@ class OpenAIChatDriver implements IChatDriver {
    getStreamedModelResponse(systemPrompt: string | undefined, userPrompt: string): AsyncIterator<string> {
       return getStreamedModelResponse(this.model,systemPrompt, userPrompt);   
    }
+
+   getConstrainedModelResponse<T> (systemPrompt: string | undefined, userPrompt: string, jsonSchema: Record<string, unknown>, defaultValue: T): Promise<T> {
+      return getConstrainedModelResponse<T>(this.model,systemPrompt, userPrompt, jsonSchema, defaultValue);   
+   }
 }
 
 /**
@@ -138,3 +142,24 @@ function getStreamedModelResponse(model: string, systemPrompt: string | undefine
    };
 }
 
+async function getConstrainedModelResponse<T>(
+   model: string,
+   systemPrompt: string | undefined,
+   userPrompt: string,
+   jsonSchema: Record<string, unknown>,
+   defaultValue: T
+): Promise<T> {
+   const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+   });
+
+   const response = await openai.responses.parse({
+      ...(systemPrompt && { 'instructions': systemPrompt }),
+      'input': userPrompt,
+      'model': model,
+      'temperature': 0.25,
+      'text': { 'format': { type: "json_schema", "strict": true, "name": "constrainedOutput", "schema": jsonSchema } }
+   });
+
+   return response.output_parsed ?? defaultValue;
+}

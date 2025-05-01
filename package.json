@@ -16,7 +16,8 @@
     "make_prompt_ids": "ts-node src/MakePromptIds.ts",
     "watch": "tsc -b -w",
     "clean": "rimraf dist",
-    "test": "mocha --require ts-node/register --extensions ts,js Test/**/*.test.ts --exit"
+    "test": "mocha --require ts-node/register --extensions ts,js Test/**/*.test.ts --exit",
+    "test-mini": "mocha --require ts-node/register --extensions ts,js Test/**/*.test.ts -g \"Constrained Model Response Tests\" --exit"    
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

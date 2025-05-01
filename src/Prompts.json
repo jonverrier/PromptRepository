@@ -45,7 +45,7 @@
        "required": false,
        "defaultValue": "typescript",
        "type": "kString"
-     },
+     },  
      {
        "name": "framework",
        "description": "The framework to use for the tests. Default is mocha.",       
