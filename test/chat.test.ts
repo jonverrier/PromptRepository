@@ -8,7 +8,7 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { ChatDriverFactory, EModelProvider, EModel } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage } from '../src/entry';
 
 const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
 
@@ -25,6 +25,23 @@ describe('getChatCompletion', () => {
    it('should successfully return chat completion without system prompt', async () => {
       const result = await chatDriver.getModelResponse(undefined, 'say Hi');
       expect(result).toMatch(/(Hi|Hello)/);
+   }).timeout(TEST_TIMEOUT_MS);
+
+   it('should successfully return chat completion with message history', async () => {
+      const messageHistory: IChatMessage[] = [
+         {
+            role: EChatRole.kUser,
+            content: 'My name is Alice',
+            timestamp: new Date()
+         },
+         {
+            role: EChatRole.kAssistant,
+            content: 'Hello Alice, nice to meet you!',
+            timestamp: new Date()
+         }
+      ];
+      const result = await chatDriver.getModelResponse('You are helpful', 'What is my name?', messageHistory);
+      expect(result.toLowerCase()).toContain('alice');
    }).timeout(TEST_TIMEOUT_MS);
 
 });
@@ -47,6 +64,30 @@ describe('getStreamedModelResponse', () => {
       const result = await iterator.next();
       expect(result.value).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
       expect(result.value.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
+   }).timeout(TEST_TIMEOUT_MS);
+
+   it('should successfully stream chat completion with message history', async () => {
+      const messageHistory: IChatMessage[] = [
+         {
+            role: EChatRole.kUser,
+            content: 'My name is Bob',
+            timestamp: new Date()
+         },
+         {
+            role: EChatRole.kAssistant,
+            content: 'Hello Bob, nice to meet you!',
+            timestamp: new Date()
+         }
+      ];
+      const iterator = chatDriver.getStreamedModelResponse('You are helpful', 'What is my name?', messageHistory);
+      const chunks: string[] = [];
+      while (true) {
+         const result = await iterator.next();
+         if (result.done) break;
+         chunks.push(result.value);
+      }
+      const fullText = chunks.join('');
+      expect(fullText.toLowerCase()).toContain('bob');
    }).timeout(TEST_TIMEOUT_MS);
 
    it('should stream long-form content in multiple chunks', async () => {
@@ -114,6 +155,45 @@ describe('Constrained Model Response Tests', () => {
       expect(result).toHaveProperty('age');
       expect(result.name).toBe('Bob');
       expect(result.age).toBe(42);
+   }).timeout(TEST_TIMEOUT_MS);
+
+   it('should return constrained JSON response with message history', async () => {
+      const schema = {
+         type: 'object',
+         properties: {
+            name: { type: 'string' },
+            age: { type: 'number' }
+         },
+         required: ['name', 'age'],
+         additionalProperties: false
+      };
+
+      const messageHistory: IChatMessage[] = [
+         {
+            role: EChatRole.kUser,
+            content: 'I am talking about Charlie who is 25 years old',
+            timestamp: new Date()
+         },
+         {
+            role: EChatRole.kAssistant,
+            content: 'I understand you are referring to Charlie, age 25.',
+            timestamp: new Date()
+         }
+      ];
+
+      const defaultValue = { name: 'default', age: 0 };
+      const result = await chatDriver.getConstrainedModelResponse(
+         'You are a helpful assistant that returns person data',
+         'Give me the details about the person we discussed',
+         schema,
+         defaultValue,
+         messageHistory
+      );
+
+      expect(result).toHaveProperty('name');
+      expect(result).toHaveProperty('age');
+      expect(result.name).toBe('Charlie');
+      expect(result.age).toBe(25);
    }).timeout(TEST_TIMEOUT_MS);
 
    it('should return default value when response parsing fails', async () => {

@@ -109,6 +109,42 @@ export enum EModelProvider {
 }
 
 /**
+ * An enumeration of possible chat roles.
+ * Used to identify the sender of a message in chat interactions.
+ */
+export enum EChatRole {
+   kUser = 'user',
+   kAssistant = 'assistant'
+}
+
+/**
+ * A message in a chat interaction.
+ */
+export interface IChatMessage {
+   role: EChatRole;
+   content: string;
+   timestamp: Date;
+}
+
+/**
+ * A request to the chat API.
+ */
+export interface IChatMessageRequest {
+   sessionId: string;
+   limit: number;
+   continuation?: string | undefined;
+}
+
+/**
+ * A response from the chat API.
+ */
+export interface IChatMessageResponse {
+   messages: IChatMessage[];
+   continuation?: string | undefined;
+}
+
+
+/**
  * Interface for a simple chat response
  */
 export interface IChatDriver {
@@ -117,17 +153,19 @@ export interface IChatDriver {
     * Retrieves a chat response from the model
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model
+    * @param messageHistory Optional array of previous chat messages
     * @returns The response from the model
     */
-   getModelResponse(systemPrompt: string | undefined, userPrompt: string): Promise<string>;
+   getModelResponse(systemPrompt: string | undefined, userPrompt: string, messageHistory?: IChatMessage[]): Promise<string>;
 
    /**
     * Retrieves a streamed chat response from the model
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model
+    * @param messageHistory Optional array of previous chat messages
     * @returns The response from the model
     */
-   getStreamedModelResponse(systemPrompt: string | undefined, userPrompt: string): AsyncIterator<string>;
+   getStreamedModelResponse(systemPrompt: string | undefined, userPrompt: string, messageHistory?: IChatMessage[]): AsyncIterator<string>;
 
 
    /**
@@ -136,13 +174,15 @@ export interface IChatDriver {
     * @param userPrompt The user prompt to send to the model 
     * @param jsonSchema The JSON schema to constrain the model output
     * @param defaultValue The default value to return if the model output does not match the schema
+    * @param messageHistory Optional array of previous chat messages
     * @returns The response from the model as a validated JSON object
     */
    getConstrainedModelResponse<T>(
       systemPrompt: string | undefined,
       userPrompt: string,
       jsonSchema: Record<string, unknown>,
-      defaultValue: T
+      defaultValue: T,
+      messageHistory?: IChatMessage[]
    ): Promise<T>;
 }
 
