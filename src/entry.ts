@@ -139,7 +139,7 @@ export interface IChatMessageRequest {
  * A response from the chat API.
  */
 export interface IChatMessageResponse {
-   messages: IChatMessage[];
+   records: IChatMessage[];
    continuation?: string | undefined;
 }
 
