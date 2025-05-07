@@ -15,14 +15,24 @@
 
 // Copyright (c) 2025 Jon Verrier
 
-import fs from 'fs';
+import type * as fs from 'node:fs';
 
-import { IPromptParameterSpec, IPrompt, IPromptRepository, throwIfUndefined } from "./entry";
+import { IPromptParameterSpec, IPrompt, IPromptRepository, throwIfUndefined, InvalidOperationError } from "./entry";
 
 // Use this to enable future upgrades on the fly. 
 // If the prompt author was using an old version, we may be able to patch. 
 const currentSchemaVersion = "0.1";
 
+let fsImpl: typeof fs | undefined;
+try {
+  // Only import fs in Node.js environment
+  if (typeof process !== 'undefined' && process.versions?.node) {
+    // Use require instead of await import since we're at module level
+    fsImpl = require('node:fs');
+  }
+} catch (error) {
+  // In browser environments, fs will remain undefined
+}
 
 /**
  * Validates that a parameter value matches its specified type
@@ -102,7 +112,10 @@ export class PromptFileRepository implements IPromptRepository {
    private prompts: IPrompt[] = [];
 
    constructor(readonly promptFilePath: string) {
-      this.prompts = JSON.parse(fs.readFileSync(promptFilePath, 'utf8'));
+      if (fsImpl === undefined) {
+         throw new InvalidOperationError("PromptFileRepository is not supported in the browser");
+      }
+      this.prompts = JSON.parse(fsImpl.readFileSync(promptFilePath, 'utf8'));
    }
 
    getPrompt(id: string): IPrompt | undefined {

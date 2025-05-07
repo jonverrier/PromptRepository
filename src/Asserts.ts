@@ -23,6 +23,19 @@ export class InvalidParameterError extends Error {
    }
 }
 
+/**
+ * Represents an error thrown when an invalid operation is attempted.
+ * @param {string} message - The error message describing the invalid operation.
+ */
+export class InvalidOperationError extends Error {
+   constructor(message?: string) {
+      super(message);
+      // see: typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html
+      Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
+      this.name = InvalidOperationError.name; // stack traces display correctly now
+   }
+}
+
 export const throwIfUndefined: <T, >(x: T | undefined) => asserts x is T = x => {
    if (typeof x === "undefined") throw new ReferenceError ("Object is undefined.");
 }

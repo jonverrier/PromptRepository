@@ -8,7 +8,7 @@
 
 export { PromptFileRepository, PromptInMemoryRepository } from "./PromptRepository";
 export { ChatDriverFactory } from "./Chat";
-export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError } from "./Asserts";
+export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError } from "./Asserts";
 
 /**
  * Enum representing parameter types as strings
