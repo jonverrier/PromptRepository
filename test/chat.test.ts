@@ -8,7 +8,7 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName } from '../src/entry';
 
 const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
 
@@ -30,11 +30,15 @@ describe('getChatCompletion', () => {
    it('should successfully return chat completion with message history', async () => {
       const messageHistory: IChatMessage[] = [
          {
+            id: '1',
+            className: ChatMessageClassName,
             role: EChatRole.kUser,
             content: 'My name is Alice',
             timestamp: new Date()
          },
          {
+            id: '2',
+            className: ChatMessageClassName,
             role: EChatRole.kAssistant,
             content: 'Hello Alice, nice to meet you!',
             timestamp: new Date()
@@ -69,11 +73,15 @@ describe('getStreamedModelResponse', () => {
    it('should successfully stream chat completion with message history', async () => {
       const messageHistory: IChatMessage[] = [
          {
+            id: '1',
+            className: ChatMessageClassName,
             role: EChatRole.kUser,
             content: 'My name is Bob',
             timestamp: new Date()
          },
          {
+            id: '2',
+            className: ChatMessageClassName,
             role: EChatRole.kAssistant,
             content: 'Hello Bob, nice to meet you!',
             timestamp: new Date()
@@ -170,11 +178,15 @@ describe('Constrained Model Response Tests', () => {
 
       const messageHistory: IChatMessage[] = [
          {
+            id: '1',
+            className: ChatMessageClassName,
             role: EChatRole.kUser,
             content: 'I am talking about Charlie who is 25 years old',
             timestamp: new Date()
          },
          {
+            id: '2',
+            className: ChatMessageClassName,
             role: EChatRole.kAssistant,
             content: 'I understand you are referring to Charlie, age 25.',
             timestamp: new Date()

@@ -117,14 +117,21 @@ export enum EChatRole {
    kAssistant = 'assistant'
 }
 
+export interface IQueryReturnable {
+   id: string | undefined;  // The id of the object. Can be undefined if the object has not yet ben saved to DB
+   className: string;       // The class name of the object.   
+}
+
 /**
  * A message in a chat interaction.
  */
-export interface IChatMessage {
+export interface IChatMessage extends IQueryReturnable {
    role: EChatRole;
    content: string;
    timestamp: Date;
 }
+
+export const ChatMessageClassName = "IChatMessage";
 
 /**
  * A request to the chat API.
