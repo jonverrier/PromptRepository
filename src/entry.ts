@@ -9,6 +9,7 @@
 export { PromptFileRepository, PromptInMemoryRepository } from "./PromptRepository";
 export { ChatDriverFactory } from "./Chat";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError } from "./Asserts";
+export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
 
 /**
  * Enum representing parameter types as strings
@@ -150,6 +151,24 @@ export interface IChatMessageResponse {
    continuation?: string | undefined;
 }
 
+/**
+ * Request parameters for archiving chat messages.
+ * Used to specify which messages should be archived based on various criteria.
+ */
+export interface IArchiveMessageRequest {
+
+   limit: number;            // Maximum number of records to archive
+   sessionId: string;        // Session identifier to scope the archive operation
+   createdAfter: string;     // Only archive records created after this date
+   createdBefore: string;    // Only archive records created before this date
+   continuation: string | undefined;  // Token for paginating through results
+}
+
+export interface IArchiveMessageResponse {
+
+   updatedCount: number;              // Number of records updated
+   continuation: string | undefined;  // Continuation token for pagination
+}
 
 /**
  * Interface for a simple chat response
@@ -200,3 +219,4 @@ export interface IChatDriverFactory {
 
    create(model: EModel, provider: EModelProvider): IChatDriver;
 }
+
