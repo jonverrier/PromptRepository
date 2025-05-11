@@ -32,7 +32,8 @@ export function renderChatMessageAsText(message: IChatMessage): string {
  * @param fullDate - Whether to include the full date after Today/Yesterday
  */
 export const formatChatMessageTimestamp = (timestamp: Date, fullDate: boolean = false): string => {
-    const date = timestamp;
+    
+    const date = new Date(timestamp); // This makes the function resilient to getting a Date object or a string in date format
     const now = new Date();
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
