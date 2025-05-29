@@ -7,7 +7,7 @@
  */
 
 export { PromptFileRepository, PromptInMemoryRepository } from "./PromptRepository";
-export { ChatDriverFactory } from "./Chat";
+export { ChatDriverFactory } from "./ChatFactory";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError } from "./Asserts";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
 
@@ -106,7 +106,8 @@ export enum EModel {
  * Enum representing model providers
  */
 export enum EModelProvider {
-   kOpenAI = "kOpenAI"
+   kOpenAI = "kOpenAI",
+   kAzureOpenAI = "kAzureOpenAI"
 }
 
 /**

@@ -13,7 +13,7 @@
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
 import { IPrompt, IPromptRepository, EModel, EModelProvider } from '../src/entry';
-import { ChatDriverFactory } from '../src/Chat';
+import { ChatDriverFactory } from '../src/ChatFactory';
 import { PromptInMemoryRepository } from '../src/PromptRepository';
 import prompts from './template-prompt.json';
 
