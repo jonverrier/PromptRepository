@@ -136,10 +136,20 @@ export interface IChatMessage extends IQueryReturnable {
 export const ChatMessageClassName = "IChatMessage";
 
 /**
+ * A data structure for a user session core details.
+ * Used to specify the user's session core details for a chat session
+ * This is the minimum data required to identify a user session, exchnaged betwen the client and server
+ */
+export interface IUserSessionSummary {
+   sessionId: string;
+   email: string
+};
+
+/**
  * A request to the chat API.
  */
 export interface IChatMessageRequest {
-   sessionId: string;
+   sessionSummary: IUserSessionSummary;
    limit: number;
    continuation?: string | undefined;
 }
@@ -159,7 +169,7 @@ export interface IChatMessageResponse {
 export interface IArchiveMessageRequest {
 
    limit: number;            // Maximum number of records to archive
-   sessionId: string;        // Session identifier to scope the archive operation
+   sessionSummary: IUserSessionSummary; // Session identifier to scope the archive operation
    createdAfter: string;     // Only archive records created after this date
    createdBefore: string;    // Only archive records created before this date
    continuation: string | undefined;  // Token for paginating through results
