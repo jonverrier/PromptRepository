@@ -13,6 +13,34 @@ interface AsyncResponse {
     [Symbol.asyncIterator](): AsyncIterator<any>;
 }
 
+const MAX_RETRIES = 5;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
+
+async function exponentialBackoff(retryCount: number): Promise<void> {
+   const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
+   await new Promise(resolve => setTimeout(resolve, delay));
+}
+
+async function retryWithExponentialBackoff<T>(
+   operation: () => Promise<T>,
+   maxRetries: number = MAX_RETRIES
+): Promise<T> {
+   let retryCount = 0;
+   
+   while (true) {
+      try {
+         return await operation();
+      } catch (error: any) {
+         if (error?.status === 429 && retryCount < maxRetries) {
+            await exponentialBackoff(retryCount);
+            retryCount++;
+            continue;
+         }
+         throw error;
+      }
+   }
+}
+
 /**
  * Abstract base class for OpenAI model drivers.
  * Provides common functionality for interacting with OpenAI's API
@@ -45,7 +73,9 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
       try {
          const config = this.createCompletionConfig(systemPrompt, messages);
-         const response = await this.openai.responses.create(config);
+         const response = await retryWithExponentialBackoff(() => 
+            this.openai.responses.create(config)
+         );
 
          if (!response.output_text) {
             throw new Error('No response content received from OpenAI');
@@ -75,7 +105,9 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       const config = this.createCompletionConfig(systemPrompt, messages);
       config.stream = true;
 
-      let streamPromise = this.openai.responses.create(config);
+      let streamPromise = retryWithExponentialBackoff(() => 
+         this.openai.responses.create(config)
+      );
       let streamIterator: AsyncIterator<any> | null = null;
 
       return {
@@ -147,7 +179,9 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       const config = this.createCompletionConfig(systemPrompt, messages);
       config.text = { format: { type: "json_schema", strict: true, name: "constrainedOutput", schema: jsonSchema } };
 
-      const response = await this.openai.responses.parse(config);
+      const response = await retryWithExponentialBackoff(() => 
+         this.openai.responses.parse(config)
+      );
       return (response.output_parsed as T) ?? defaultValue;
    }
 }
