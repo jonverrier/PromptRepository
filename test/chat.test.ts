@@ -17,6 +17,8 @@ const chatDriverFactory = new ChatDriverFactory();
 const providers = [EModelProvider.kOpenAI, EModelProvider.kAzureOpenAI];
 const chatDrivers = providers.map(provider => chatDriverFactory.create(EModel.kLarge, provider));
 
+
+
 // Run all tests for each provider
 providers.forEach((provider, index) => {
   const chatDriver = chatDrivers[index];
@@ -278,6 +280,16 @@ providers.forEach((provider, index) => {
         type: 'phone',
         value: '555-0123'
       });
+    }).timeout(TEST_TIMEOUT_MS);
+  });
+
+  // Mini model tests for each provider
+  const miniChatDriver = chatDriverFactory.create(EModel.kMini, provider);
+
+  describe(`Mini Model Tests (${provider})`, () => {
+    it('should successfully return simple chat completion', async () => {
+      const result = await miniChatDriver.getModelResponse('You are helpful', 'say Hi');
+      expect(result).toMatch(/(Hi|Hello)/);
     }).timeout(TEST_TIMEOUT_MS);
   });
 });

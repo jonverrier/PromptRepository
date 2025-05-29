@@ -13,7 +13,7 @@ import { OpenAIModelChatDriver } from './Chat';
 
 const AZURE_DEPLOYMENTS = {
    LARGE: "Studio41Large",
-   MINI: "Studio41Mini"
+   MINI: "Studio41Small"
 } as const;
 
 /**
