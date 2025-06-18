@@ -1,6 +1,6 @@
 {
   "name": "prompt-repository",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Managing Prompts and standardised Unit Evals ",
   "main": "dist/src/entry.js",
   "directories": {
