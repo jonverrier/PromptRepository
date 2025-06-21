@@ -7,8 +7,9 @@
 // Copyright (c) 2025 Jon Verrier
 
 import { expect } from 'expect';
-import { describe, it } from 'mocha';
+import { describe, it, beforeEach, afterEach } from 'mocha';
 import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName } from '../src/entry';
+import { OpenAIModelChatDriver } from '../src/Chat';
 
 const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
 
@@ -17,7 +18,71 @@ const chatDriverFactory = new ChatDriverFactory();
 const providers = [EModelProvider.kOpenAI, EModelProvider.kAzureOpenAI];
 const chatDrivers = providers.map(provider => chatDriverFactory.create(EModel.kLarge, provider));
 
+// Mock class for testing exponential backoff
+class MockOpenAIChatDriver extends OpenAIModelChatDriver {
+   private failCount = 0;
+   private shouldFail = false;
+   private maxFailures = 0;
 
+   constructor() {
+      super(EModel.kLarge);
+      // Mock the OpenAI client
+      (this as any).openai = {
+         responses: {
+            create: async (config: any) => {
+               if (this.shouldFail && this.failCount < this.maxFailures) {
+                  this.failCount++;
+                  const error: any = new Error('Rate limit exceeded');
+                  error.status = 429;
+                  throw error;
+               }
+               
+               // If streaming is requested, return a mock stream
+               if (config.stream) {
+                  return {
+                     [Symbol.asyncIterator]: () => ({
+                        next: async () => ({
+                           value: { delta: 'Success response' },
+                           done: false
+                        })
+                     })
+                  };
+               }
+               
+               return { output_text: 'Success response' };
+            },
+            parse: async (config: any) => {
+               if (this.shouldFail && this.failCount < this.maxFailures) {
+                  this.failCount++;
+                  const error: any = new Error('Rate limit exceeded');
+                  error.status = 429;
+                  throw error;
+               }
+               return { output_parsed: { test: 'data' } };
+            }
+         }
+      };
+   }
+
+   protected createCompletionConfig(systemPrompt: string | undefined, messages: IChatMessage[]): any {
+      return { messages, systemPrompt };
+   }
+
+   setShouldFail(shouldFail: boolean, maxFailures: number = 0) {
+      this.shouldFail = shouldFail;
+      this.maxFailures = maxFailures;
+      this.failCount = 0;
+   }
+
+   getFailCount() {
+      return this.failCount;
+   }
+
+   // Method to override the mock for specific tests
+   setMockCreate(mockFn: () => Promise<any>) {
+      (this as any).openai.responses.create = mockFn;
+   }
+}
 
 // Run all tests for each provider
 providers.forEach((provider, index) => {
@@ -293,3 +358,111 @@ providers.forEach((provider, index) => {
     }).timeout(TEST_TIMEOUT_MS);
   });
 });
+
+describe('Exponential Backoff Tests', () => {
+   let mockDriver: MockOpenAIChatDriver;
+
+   beforeEach(() => {
+      mockDriver = new MockOpenAIChatDriver();
+   });
+
+   afterEach(() => {
+      mockDriver.setShouldFail(false);
+   });
+
+   it('should retry on 429 errors and eventually succeed', async () => {
+      // Set up to fail 2 times then succeed
+      mockDriver.setShouldFail(true, 2);
+
+      const startTime = Date.now();
+      const result = await mockDriver.getModelResponse('You are helpful', 'say Hi');
+      const endTime = Date.now();
+
+      expect(result).toBe('Success response');
+      expect(mockDriver.getFailCount()).toBe(2);
+
+      // Verify exponential backoff timing (should be ~3 seconds: 1s + 2s)
+      const elapsedTime = endTime - startTime;
+      expect(elapsedTime).toBeGreaterThan(2500); // At least 2.5 seconds
+      expect(elapsedTime).toBeLessThan(5000); // Less than 5 seconds
+   }).timeout(10000);
+
+   it('should retry on 429 errors for constrained responses', async () => {
+      // Set up to fail 1 time then succeed
+      mockDriver.setShouldFail(true, 1);
+
+      const schema = {
+         type: 'object',
+         properties: { test: { type: 'string' } },
+         required: ['test']
+      };
+
+      const startTime = Date.now();
+      const result = await mockDriver.getConstrainedModelResponse(
+         'You are helpful',
+         'return test data',
+         schema,
+         { test: 'default' }
+      );
+      const endTime = Date.now();
+
+      expect(result).toEqual({ test: 'data' });
+      expect(mockDriver.getFailCount()).toBe(1);
+
+      // Verify exponential backoff timing (should be ~1 second)
+      const elapsedTime = endTime - startTime;
+      expect(elapsedTime).toBeGreaterThan(800); // At least 800ms
+      expect(elapsedTime).toBeLessThan(2000); // Less than 2 seconds
+   }).timeout(5000);
+
+   it('should throw error after max retries exceeded', async () => {
+      // Set up to fail more than max retries (5)
+      mockDriver.setShouldFail(true, 6);
+
+      const startTime = Date.now();
+      await expect(
+         mockDriver.getModelResponse('You are helpful', 'say Hi')
+      ).rejects.toThrow('OpenAI API error: Rate limit exceeded');
+      const endTime = Date.now();
+
+      expect(mockDriver.getFailCount()).toBe(6); // Should have tried 6 times (1 initial + 5 retries)
+      
+      // Verify it took reasonable time (should be ~31 seconds: 1+2+4+8+16)
+      const elapsedTime = endTime - startTime;
+      expect(elapsedTime).toBeGreaterThan(25000); // At least 25 seconds
+      expect(elapsedTime).toBeLessThan(40000); // Less than 40 seconds
+   }).timeout(45000);
+
+   it('should not retry on non-429 errors', async () => {
+      // Mock to throw a different error
+      mockDriver.setMockCreate(async () => {
+         const error: any = new Error('Authentication failed');
+         error.status = 401;
+         throw error;
+      });
+
+      await expect(
+         mockDriver.getModelResponse('You are helpful', 'say Hi')
+      ).rejects.toThrow('OpenAI API error: Authentication failed');
+   }).timeout(5000);
+
+   it('should handle streaming with exponential backoff', async () => {
+      // Set up to fail 1 time then succeed
+      mockDriver.setShouldFail(true, 1);
+
+      const startTime = Date.now();
+      const iterator = mockDriver.getStreamedModelResponse('You are helpful', 'say Hi');
+      const result = await iterator.next();
+      const endTime = Date.now();
+
+      expect(result.value).toBe('Success response');
+      expect(mockDriver.getFailCount()).toBe(1);
+
+      // Verify exponential backoff timing
+      const elapsedTime = endTime - startTime;
+      expect(elapsedTime).toBeGreaterThan(800);
+      expect(elapsedTime).toBeLessThan(2000);
+   }).timeout(5000);
+});
+
+
