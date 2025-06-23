@@ -6,10 +6,13 @@
  * used throughout the application for managing and retrieving LLM prompts.
  */
 
+import { IFunction } from './Function';
+
 export { PromptFileRepository, PromptInMemoryRepository } from "./PromptRepository";
 export { ChatDriverFactory } from "./ChatFactory";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError } from "./Asserts";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
+export { IFunction, EDataType } from "./Function";
 
 /**
  * Enum representing parameter types as strings
@@ -113,10 +116,13 @@ export enum EModelProvider {
 /**
  * An enumeration of possible chat roles.
  * Used to identify the sender of a message in chat interactions.
+ * Follows OpenAI's chat completion API guidelines.
  */
 export enum EChatRole {
    kUser = 'user',
-   kAssistant = 'assistant'
+   kAssistant = 'assistant',
+   kFunction = 'function',
+   kTool = 'tool'
 }
 
 export interface IQueryReturnable {
@@ -125,12 +131,25 @@ export interface IQueryReturnable {
 }
 
 /**
+ * Interface for function call information in assistant messages.
+ * Follows OpenAI's function calling format.
+ */
+export interface IFunctionCall {
+   name: string;
+   arguments: string; // JSON string of arguments
+}
+
+/**
  * A message in a chat interaction.
+ * Supports OpenAI's function calling format with optional function_call and name properties.
  */
 export interface IChatMessage extends IQueryReturnable {
    role: EChatRole;
-   content: string;
+   content: string | null; // null for assistant messages with function_call
    timestamp: Date;
+   name?: string; // Required for function/tool messages, optional for others
+   function_call?: IFunctionCall; // Present in assistant messages when calling a function
+   tool_call_id?: string; // For tool use pattern
 }
 
 export const ChatMessageClassName = "IChatMessage";
@@ -191,18 +210,30 @@ export interface IChatDriver {
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model
     * @param messageHistory Optional array of previous chat messages
+    * @param functions Optional array of functions to pass to the model
     * @returns The response from the model
     */
-   getModelResponse(systemPrompt: string | undefined, userPrompt: string, messageHistory?: IChatMessage[]): Promise<string>;
+   getModelResponse(
+      systemPrompt: string | undefined,
+      userPrompt: string,
+      messageHistory?: IChatMessage[],
+      functions?: IFunction[]
+   ): Promise<string>;
 
    /**
     * Retrieves a streamed chat response from the model
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model
     * @param messageHistory Optional array of previous chat messages
+    * @param functions Optional array of functions to pass to the model
     * @returns The response from the model
     */
-   getStreamedModelResponse(systemPrompt: string | undefined, userPrompt: string, messageHistory?: IChatMessage[]): AsyncIterator<string>;
+   getStreamedModelResponse(
+      systemPrompt: string | undefined,
+      userPrompt: string,
+      messageHistory?: IChatMessage[],
+      functions?: IFunction[]
+   ): AsyncIterator<string>;
 
 
    /**
@@ -212,6 +243,7 @@ export interface IChatDriver {
     * @param jsonSchema The JSON schema to constrain the model output
     * @param defaultValue The default value to return if the model output does not match the schema
     * @param messageHistory Optional array of previous chat messages
+    * @param functions Optional array of functions to pass to the model
     * @returns The response from the model as a validated JSON object
     */
    getConstrainedModelResponse<T>(
@@ -219,7 +251,8 @@ export interface IChatDriver {
       userPrompt: string,
       jsonSchema: Record<string, unknown>,
       defaultValue: T,
-      messageHistory?: IChatMessage[]
+      messageHistory?: IChatMessage[],
+      functions?: IFunction[]
    ): Promise<T>;
 }
 

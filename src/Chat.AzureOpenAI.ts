@@ -8,7 +8,7 @@
 
 import { AzureOpenAI } from 'openai';
 import { EChatRole } from './entry';
-import { EModel, IChatMessage } from './entry';
+import { EModel, IChatMessage, IFunction } from './entry';
 import { OpenAIModelChatDriver } from './Chat';
 
 const AZURE_DEPLOYMENTS = {
@@ -48,17 +48,50 @@ export class AzureOpenAIChatDriver extends OpenAIModelChatDriver {
       });
    }
 
-   protected createCompletionConfig(systemPrompt: string | undefined, messages: IChatMessage[]): any {
-      const formattedMessages = messages.map(msg => ({
-         role: msg.role === EChatRole.kUser ? 'user' : 'assistant',
-         content: msg.content
-      }));
+   protected createCompletionConfig(systemPrompt: string | undefined, messages: IChatMessage[], functions?: IFunction[]): any {
+      const filteredMessages = messages.filter(msg => msg.role !== EChatRole.kFunction);
+      const formattedMessages = filteredMessages.map(msg => {
+         const isAssistantWithFunctionCall = msg.role === EChatRole.kAssistant && msg.function_call;
+         const baseMessage: any = {
+            role: msg.role === EChatRole.kUser ? 'user' : 
+                  msg.role === EChatRole.kAssistant ? 'assistant' : 
+                  msg.role === EChatRole.kFunction ? 'function' : 'user',
+            content: isAssistantWithFunctionCall ? '' : msg.content
+         };
 
-      return {
+         // Add name property for function messages
+         if (msg.role === EChatRole.kFunction && msg.name) {
+            baseMessage.name = msg.name;
+         }
+
+         return baseMessage;
+      });
+
+      const config: any = {
          model: this.deployment,
          input: formattedMessages,
          ...(systemPrompt && { instructions: systemPrompt }),
          temperature: 0.25
       };
+
+      // Add functions to the configuration if provided
+      if (functions && functions.length > 0) {
+         config.tools = functions.map(func => {
+            const tool = {
+               name: func.name,
+               description: func.description,
+               type: 'function',
+               parameters: {
+                  type: 'object',
+                  properties: func.inputSchema.properties,
+                  required: func.inputSchema.required,
+                  additionalProperties: false
+               }
+            };
+            return tool;
+         });
+      }
+
+      return config;
    }
 } 

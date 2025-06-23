@@ -49,7 +49,15 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
                   };
                }
                
-               return { output_text: 'Success response' };
+               // Return new API format with output array
+               return { 
+                  output: [
+                     {
+                        type: 'text',
+                        content: 'Success response'
+                     }
+                  ]
+               };
             },
             parse: async (config: any) => {
                if (this.shouldFail && this.failCount < this.maxFailures) {

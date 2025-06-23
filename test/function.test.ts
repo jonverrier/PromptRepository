@@ -1,0 +1,247 @@
+/**
+ * @module function.test
+ * 
+ * Unit tests for the Function module which handles function definitions for LLM interactions.
+ */
+
+// Copyright (c) 2025 Jon Verrier
+
+import { expect } from 'expect';
+import { describe, it } from 'mocha';
+import { ChatDriverFactory, EModelProvider, EModel } from '../src/entry';
+import { IFunction, EDataType, IFunctionArgs } from '../src/Function';
+
+const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
+
+// Create chat drivers 
+const chatDriverFactory = new ChatDriverFactory();
+const providers = [EModelProvider.kAzureOpenAI, EModelProvider.kOpenAI];
+const chatDrivers = providers.map(provider => chatDriverFactory.create(EModel.kLarge, provider));
+
+// Sample function definition for testing
+const sampleFunction: IFunction = {
+   name: 'get_leading_driver',
+   description: 'Get the current leading driver in a specific motorsport race series',
+   inputSchema: {
+      properties: {
+         raceSeries: {
+            type: EDataType.kString,
+            description: 'The name of the motorsport race series, e.g. Formula 1, NASCAR, IndyCar'
+         }
+      },
+      required: ['raceSeries']
+   },
+   outputSchema: {
+      properties: {
+         leadingDriver: {
+            type: EDataType.kString,
+            description: 'The name of the current leading driver in the championship'
+         },
+         raceSeries: {
+            type: EDataType.kString,
+            description: 'The race series that was queried'
+         },
+         points: {
+            type: EDataType.kNumber,
+            description: 'The current championship points of the leading driver'
+         }
+      },
+      required: ['leadingDriver', 'raceSeries', 'points']
+   },
+   validateArgs: (args: IFunctionArgs): IFunctionArgs => {
+      if (!args.raceSeries || typeof args.raceSeries !== 'string') {
+         throw new Error('raceSeries is required and must be a string');
+      }
+      return args;
+   },
+   execute: async (args: IFunctionArgs): Promise<IFunctionArgs> => {
+      const raceSeries = args.raceSeries as string;
+      
+      // Mock data for different race series
+      const mockData: { [key: string]: { driver: string; points: number } } = {
+         'Formula 1': { driver: 'Max Verstappen', points: 575 },
+         'NASCAR': { driver: 'Kyle Larson', points: 4040 },
+         'IndyCar': { driver: 'Alex Palou', points: 656 },
+         'Formula E': { driver: 'Jake Dennis', points: 229 },
+         'WEC': { driver: 'Toyota Gazoo Racing', points: 172 }
+      };
+      
+      const data = mockData[raceSeries] || { driver: 'Unknown Driver', points: 0 };
+      
+      return {
+         leadingDriver: data.driver,
+         raceSeries: raceSeries,
+         points: data.points
+      };
+   }
+};
+
+// Run all tests for each provider
+providers.forEach((provider, index) => {
+  const chatDriver = chatDrivers[index];
+
+  describe(`Function Integration Tests (${provider})`, () => {
+    it('should successfully return chat completion with function definition', async () => {
+      const result = await chatDriver.getModelResponse(
+         'You are a helpful assistant that can call functions to get motorsport information.',
+         'Who is the leading driver in Formula 1?',
+         undefined, // messageHistory
+         [sampleFunction] // functions
+      );
+      
+      // The model should respond acknowledging the function call capability
+      expect(result).toMatch(/driver|formula|racing|function|call/i);
+      expect(result.length).toBeGreaterThan(10);
+    }).timeout(TEST_TIMEOUT_MS);
+
+    /*
+    it('should successfully return chat completion with multiple function definitions', async () => {
+      const multipleFunctions: IFunction[] = [
+         sampleFunction,
+         {
+            name: 'get_time',
+            description: 'Get the current time for a specific timezone',
+            inputSchema: {
+               properties: {
+                  timezone: {
+                     type: EDataType.kString,
+                     description: 'The timezone to get the time for, e.g. America/New_York'
+                  }
+               },
+               required: ['timezone']
+            },
+            outputSchema: {
+               properties: {
+                  time: {
+                     type: EDataType.kString,
+                     description: 'The current time in the specified timezone'
+                  },
+                  timezone: {
+                     type: EDataType.kString,
+                     description: 'The timezone that was queried'
+                  }
+               },
+               required: ['time', 'timezone']
+            }
+         }
+      ];
+
+      const result = await chatDriver.getModelResponse(
+         'You are a helpful assistant with access to weather and time functions.',
+         'What time is it in London and what is the weather like there?',
+         undefined, // messageHistory
+         multipleFunctions // functions
+      );
+      
+      // The model should respond acknowledging the available functions
+      expect(result).toMatch(/weather|time|function|call/i);
+      expect(result.length).toBeGreaterThan(10);
+    }).timeout(TEST_TIMEOUT_MS);
+
+    it('should handle function with complex nested schema', async () => {
+      const complexFunction: IFunction = {
+         name: 'create_user_profile',
+         description: 'Create a user profile with contact information',
+         inputSchema: {
+            properties: {
+               name: {
+                  type: EDataType.kString,
+                  description: 'The full name of the user'
+               },
+               age: {
+                  type: EDataType.kNumber,
+                  description: 'The age of the user'
+               },
+               contacts: {
+                  type: EDataType.kArray,
+                  description: 'Array of contact information'
+               }
+            },
+            required: ['name', 'age']
+         },
+         outputSchema: {
+            properties: {
+               userId: {
+                  type: EDataType.kString,
+                  description: 'The unique identifier for the user'
+               },
+               profile: {
+                  type: EDataType.kObject,
+                  description: 'The complete user profile'
+               },
+               status: {
+                  type: EDataType.kString,
+                  description: 'The status of the profile creation'
+               }
+            },
+            required: ['userId', 'profile', 'status']
+         }
+      };
+
+      const result = await chatDriver.getModelResponse(
+         'You are a helpful assistant that can create user profiles.',
+         'Create a profile for John Doe who is 30 years old with email john@example.com',
+         undefined, // messageHistory
+         [complexFunction] // functions
+      );
+      
+      // The model should respond acknowledging the profile creation capability
+      expect(result).toMatch(/profile|user|create|function/i);
+      expect(result.length).toBeGreaterThan(10);
+    }).timeout(TEST_TIMEOUT_MS);
+    */
+  });
+});
+
+describe('Function Interface Tests', () => {
+   it('should validate function interface structure', () => {
+      const testFunction: IFunction = {
+         name: 'test_function',
+         description: 'A test function for validation',
+         inputSchema: {
+            properties: {
+               testParam: {
+                  type: EDataType.kString,
+                  description: 'A test parameter'
+               }
+            },
+            required: ['testParam']
+         },
+         outputSchema: {
+            properties: {
+               testResult: {
+                  type: EDataType.kString,
+                  description: 'A test result'
+               }
+            },
+            required: ['testResult']
+         },
+         validateArgs: (args: IFunctionArgs): IFunctionArgs => {
+            if (!args.testParam || typeof args.testParam !== 'string') {
+               throw new Error('testParam is required and must be a string');
+            }
+            return args;
+         },
+         execute: async (args: IFunctionArgs): Promise<IFunctionArgs> => {
+            const testParam = args.testParam as string;
+            return {
+               testResult: `Processed: ${testParam}`
+            };
+         }
+      };
+
+      expect(testFunction.name).toBe('test_function');
+      expect(testFunction.description).toBe('A test function for validation');
+      expect(testFunction.inputSchema.properties.testParam.type).toBe(EDataType.kString);
+      expect(testFunction.outputSchema.properties.testResult.type).toBe(EDataType.kString);
+      expect(testFunction.inputSchema.required).toContain('testParam');
+      expect(testFunction.outputSchema.required).toContain('testResult');
+   });
+
+   it('should validate EDataType enum values', () => {
+      expect(EDataType.kObject).toBe('object');
+      expect(EDataType.kString).toBe('string');
+      expect(EDataType.kNumber).toBe('number');
+      expect(EDataType.kArray).toBe('array');
+   });
+});
