@@ -99,18 +99,56 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                   for (const call of toolCalls) {
                      const functionName = call.name;
                      let functionArgs: any = {};
+                     let functionResult: any;
+                     
                      try {
-                        functionArgs = JSON.parse(call.arguments);
-                     } catch (e) {
-                        throw new Error('Failed to parse function call arguments');
+                        // Parse function arguments
+                        try {
+                           functionArgs = JSON.parse(call.arguments);
+                        } catch (e) {
+                           functionResult = {
+                              error: true,
+                              message: `Failed to parse function call arguments: ${e instanceof Error ? e.message : String(e)}`,
+                              functionName: functionName,
+                              timestamp: new Date().toISOString()
+                           };
+                        }
+                        
+                        // Find the function
+                        const func = functions.find(f => f.name === functionName);
+                        if (!func) {
+                           functionResult = {
+                              error: true,
+                              message: `Function ${functionName} not found in provided functions`,
+                              functionName: functionName,
+                              timestamp: new Date().toISOString()
+                           };
+                        } else if (!functionResult) {
+                           // Validate and execute only if no previous errors occurred
+                           try {
+                              const validatedArgs = func.validateArgs(functionArgs);
+                              functionResult = await func.execute(validatedArgs);
+                           } catch (error) {
+                              // Set functionResult to an error string including exception details
+                              const errorMessage = error instanceof Error ? error.message : String(error);
+                              functionResult = {
+                                 error: true,
+                                 message: `Function execution failed: ${errorMessage}`,
+                                 functionName: functionName,
+                                 timestamp: new Date().toISOString()
+                              };
+                           }
+                        }
+                     } catch (error) {
+                        // Catch any unexpected errors
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        functionResult = {
+                           error: true,
+                           message: `Unexpected error: ${errorMessage}`,
+                           functionName: functionName,
+                           timestamp: new Date().toISOString()
+                        };
                      }
-                     const func = functions.find(f => f.name === functionName);
-                     if (!func) {
-                        throw new Error(`Function ${functionName} not found in provided functions`);
-                     }
-                     // Validate and execute
-                     const validatedArgs = func.validateArgs(functionArgs);
-                     const functionResult = await func.execute(validatedArgs);
 
                      // For OpenAI (which doesn't support 'tool' role), send as assistant message
                      // For Azure OpenAI, send as tool message

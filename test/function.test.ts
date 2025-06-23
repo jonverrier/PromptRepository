@@ -18,62 +18,78 @@ const chatDriverFactory = new ChatDriverFactory();
 const providers = [EModelProvider.kAzureOpenAI, EModelProvider.kOpenAI];
 const chatDrivers = providers.map(provider => chatDriverFactory.create(EModel.kLarge, provider));
 
-// Sample function definition for testing
-const sampleFunction: IFunction = {
-   name: 'get_leading_driver',
-   description: 'Get the current leading driver in a specific motorsport race series',
-   inputSchema: {
-      properties: {
-         raceSeries: {
-            type: EDataType.kString,
-            description: 'The name of the motorsport race series, e.g. Formula 1, NASCAR, IndyCar'
-         }
-      },
-      required: ['raceSeries']
-   },
-   outputSchema: {
-      properties: {
-         leadingDriver: {
-            type: EDataType.kString,
-            description: 'The name of the current leading driver in the championship'
-         },
-         raceSeries: {
-            type: EDataType.kString,
-            description: 'The race series that was queried'
-         },
-         points: {
-            type: EDataType.kNumber,
-            description: 'The current championship points of the leading driver'
-         }
-      },
-      required: ['leadingDriver', 'raceSeries', 'points']
-   },
-   validateArgs: (args: IFunctionArgs): IFunctionArgs => {
+// Mock data for different race series
+const mockRaceData: { [key: string]: { driver: string; points: number } } = {
+   'Formula 1': { driver: 'Max Verstappen', points: 575 },
+   'NASCAR': { driver: 'Kyle Larson', points: 4040 },
+   'IndyCar': { driver: 'Alex Palou', points: 656 },
+   'Formula E': { driver: 'Jake Dennis', points: 229 },
+   'WEC': { driver: 'Toyota Gazoo Racing', points: 172 }
+};
+
+// Valid race series for strict validation
+const validRaceSeries = ['Formula 1', 'NASCAR', 'IndyCar', 'Formula E', 'WEC'];
+
+// Factory function to create motorsport function with configurable validation
+const createMotorsportFunction = (validationLevel: 'basic' | 'strict' = 'basic'): IFunction => {
+   const validateArgs = (args: IFunctionArgs): IFunctionArgs => {
       if (!args.raceSeries || typeof args.raceSeries !== 'string') {
          throw new Error('raceSeries is required and must be a string');
       }
+      
+      if (validationLevel === 'strict') {
+         if (args.raceSeries.length < 5) {
+            throw new Error('raceSeries must be at least 5 characters long');
+         }
+         if (!validRaceSeries.includes(args.raceSeries)) {
+            throw new Error(`Invalid race series: ${args.raceSeries}. Must be one of: ${validRaceSeries.join(', ')}`);
+         }
+      }
+      
       return args;
-   },
-   execute: async (args: IFunctionArgs): Promise<IFunctionArgs> => {
-      const raceSeries = args.raceSeries as string;
-      
-      // Mock data for different race series
-      const mockData: { [key: string]: { driver: string; points: number } } = {
-         'Formula 1': { driver: 'Max Verstappen', points: 575 },
-         'NASCAR': { driver: 'Kyle Larson', points: 4040 },
-         'IndyCar': { driver: 'Alex Palou', points: 656 },
-         'Formula E': { driver: 'Jake Dennis', points: 229 },
-         'WEC': { driver: 'Toyota Gazoo Racing', points: 172 }
-      };
-      
-      const data = mockData[raceSeries] || { driver: 'Unknown Driver', points: 0 };
-      
-      return {
-         leadingDriver: data.driver,
-         raceSeries: raceSeries,
-         points: data.points
-      };
-   }
+   };
+
+   return {
+      name: 'get_leading_driver',
+      description: 'Get the current leading driver in a specific motorsport race series',
+      inputSchema: {
+         properties: {
+            raceSeries: {
+               type: EDataType.kString,
+               description: 'The name of the motorsport race series, e.g. Formula 1, NASCAR, IndyCar'
+            }
+         },
+         required: ['raceSeries']
+      },
+      outputSchema: {
+         properties: {
+            leadingDriver: {
+               type: EDataType.kString,
+               description: 'The name of the current leading driver in the championship'
+            },
+            raceSeries: {
+               type: EDataType.kString,
+               description: 'The race series that was queried'
+            },
+            points: {
+               type: EDataType.kNumber,
+               description: 'The current championship points of the leading driver'
+            }
+         },
+         required: ['leadingDriver', 'raceSeries', 'points']
+      },
+      validateArgs,
+      execute: async (args: IFunctionArgs): Promise<IFunctionArgs> => {
+         const raceSeries = args.raceSeries as string;
+         const data = mockRaceData[raceSeries] || { driver: 'Unknown Driver', points: 0 };
+         
+         return {
+            leadingDriver: data.driver,
+            raceSeries: raceSeries,
+            points: data.points
+         };
+      }
+   };
 };
 
 // Run all tests for each provider
@@ -86,12 +102,38 @@ providers.forEach((provider, index) => {
          'You are a helpful assistant that can call functions to get motorsport information.',
          'Who is the leading driver in Formula 1?',
          undefined, // messageHistory
-         [sampleFunction] // functions
+         [createMotorsportFunction('basic')] // functions
       );
       
       // The model should respond acknowledging the function call capability
       expect(result).toMatch(/driver|formula|racing|function|call/i);
       expect(result.length).toBeGreaterThan(10);
+    }).timeout(TEST_TIMEOUT_MS);
+
+    it('should handle validation failure and include error information in response', async () => {
+      const result = await chatDriver.getModelResponse(
+         'You are a helpful assistant that can call functions to get motorsport information.',
+         'Who is the leading driver in F35?',
+         undefined, // messageHistory
+         [createMotorsportFunction('strict')] // functions
+      );
+      
+      console.log(result);
+      
+      // The model should respond with error information from validation failure
+      // Check for various error indicators that might appear in the response
+      const hasErrorIndicators = 
+         result.toLowerCase().includes('error') ||
+         result.toLowerCase().includes('issue') ||
+         result.toLowerCase().includes('problem') ||
+         result.toLowerCase().includes('misunderstanding') ||         
+         result.toLowerCase().includes('not recognized') ||
+         result.toLowerCase().includes('not a valid') ||
+         result.toLowerCase().includes('no recognized') ||
+         result.toLowerCase().includes('not a valid') ||
+         result.toLowerCase().includes('not a recognized');
+      
+      expect(hasErrorIndicators).toBe(true);
     }).timeout(TEST_TIMEOUT_MS);
 
     /*
@@ -190,6 +232,8 @@ providers.forEach((provider, index) => {
       expect(result.length).toBeGreaterThan(10);
     }).timeout(TEST_TIMEOUT_MS);
     */
+
+    
   });
 });
 
