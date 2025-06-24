@@ -116,9 +116,7 @@ providers.forEach((provider, index) => {
          'Who is the leading driver in F35?',
          undefined, // messageHistory
          [createMotorsportFunction('strict')] // functions
-      );
-      
-      console.log(result);
+      );      
       
       // The model should respond with error information from validation failure
       // Check for various error indicators that might appear in the response

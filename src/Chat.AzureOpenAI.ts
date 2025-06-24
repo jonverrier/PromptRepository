@@ -48,7 +48,12 @@ export class AzureOpenAIChatDriver extends OpenAIModelChatDriver {
       });
    }
 
-   protected createCompletionConfig(systemPrompt: string | undefined, messages: IChatMessage[], functions?: IFunction[]): any {
+   protected createCompletionConfig(
+      systemPrompt: string | undefined,
+      messages: IChatMessage[],
+      functions?: IFunction[],
+      useToolMessages?: boolean
+   ): any {
       const filteredMessages = messages.filter(msg => msg.role !== EChatRole.kFunction);
       const formattedMessages = filteredMessages.map(msg => {
          const isAssistantWithFunctionCall = msg.role === EChatRole.kAssistant && msg.function_call;
@@ -93,5 +98,9 @@ export class AzureOpenAIChatDriver extends OpenAIModelChatDriver {
       }
 
       return config;
+   }
+
+   protected shouldUseToolMessages(): boolean {
+      return true; // Azure OpenAI supports tool messages
    }
 } 

@@ -8,7 +8,7 @@
 
 import { expect } from 'expect';
 import { describe, it, beforeEach, afterEach } from 'mocha';
-import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction } from '../src/entry';
 import { OpenAIModelChatDriver } from '../src/Chat';
 
 const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
@@ -72,8 +72,12 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
       };
    }
 
-   protected createCompletionConfig(systemPrompt: string | undefined, messages: IChatMessage[]): any {
-      return { messages, systemPrompt };
+   protected createCompletionConfig(systemPrompt: string | undefined, messages: IChatMessage[], functions?: IFunction[], useToolMessages?: boolean): any {
+      return { messages, systemPrompt, useToolMessages: useToolMessages || false };
+   }
+
+   protected shouldUseToolMessages(): boolean {
+      return false; // Mock implementation defaults to false
    }
 
    setShouldFail(shouldFail: boolean, maxFailures: number = 0) {

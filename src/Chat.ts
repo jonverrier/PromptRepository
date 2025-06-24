@@ -57,7 +57,17 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
    constructor(protected modelType: EModel) {}
 
-   protected abstract createCompletionConfig(systemPrompt: string | undefined, messages: IChatMessage[], functions?: IFunction[]): any;
+   protected abstract createCompletionConfig(
+      systemPrompt: string | undefined,
+      messages: IChatMessage[],
+      functions?: IFunction[],
+      useToolMessages?: boolean
+   ): any;
+
+   protected shouldUseToolMessages(): boolean {
+      // Default implementation - subclasses can override
+      return false;
+   }
 
    async getModelResponse(systemPrompt: string | undefined, 
       userPrompt: string, 
@@ -76,7 +86,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       ];
 
       try {
-         let config = this.createCompletionConfig(systemPrompt, messages, functions);
+         let config = this.createCompletionConfig(systemPrompt, messages, functions, false);
          let response = await retryWithExponentialBackoff(() => 
             this.openai.responses.create(config)
          );
@@ -150,10 +160,8 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                         };
                      }
 
-                     // For OpenAI (which doesn't support 'tool' role), send as assistant message
-                     // For Azure OpenAI, send as tool message
-                     const isOpenAI = this.constructor.name === 'OpenAIChatDriver';
-                     if (isOpenAI) {
+                     // Use the shouldUseToolMessages method to determine message type
+                     if (!this.shouldUseToolMessages()) {
                         toolMessages.push({
                            role: EChatRole.kAssistant,
                            content: `Function ${functionName} returned: ${JSON.stringify(functionResult)}`,
@@ -179,7 +187,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                      ...toolMessages
                   ];
                   // Re-invoke the model with the tool result(s)
-                  config = this.createCompletionConfig(systemPrompt, currentMessages, functions);
+                  config = this.createCompletionConfig(systemPrompt, currentMessages, functions, false);
                   response = await retryWithExponentialBackoff(() => 
                      this.openai.responses.create(config)
                   );
@@ -229,7 +237,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          }
       ];
 
-      const config = this.createCompletionConfig(systemPrompt, messages, functions);
+      const config = this.createCompletionConfig(systemPrompt, messages, functions, false);
       config.stream = true;
 
       let streamPromise = retryWithExponentialBackoff(() => 
@@ -304,7 +312,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          }
       ];
 
-      const config = this.createCompletionConfig(systemPrompt, messages, functions);
+      const config = this.createCompletionConfig(systemPrompt, messages, functions, false);
       config.text = { format: { type: "json_schema", strict: true, name: "constrainedOutput", schema: jsonSchema } };
 
       const response = await retryWithExponentialBackoff(() => 
