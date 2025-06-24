@@ -72,8 +72,8 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
       };
    }
 
-   protected createCompletionConfig(systemPrompt: string | undefined, messages: IChatMessage[], functions?: IFunction[], useToolMessages?: boolean): any {
-      return { messages, systemPrompt, useToolMessages: useToolMessages || false };
+   protected getModelName(): string {
+      return 'mock-model';
    }
 
    protected shouldUseToolMessages(): boolean {

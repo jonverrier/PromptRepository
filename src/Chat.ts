@@ -57,16 +57,63 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
    constructor(protected modelType: EModel) {}
 
-   protected abstract createCompletionConfig(
+   protected shouldUseToolMessages(): boolean {
+      // Default implementation - subclasses can override
+      return false;
+   }
+
+   protected abstract getModelName(): string;
+
+   protected createCompletionConfig(
       systemPrompt: string | undefined,
       messages: IChatMessage[],
       functions?: IFunction[],
       useToolMessages?: boolean
-   ): any;
+   ): any {
+      const filteredMessages = messages.filter(msg => msg.role !== EChatRole.kFunction);
+      const formattedMessages = filteredMessages.map(msg => {
+         const isAssistantWithFunctionCall = msg.role === EChatRole.kAssistant && msg.function_call;
+         const baseMessage: any = {
+            role: msg.role === EChatRole.kUser ? 'user' : 
+                  msg.role === EChatRole.kAssistant ? 'assistant' : 
+                  msg.role === EChatRole.kFunction ? 'function' : 'user',
+            content: isAssistantWithFunctionCall ? '' : msg.content
+         };
 
-   protected shouldUseToolMessages(): boolean {
-      // Default implementation - subclasses can override
-      return false;
+         // Add name property for function messages
+         if (msg.role === EChatRole.kFunction && msg.name) {
+            baseMessage.name = msg.name;
+         }
+
+         return baseMessage;
+      });
+
+      const config: any = {
+         model: this.getModelName(),
+         input: formattedMessages,
+         ...(systemPrompt && { instructions: systemPrompt }),
+         temperature: 0.25
+      };
+
+      // Add functions to the configuration if provided
+      if (functions && functions.length > 0) {
+         config.tools = functions.map(func => {
+            const tool = {
+               name: func.name,
+               description: func.description,
+               type: 'function',
+               parameters: {
+                  type: 'object',
+                  properties: func.inputSchema.properties,
+                  required: func.inputSchema.required,
+                  additionalProperties: false
+               }
+            };
+            return tool;
+         });
+      }
+
+      return config;
    }
 
    async getModelResponse(systemPrompt: string | undefined, 

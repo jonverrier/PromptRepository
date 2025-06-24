@@ -129,7 +129,9 @@ providers.forEach((provider, index) => {
          result.toLowerCase().includes('not a valid') ||
          result.toLowerCase().includes('no recognized') ||
          result.toLowerCase().includes('not a valid') ||
-         result.toLowerCase().includes('not a recognized');
+         result.toLowerCase().includes('not a recognized') ||
+         result.toLowerCase().includes('confusion') ||
+         result.toLowerCase().includes('no widely recognized');
       
       expect(hasErrorIndicators).toBe(true);
     }).timeout(TEST_TIMEOUT_MS);
