@@ -142,10 +142,10 @@ export interface IFunctionCall {
 /**
  * A message in a chat interaction.
  * Supports OpenAI's function calling format with optional function_call and name properties.
- */
+ */   
 export interface IChatMessage extends IQueryReturnable {
    role: EChatRole;
-   content: string | null; // null for assistant messages with function_call
+   content: string | undefined; // undefined for assistant messages with function_call
    timestamp: Date;
    name?: string; // Required for function/tool messages, optional for others
    function_call?: IFunctionCall; // Present in assistant messages when calling a function

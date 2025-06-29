@@ -6,7 +6,7 @@
 // Copyright (c) 2025 Jon Verrier
 
 import OpenAI from 'openai';
-import { EChatRole, IFunctionCall } from './entry';
+import { EChatRole } from './entry';
 import { IChatDriver, EModel, IChatMessage, IFunction } from './entry';
 
 interface AsyncResponse {
