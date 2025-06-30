@@ -53,6 +53,7 @@ const createMotorsportFunction = (validationLevel: 'basic' | 'strict' = 'basic')
       name: 'get_leading_driver',
       description: 'Get the current leading driver in a specific motorsport race series',
       inputSchema: {
+         type: EDataType.kObject,
          properties: {
             raceSeries: {
                type: EDataType.kString,
@@ -62,6 +63,7 @@ const createMotorsportFunction = (validationLevel: 'basic' | 'strict' = 'basic')
          required: ['raceSeries']
       },
       outputSchema: {
+         type: EDataType.kObject,
          properties: {
             leadingDriver: {
                type: EDataType.kString,
@@ -92,50 +94,89 @@ const createMotorsportFunction = (validationLevel: 'basic' | 'strict' = 'basic')
    };
 };
 
+// Helper function to test both streaming and non-streaming responses
+const testFunctionIntegration = async (
+   chatDriver: any,
+   testName: string,
+   systemPrompt: string,
+   userPrompt: string,
+   functions: IFunction[],
+   expectedValidation: (result: string) => boolean
+) => {
+   // Test non-streaming response
+   it(`${testName} (getModelResponse)`, async () => {
+      const result = await chatDriver.getModelResponse(
+         systemPrompt,
+         userPrompt,
+         undefined, // messageHistory
+         functions
+      );
+      
+      expect(expectedValidation(result)).toBe(true);
+   }).timeout(TEST_TIMEOUT_MS);
+
+   // Test streaming response
+   it(`${testName} (getStreamedModelResponse)`, async () => {
+      const iterator = chatDriver.getStreamedModelResponse(
+         systemPrompt,
+         userPrompt,
+         undefined, // messageHistory
+         functions
+      );
+      
+      const chunks: string[] = [];
+      while (true) {
+         const result = await iterator.next();
+         if (result.done) break;
+         if (result.value) {
+            chunks.push(result.value);
+         }
+      }
+      
+      const fullText = chunks.join('');
+      expect(expectedValidation(fullText)).toBe(true);
+   }).timeout(TEST_TIMEOUT_MS);
+};
+
 // Run all tests for each provider
 providers.forEach((provider, index) => {
   const chatDriver = chatDrivers[index];
 
   describe(`Function Integration Tests (${provider})`, () => {
-    it('should successfully return chat completion with function definition', async () => {
-      const result = await chatDriver.getModelResponse(
-         'You are a helpful assistant that can call functions to get motorsport information.',
-         'Who is the leading driver in Formula 1?',
-         undefined, // messageHistory
-         [createMotorsportFunction('basic')] // functions
-      );
-      
-      // The model should respond acknowledging the function call capability
-      expect(result).toMatch(/driver|formula|racing|function|call/i);
-      expect(result.length).toBeGreaterThan(10);
-    }).timeout(TEST_TIMEOUT_MS);
+    testFunctionIntegration(
+      chatDriver,
+      'should successfully return chat completion with function definition',
+      'You are a helpful assistant that can call functions to get motorsport information.',
+      'Who is the leading driver in Formula 1?',
+      [createMotorsportFunction('basic')],
+      (result: string) => {
+         // The model should respond acknowledging the function call capability
+         return result.match(/driver|formula|racing|function|call/i) !== null && result.length > 10;
+      }
+    );
 
-    it('should handle validation failure and include error information in response', async () => {
-      const result = await chatDriver.getModelResponse(
-         'You are a helpful assistant that can call functions to get motorsport information.',
-         'Who is the leading driver in F35?',
-         undefined, // messageHistory
-         [createMotorsportFunction('strict')] // functions
-      );      
-      
-      // The model should respond with error information from validation failure
-      // Check for various error indicators that might appear in the response
-      const hasErrorIndicators = 
-         result.toLowerCase().includes('error') ||
-         result.toLowerCase().includes('issue') ||
-         result.toLowerCase().includes('problem') ||
-         result.toLowerCase().includes('misunderstanding') ||         
-         result.toLowerCase().includes('not recognized') ||
-         result.toLowerCase().includes('not a valid') ||
-         result.toLowerCase().includes('no recognized') ||
-         result.toLowerCase().includes('not a valid') ||
-         result.toLowerCase().includes('not a recognized') ||
-         result.toLowerCase().includes('confusion') ||
-         result.toLowerCase().includes('no widely recognized');
-      
-      expect(hasErrorIndicators).toBe(true);
-    }).timeout(TEST_TIMEOUT_MS);
-    
+    testFunctionIntegration(
+      chatDriver,
+      'should handle validation failure and include error information in response',
+      'You are a helpful assistant that can call functions to get motorsport information.',
+      'Who is the leading driver in F35?',
+      [createMotorsportFunction('strict')],
+      (result: string) => {
+         // The model should respond with error information from validation failure
+         // Check for various error indicators that might appear in the response
+         return result.toLowerCase().includes('error') ||
+                result.toLowerCase().includes('issue') ||
+                result.toLowerCase().includes('problem') ||
+                result.toLowerCase().includes('misunderstanding') ||         
+                result.toLowerCase().includes('not recognized') ||
+                result.toLowerCase().includes('not a valid') ||
+                result.toLowerCase().includes('no recognized') ||
+                result.toLowerCase().includes('not a valid') ||
+                result.toLowerCase().includes('not a recognized') ||
+                result.toLowerCase().includes('confusion') ||
+                result.toLowerCase().includes('no widely recognized');
+      }
+    );
   });
 });
 
@@ -145,6 +186,7 @@ describe('Function Interface Tests', () => {
          name: 'test_function',
          description: 'A test function for validation',
          inputSchema: {
+            type: EDataType.kObject,
             properties: {
                testParam: {
                   type: EDataType.kString,
@@ -154,6 +196,7 @@ describe('Function Interface Tests', () => {
             required: ['testParam']
          },
          outputSchema: {
+            type: EDataType.kObject,
             properties: {
                testResult: {
                   type: EDataType.kString,

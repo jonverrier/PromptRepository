@@ -10,6 +10,7 @@ export enum EDataType {
    kObject = "object",
    kString = "string",
    kNumber = "number",
+   kBoolean = "boolean",
    kArray = "array"
 }
 
@@ -30,8 +31,23 @@ export type FnValidateFunctionArgs = (args: IFunctionArgs) => IFunctionArgs;
  */
 export type FnExecuteFunction = (args: IFunctionArgs) => Promise<IFunctionArgs>;
 
-
-/**
+export interface ISchemaProperty {
+   type: EDataType | string; // Accepts both enum and string literal
+   description: string;
+   properties?: { [key: string]: ISchemaProperty };
+   items?: ISchemaProperty;
+   required?: string[] | readonly string[];
+   additionalProperties?: boolean;
+ }
+ 
+ export interface ISchema {
+   type: EDataType | string;
+   properties: { [key: string]: ISchemaProperty };
+   required?: string[] | readonly string[];
+   additionalProperties?: boolean;
+ }
+ 
+ /**
  * Interface for a function
  * 
  * @interface IFunction
@@ -40,21 +56,11 @@ export type FnExecuteFunction = (args: IFunctionArgs) => Promise<IFunctionArgs>;
  * @property {object} inputSchema - The input schema of the function
  * @property {object} outputSchema - The output schema of the function
  */
-export interface IFunction {
-  name: string;
-  description: string;
-  inputSchema: {
-    properties: {
-      [key: string]: { type: EDataType; description: string };
-    };
-    required: Array<string>;
-  };
-  outputSchema: {
-    properties: {
-      [key: string]: { type: EDataType; description: string };
-    };
-    required: Array<string>;
-  };  
-  validateArgs: FnValidateFunctionArgs;
-  execute: FnExecuteFunction;
-} 
+ export interface IFunction {
+   name: string;
+   description: string;
+   inputSchema: ISchema;
+   outputSchema: ISchema;
+   validateArgs: (args: any) => any;
+   execute: (args: any) => Promise<any>;
+ }

@@ -151,150 +151,206 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       return config;
    }
 
+   /**
+    * Creates a user message with the given prompt
+    */
+   protected createUserMessage(userPrompt: string): IChatMessage {
+      return {
+         role: EChatRole.kUser,
+         content: userPrompt,
+         timestamp: new Date(),
+         id: `user-${Date.now()}`,
+         className: 'user-message'
+      };
+   }
+
+   /**
+    * Builds the complete message array including history and new user message
+    */
+   protected buildMessageArray(messageHistory: IChatMessage[] | undefined, userPrompt: string): IChatMessage[] {
+      return [
+         ...(messageHistory || []),
+         this.createUserMessage(userPrompt)
+      ];
+   }
+
+   /**
+    * Handles a single function call and returns the result
+    */
+   protected async handleFunctionCall(call: any, functions: IFunction[]): Promise<IChatMessage> {
+      const functionName = call.name;
+      let functionArgs: any = {};
+      let functionResult: any;
+      
+      try {
+         // Parse function arguments
+         try {
+            functionArgs = JSON.parse(call.arguments);
+         } catch (e) {
+            functionResult = {
+               error: true,
+               message: `Failed to parse function call arguments: ${e instanceof Error ? e.message : String(e)}`,
+               functionName: functionName,
+               timestamp: new Date().toISOString()
+            };
+         }
+         
+         // Find the function
+         const func = functions.find(f => f.name === functionName);
+         if (!func) {
+            functionResult = {
+               error: true,
+               message: `Function ${functionName} not found in provided functions`,
+               functionName: functionName,
+               timestamp: new Date().toISOString()
+            };
+         } else if (!functionResult) {
+            // Validate and execute only if no previous errors occurred
+            try {
+               const validatedArgs = func.validateArgs(functionArgs);
+               functionResult = await func.execute(validatedArgs);
+            } catch (error) {
+               // Set functionResult to an error string including exception details
+               const errorMessage = error instanceof Error ? error.message : String(error);
+               functionResult = {
+                  error: true,
+                  message: `Function execution failed: ${errorMessage}`,
+                  functionName: functionName,
+                  timestamp: new Date().toISOString()
+               };
+            }
+         }
+      } catch (error) {
+         // Catch any unexpected errors
+         const errorMessage = error instanceof Error ? error.message : String(error);
+         functionResult = {
+            error: true,
+            message: `Unexpected error: ${errorMessage}`,
+            functionName: functionName,
+            timestamp: new Date().toISOString()
+         };
+      }
+
+      // Use the shouldUseToolMessages method to determine message type
+      if (!this.shouldUseToolMessages()) {
+         return {
+            role: EChatRole.kAssistant,
+            content: `Function ${functionName} returned: ${JSON.stringify(functionResult)}`,
+            timestamp: new Date(),
+            id: `assistant-${Date.now()}`,
+            className: 'assistant-message'
+         };
+      } else {
+         return {
+            role: EChatRole.kTool,
+            name: functionName,
+            tool_call_id: call.call_id,
+            content: JSON.stringify(functionResult),
+            timestamp: new Date(),
+            id: `tool-${Date.now()}`,
+            className: 'tool-message'
+         };
+      }
+   }
+
+   /**
+    * Processes tool calls and returns tool messages
+    */
+   protected async processToolCalls(toolCalls: any[], functions: IFunction[]): Promise<IChatMessage[]> {
+      const toolMessages: IChatMessage[] = [];
+      for (const call of toolCalls) {
+         const toolMessage = await this.handleFunctionCall(call, functions);
+         toolMessages.push(toolMessage);
+      }
+      return toolMessages;
+   }
+
+   /**
+    * Extracts text content from response output array
+    */
+   protected extractTextFromOutput(outputArr: any[]): string | null {
+      const textOutput = outputArr.find((item: any) => 
+         item.type === 'text' || 
+         (item.type === 'message' && item.content && Array.isArray(item.content) && 
+          item.content.find((c: any) => c.type === 'output_text'))
+      );
+      
+      if (textOutput) {
+         if (textOutput.type === 'text' && textOutput.content) {
+            return textOutput.content;
+         } else if (textOutput.type === 'message' && textOutput.content) {
+            const textContent = textOutput.content.find((c: any) => c.type === 'output_text');
+            if (textContent && textContent.text) {
+               return textContent.text;
+            }
+         }
+      }
+      return null;
+   }
+
+   /**
+    * Handles the tool use loop for both streaming and non-streaming responses
+    */
+   protected async handleToolUseLoop(
+      systemPrompt: string | undefined,
+      messages: IChatMessage[],
+      functions: IFunction[] | undefined,
+      createResponse: (config: any) => Promise<any>
+   ): Promise<string> {
+      let config = this.createCompletionConfig(systemPrompt, messages, functions, false);
+      let response = await createResponse(config);
+
+      // Tool use loop: keep handling tool calls until we get a text response or hit max rounds
+      let toolUseRounds = 0;
+      const MAX_TOOL_USE_ROUNDS = 50;
+      let currentMessages = messages;
+      
+      while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
+         // Check for function/tool calls in output array (new API)
+         const outputArr = (response as any).output;
+         if (outputArr && Array.isArray(outputArr)) {
+            // If any function_call, handle tool use
+            const toolCalls = outputArr.filter((item: any) => item.type === 'function_call');
+            if (toolCalls.length > 0 && functions) {
+               const toolMessages = await this.processToolCalls(toolCalls, functions);
+               
+               // Add tool messages to the conversation history
+               currentMessages = [
+                  ...currentMessages,
+                  ...toolMessages
+               ];
+               
+               // Re-invoke the model with the tool result(s)
+               config = this.createCompletionConfig(systemPrompt, currentMessages, functions, false);
+               response = await createResponse(config);
+               toolUseRounds++;
+               continue;
+            }
+            
+            // If any text output, return it
+            const textContent = this.extractTextFromOutput(outputArr);
+            if (textContent) {
+               return textContent;
+            }
+         }            
+      }
+      throw new Error('No response content received from OpenAI');
+   }
+
    async getModelResponse(systemPrompt: string | undefined, 
       userPrompt: string, 
       messageHistory?: IChatMessage[],
       functions?: IFunction[]): Promise<string> {
 
-      const messages: IChatMessage[] = [
-         ...(messageHistory || []),
-         {
-            role: EChatRole.kUser,
-            content: userPrompt,
-            timestamp: new Date(),
-            id: `user-${Date.now()}`,
-            className: 'user-message'
-         }
-      ];
+      const messages = this.buildMessageArray(messageHistory, userPrompt);
 
       try {
-         let config = this.createCompletionConfig(systemPrompt, messages, functions, false);
-         let response = await retryWithExponentialBackoff(() => 
-            this.openai.responses.create(config)
+         return await this.handleToolUseLoop(
+            systemPrompt,
+            messages,
+            functions,
+            (config) => retryWithExponentialBackoff(() => this.openai.responses.create(config))
          );
-
-         // Tool use loop: keep handling tool calls until we get a text response or hit max rounds
-         let toolUseRounds = 0;
-         const MAX_TOOL_USE_ROUNDS = 50;
-         let currentMessages = messages;
-         while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
-            // Check for function/tool calls in output array (new API)
-            const outputArr = (response as any).output;
-            if (outputArr && Array.isArray(outputArr)) {
-               // Enable this when debugging: print the output array each round
-               // console.log(`Tool use round ${toolUseRounds + 1}, output:`, JSON.stringify(outputArr, null, 2));
-               
-               // If any function_call, handle tool use
-               const toolCalls = outputArr.filter((item: any) => item.type === 'function_call');
-               if (toolCalls.length > 0 && functions) {
-                  const toolMessages: IChatMessage[] = [];
-                  for (const call of toolCalls) {
-                     const functionName = call.name;
-                     let functionArgs: any = {};
-                     let functionResult: any;
-                     
-                     try {
-                        // Parse function arguments
-                        try {
-                           functionArgs = JSON.parse(call.arguments);
-                        } catch (e) {
-                           functionResult = {
-                              error: true,
-                              message: `Failed to parse function call arguments: ${e instanceof Error ? e.message : String(e)}`,
-                              functionName: functionName,
-                              timestamp: new Date().toISOString()
-                           };
-                        }
-                        
-                        // Find the function
-                        const func = functions.find(f => f.name === functionName);
-                        if (!func) {
-                           functionResult = {
-                              error: true,
-                              message: `Function ${functionName} not found in provided functions`,
-                              functionName: functionName,
-                              timestamp: new Date().toISOString()
-                           };
-                        } else if (!functionResult) {
-                           // Validate and execute only if no previous errors occurred
-                           try {
-                              const validatedArgs = func.validateArgs(functionArgs);
-                              functionResult = await func.execute(validatedArgs);
-                           } catch (error) {
-                              // Set functionResult to an error string including exception details
-                              const errorMessage = error instanceof Error ? error.message : String(error);
-                              functionResult = {
-                                 error: true,
-                                 message: `Function execution failed: ${errorMessage}`,
-                                 functionName: functionName,
-                                 timestamp: new Date().toISOString()
-                              };
-                           }
-                        }
-                     } catch (error) {
-                        // Catch any unexpected errors
-                        const errorMessage = error instanceof Error ? error.message : String(error);
-                        functionResult = {
-                           error: true,
-                           message: `Unexpected error: ${errorMessage}`,
-                           functionName: functionName,
-                           timestamp: new Date().toISOString()
-                        };
-                     }
-
-                     // Use the shouldUseToolMessages method to determine message type
-                     if (!this.shouldUseToolMessages()) {
-                        toolMessages.push({
-                           role: EChatRole.kAssistant,
-                           content: `Function ${functionName} returned: ${JSON.stringify(functionResult)}`,
-                           timestamp: new Date(),
-                           id: `assistant-${Date.now()}`,
-                           className: 'assistant-message'
-                        });
-                     } else {
-                        toolMessages.push({
-                           role: EChatRole.kTool,
-                           name: functionName,
-                           tool_call_id: call.call_id,
-                           content: JSON.stringify(functionResult),
-                           timestamp: new Date(),
-                           id: `tool-${Date.now()}`,
-                           className: 'tool-message'
-                        });
-                     }
-                  }
-                  // Add tool messages to the conversation history
-                  currentMessages = [
-                     ...currentMessages,
-                     ...toolMessages
-                  ];
-                  // Re-invoke the model with the tool result(s)
-                  config = this.createCompletionConfig(systemPrompt, currentMessages, functions, false);
-                  response = await retryWithExponentialBackoff(() => 
-                     this.openai.responses.create(config)
-                  );
-                  toolUseRounds++;
-                  continue;
-               }
-               // If any text output, return it
-               const textOutput = outputArr.find((item: any) => 
-                  item.type === 'text' || 
-                  (item.type === 'message' && item.content && Array.isArray(item.content) && 
-                   item.content.find((c: any) => c.type === 'output_text'))
-               );
-               if (textOutput) {
-                  if (textOutput.type === 'text' && textOutput.content) {
-                     return textOutput.content;
-                  } else if (textOutput.type === 'message' && textOutput.content) {
-                     const textContent = textOutput.content.find((c: any) => c.type === 'output_text');
-                     if (textContent && textContent.text) {
-                        return textContent.text;
-                     }
-                  }
-               }
-            }            
-         }
-         throw new Error('No response content received from OpenAI');
       } catch (error) {
          if (error instanceof Error) {
             throw new Error(`OpenAI API error: ${error.message}`);
@@ -308,56 +364,160 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       messageHistory?: IChatMessage[],
       functions?: IFunction[]): AsyncIterator<string> {
          
-      const messages: IChatMessage[] = [
-         ...(messageHistory || []),
-         {
-            role: EChatRole.kUser,
-            content: userPrompt,
-            timestamp: new Date(),
-            id: `user-${Date.now()}`,
-            className: 'user-message'
-         }
-      ];
-
-      const config = this.createCompletionConfig(systemPrompt, messages, functions, false);
-      config.stream = true;
-
-      let streamPromise = retryWithExponentialBackoff(() => 
-         this.openai.responses.create(config)
-      );
+      const messages = this.buildMessageArray(messageHistory, userPrompt);
+      let currentMessages = messages;
+      let toolUseRounds = 0;
+      const MAX_TOOL_USE_ROUNDS = 50;
+      
+      let streamPromise: Promise<any> | null = null;
       let streamIterator: AsyncIterator<any> | null = null;
+      let isInToolUseMode = false;
+      let pendingToolCalls: any[] = [];
+      let toolCallBuffer = '';
+      let pendingErrorToEmit: string | null = null;
+
+      // Capture 'this' reference for use in the iterator
+      const self = this;
+
+      const createStreamConfig = () => {
+         const config = self.createCompletionConfig(systemPrompt, currentMessages, functions, false);
+         config.stream = true;
+         return config;
+      };
+
+      const initializeStream = async () => {
+         if (!streamPromise) {
+            const config = createStreamConfig();
+            streamPromise = retryWithExponentialBackoff(() => self.openai.responses.create(config));
+         }
+         
+         if (!streamIterator) {
+            const stream = await streamPromise;
+            if (Symbol.asyncIterator in stream) {
+               streamIterator = (stream as unknown as AsyncResponse)[Symbol.asyncIterator]();
+            } else {
+               throw new Error('Stream does not support async iteration');
+            }
+         }
+      };
+
+      const resetStream = () => {
+         streamPromise = null;
+         streamIterator = null;
+      };
 
       return {
          async next(): Promise<IteratorResult<string>> {
             try {
-               if (!streamIterator) {
-                  const stream = await streamPromise;
-                  if (Symbol.asyncIterator in stream) {
-                     streamIterator = (stream as unknown as AsyncResponse)[Symbol.asyncIterator]();
-                  } else {
-                     throw new Error('Stream does not support async iteration');
-                  }
+               // If we have a pending error to emit, do so and clear it
+               if (pendingErrorToEmit) {
+                  const err = pendingErrorToEmit;
+                  pendingErrorToEmit = null;
+                  return { value: err, done: false };
                }
+
+               await initializeStream();
 
                if (streamIterator) {
-                  let looking = true;
-                  while (looking) {
-                     const chunk = await streamIterator.next();
-                     if (chunk.done) {
-                        streamIterator = null;
-                        return { value: '', done: true };
-                     }
+                  const chunk = await streamIterator.next();
+                  if (chunk.done) {
+                     // Check if we have a complete response to process
+                     if (isInToolUseMode && pendingToolCalls.length > 0 && functions) {
+                        // Process tool calls
+                        const toolMessages = await self.processToolCalls(pendingToolCalls, functions);
+                        currentMessages = [...currentMessages, ...toolMessages];
 
+                        // Check for error in toolMessages
+                        const errorMsg = toolMessages
+                          .map(msg => {
+                            try {
+                              const content = typeof msg.content === 'string' ? msg.content : '';
+                              const parsed = JSON.parse(content);
+                              if (parsed && parsed.error && parsed.message) {
+                                return `Function ${parsed.functionName || ''} error: ${parsed.message}`;
+                              }
+                            } catch { /* ignore */ }
+                            // fallback: look for error in string
+                            if (typeof msg.content === 'string' && msg.content.toLowerCase().includes('error')) {
+                              return msg.content;
+                            }
+                            return null;
+                          })
+                          .find(Boolean);
+                        if (errorMsg) {
+                          pendingErrorToEmit = errorMsg;
+                        }
+                        
+                        // Reset for next round
+                        resetStream();
+                        pendingToolCalls = [];
+                        toolCallBuffer = '';
+                        isInToolUseMode = false;
+                        toolUseRounds++;
+                        
+                        if (toolUseRounds >= MAX_TOOL_USE_ROUNDS) {
+                           throw new Error('Maximum tool use rounds exceeded');
+                        }
+                        
+                        // Continue with next iteration
+                        return this.next();
+                     }
+                     
+                     resetStream();
+                     return { value: '', done: true };
+                  }
+
+                  // Handle streaming chunks
+                  if (chunk.value && typeof chunk.value === 'object') {
+                     // Check for function call chunks
+                     if (chunk.value.type === 'function_call') {
+                        isInToolUseMode = true;
+                        pendingToolCalls.push(chunk.value);
+                        return { value: '', done: false };
+                     }
+                     
+                     // Check for function call completion in output_item.done
+                     if (chunk.value.type === 'response.output_item.done' && chunk.value.item && chunk.value.item.type === 'function_call') {
+                        isInToolUseMode = true;
+                        pendingToolCalls.push(chunk.value.item);
+                        return { value: '', done: false };
+                     }
+                     
+                     // Check for text chunks
                      if ('delta' in chunk.value && typeof chunk.value.delta === 'string') {
-                        looking = false;
-                        return { value: chunk.value.delta, done: false };
+                        if (isInToolUseMode) {
+                           // Buffer text during tool use mode
+                           toolCallBuffer += chunk.value.delta;
+                           return { value: '', done: false };
+                        } else {
+                           return { value: chunk.value.delta, done: false };
+                        }
+                     }
+                     
+                     // Check for complete response chunks
+                     if (chunk.value.output && Array.isArray(chunk.value.output)) {
+                        const outputArr = chunk.value.output;
+                        
+                        // Check for function calls
+                        const toolCalls = outputArr.filter((item: any) => item.type === 'function_call');
+                        if (toolCalls.length > 0 && functions) {
+                           isInToolUseMode = true;
+                           pendingToolCalls = toolCalls;
+                           return { value: '', done: false };
+                        }
+                        
+                        // Check for text output
+                        const textContent = self.extractTextFromOutput(outputArr);
+                        if (textContent) {
+                           return { value: textContent, done: false };
+                        }
                      }
                   }
                }
 
-               return { value: '', done: true };
+               return { value: '', done: false };
             } catch (error) {
-               streamIterator = null;
+               resetStream();
                if (error instanceof Error) {
                   throw new Error(`Stream error: ${error.message}`);
                }
@@ -365,11 +525,11 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
             }
          },
          return(): Promise<IteratorResult<string>> {
-            streamIterator = null;
+            resetStream();
             return Promise.resolve({ value: '', done: true });
          },
          throw(error: any): Promise<IteratorResult<string>> {
-            streamIterator = null;
+            resetStream();
             return Promise.reject(error);
          }
       };
@@ -383,16 +543,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       messageHistory?: IChatMessage[],
       functions?: IFunction[]
    ): Promise<T> {
-      const messages: IChatMessage[] = [
-         ...(messageHistory || []),
-         {
-            role: EChatRole.kUser,
-            content: userPrompt,
-            timestamp: new Date(),
-            id: `user-${Date.now()}`,
-            className: 'user-message'
-         }
-      ];
+      const messages = this.buildMessageArray(messageHistory, userPrompt);
 
       const config = this.createCompletionConfig(systemPrompt, messages, functions, false);
       config.text = { format: { type: "json_schema", strict: true, name: "constrainedOutput", schema: jsonSchema } };
