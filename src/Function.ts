@@ -17,7 +17,7 @@ export enum EDataType {
  * Base interface for argument objects
  */
 export interface IFunctionArgs {
-   [key: string]: string | number | boolean | string[] | number[] | boolean[] | undefined;   
+   [key: string]: string | number | boolean | string[] | number[] | boolean[] | object | object[] | undefined;   
 }
 
 /**

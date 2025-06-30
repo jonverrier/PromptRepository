@@ -12,7 +12,7 @@ export { PromptFileRepository, PromptInMemoryRepository } from "./PromptReposito
 export { ChatDriverFactory } from "./ChatFactory";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError } from "./Asserts";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
-export { IFunction, EDataType } from "./Function";
+export { IFunction, IFunctionArgs, EDataType } from "./Function";
 
 /**
  * Enum representing parameter types as strings
