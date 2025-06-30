@@ -136,17 +136,26 @@ providers.forEach((provider, index) => {
   describe(`getStreamedModelResponse (${provider})`, () => {
     it('should successfully stream chat completion with system prompt', async () => {
       const iterator = chatDriver.getStreamedModelResponse('You are helpful', 'say Hi');
-      const result = await iterator.next();
-
-      expect(result.value).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
-      expect(result.value.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
+      let result = '';
+      while (true) {
+        const chunk = await iterator.next();
+        if (chunk.done) break;
+        if (chunk.value) result += chunk.value;
+      }
+      expect(result).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
+      expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
     }).timeout(TEST_TIMEOUT_MS);
 
     it('should successfully stream chat completion without system prompt', async () => {
       const iterator = chatDriver.getStreamedModelResponse(undefined, 'say Hi');
-      const result = await iterator.next();
-      expect(result.value).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
-      expect(result.value.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
+      let result = '';
+      while (true) {
+        const chunk = await iterator.next();
+        if (chunk.done) break;
+        if (chunk.value) result += chunk.value;
+      }
+      expect(result).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
+      expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
     }).timeout(TEST_TIMEOUT_MS);
 
     it('should successfully stream chat completion with message history', async () => {
@@ -167,13 +176,12 @@ providers.forEach((provider, index) => {
         }
       ];
       const iterator = chatDriver.getStreamedModelResponse('You are helpful', 'What is my name?', messageHistory);
-      const chunks: string[] = [];
+      let fullText = '';
       while (true) {
         const result = await iterator.next();
         if (result.done) break;
-        chunks.push(result.value);
+        if (result.value) fullText += result.value;
       }
-      const fullText = chunks.join('');
       expect(fullText.toLowerCase()).toContain('bob');
     }).timeout(TEST_TIMEOUT_MS);
 

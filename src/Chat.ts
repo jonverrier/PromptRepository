@@ -483,8 +483,19 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                         return { value: '', done: false };
                      }
                      
-                     // Check for text chunks
+                     // Check for text chunks - handle different streaming formats
                      if ('delta' in chunk.value && typeof chunk.value.delta === 'string') {
+                        if (isInToolUseMode) {
+                           // Buffer text during tool use mode
+                           toolCallBuffer += chunk.value.delta;
+                           return { value: '', done: false };
+                        } else {
+                           return { value: chunk.value.delta, done: false };
+                        }
+                     }
+                     
+                     // Check for response.output_text.delta format
+                     if (chunk.value.type === 'response.output_text.delta' && typeof chunk.value.delta === 'string') {
                         if (isInToolUseMode) {
                            // Buffer text during tool use mode
                            toolCallBuffer += chunk.value.delta;
