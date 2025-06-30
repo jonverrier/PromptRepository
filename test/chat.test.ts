@@ -458,6 +458,71 @@ describe('Exponential Backoff Tests', () => {
       ).rejects.toThrow('OpenAI API error: Authentication failed');
    }).timeout(5000);
 
+   it('should handle content filter errors without retrying', async () => {
+      // Mock to throw a content filter error
+      mockDriver.setMockCreate(async () => {
+         const error: any = new Error('Content filter triggered');
+         error.status = 400;
+         error.error = {
+            type: 'content_filter',
+            message: 'Content violates OpenAI safety policies'
+         };
+         throw error;
+      });
+
+      await expect(
+         mockDriver.getModelResponse('You are helpful', 'say Hi')
+      ).rejects.toThrow('OpenAI content filter triggered: Content violates OpenAI safety policies');
+   }).timeout(5000);
+
+   it('should handle safety system errors without retrying', async () => {
+      // Mock to throw a safety error
+      mockDriver.setMockCreate(async () => {
+         const error: any = new Error('Safety system triggered');
+         error.status = 400;
+         error.error = {
+            type: 'safety',
+            message: 'Content violates OpenAI safety guidelines'
+         };
+         throw error;
+      });
+
+      await expect(
+         mockDriver.getModelResponse('You are helpful', 'say Hi')
+      ).rejects.toThrow('OpenAI safety system triggered: Content violates OpenAI safety guidelines');
+   }).timeout(5000);
+
+   it('should handle general refusal errors without retrying', async () => {
+      // Mock to throw a general refusal error
+      mockDriver.setMockCreate(async () => {
+         const error: any = new Error('Request refused');
+         error.status = 400;
+         error.error = {
+            type: 'invalid_request',
+            message: 'I cannot process this request'
+         };
+         throw error;
+      });
+
+      await expect(
+         mockDriver.getModelResponse('You are helpful', 'say Hi')
+      ).rejects.toThrow('OpenAI refused request: I cannot process this request');
+   }).timeout(5000);
+
+   it('should handle 403 forbidden errors as refusals', async () => {
+      // Mock to throw a 403 error
+      mockDriver.setMockCreate(async () => {
+         const error: any = new Error('Forbidden');
+         error.status = 403;
+         error.message = 'Access forbidden';
+         throw error;
+      });
+
+      await expect(
+         mockDriver.getModelResponse('You are helpful', 'say Hi')
+      ).rejects.toThrow('OpenAI refused request (403): Access forbidden');
+   }).timeout(5000);
+
    it('should handle streaming with exponential backoff', async () => {
       // Set up to fail 1 time then succeed
       mockDriver.setShouldFail(true, 1);
