@@ -379,6 +379,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       let hasStartedFunctionCall = false;
       let functionCallInProgress = false;
       let functionCallBuffer = '';
+      let accumulatedText = '';
 
       // Capture 'this' reference for use in the iterator
       const self = this;
@@ -412,28 +413,75 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          hasStartedFunctionCall = false;
          functionCallInProgress = false;
          functionCallBuffer = '';
+         accumulatedText = '';
       };
 
       // Helper function to detect and filter function call content
       const isFunctionCallContent = (text: string): boolean => {
          // Check if text looks like JSON function call arguments
          const trimmed = text.trim();
-         if (trimmed.startsWith('{') && trimmed.includes('"raceSeries"')) {
-            return true;
-         }
-         // Check for other function call patterns
-         if (trimmed.startsWith('{') && (trimmed.includes('"') || trimmed.includes(':'))) {
+         if (trimmed.startsWith('{') && trimmed.includes('"')) {
             return true;
          }
          return false;
       };
 
       const filterFunctionCallContent = (text: string): string => {
-         // Remove function call JSON from the beginning of text
-         const jsonMatch = text.match(/^\{[^}]*"raceSeries"[^}]*\}/);
-         if (jsonMatch) {
-            return text.substring(jsonMatch[0].length);
+         // Try to find and remove JSON object at the beginning of text
+         const trimmed = text.trim();
+         
+         if (!trimmed.startsWith('{')) {
+            return text;
          }
+         
+         try {
+            // Find the end of the JSON object
+            let braceCount = 0;
+            let inString = false;
+            let escapeNext = false;
+            let jsonEndIndex = -1;
+            
+            for (let i = 0; i < trimmed.length; i++) {
+               const char = trimmed[i];
+               
+               if (escapeNext) {
+                  escapeNext = false;
+                  continue;
+               }
+               
+               if (char === '\\') {
+                  escapeNext = true;
+                  continue;
+               }
+               
+               if (char === '"' && !escapeNext) {
+                  inString = !inString;
+                  continue;
+               }
+               
+               if (!inString) {
+                  if (char === '{') {
+                     braceCount++;
+                  } else if (char === '}') {
+                     braceCount--;
+                     if (braceCount === 0) {
+                        jsonEndIndex = i;
+                        break;
+                     }
+                  }
+               }
+            }
+            
+            if (jsonEndIndex !== -1) {
+               // Remove the JSON object and any leading whitespace
+               const remainingText = trimmed.substring(jsonEndIndex + 1).trim();
+               return remainingText;
+            }
+         } catch (error) {
+            // If parsing fails, return original text
+            console.warn('Failed to parse function call JSON:', error);
+         }
+         
          return text;
       };
 
@@ -534,8 +582,11 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                            toolCallBuffer += delta;
                            return { value: '', done: false };
                         } else {
-                           // Check if this delta contains function call content
-                           if (isFunctionCallContent(delta)) {
+                           // Accumulate text to check for function call patterns
+                           accumulatedText += delta;
+                           
+                           // Check if accumulated text contains function call content
+                           if (isFunctionCallContent(accumulatedText)) {
                               functionCallInProgress = true;
                               functionCallBuffer += delta;
                               return { value: '', done: false };
@@ -544,8 +595,21 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                               functionCallBuffer += delta;
                               return { value: '', done: false };
                            } else {
-                              // Normal text content
-                              return { value: delta, done: false };
+                              // Check if we can safely return accumulated text
+                              const filteredText = filterFunctionCallContent(accumulatedText);
+                              if (filteredText !== accumulatedText) {
+                                 // Function call was detected and filtered, reset and return clean text
+                                 accumulatedText = '';
+                                 return { value: filteredText, done: false };
+                              } else if (!accumulatedText.includes('{')) {
+                                 // No JSON detected, safe to return
+                                 const textToReturn = accumulatedText;
+                                 accumulatedText = '';
+                                 return { value: textToReturn, done: false };
+                              } else {
+                                 // Might be partial JSON, continue accumulating
+                                 return { value: '', done: false };
+                              }
                            }
                         }
                      }
@@ -559,8 +623,11 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                            toolCallBuffer += delta;
                            return { value: '', done: false };
                         } else {
-                           // Check if this delta contains function call content
-                           if (isFunctionCallContent(delta)) {
+                           // Accumulate text to check for function call patterns
+                           accumulatedText += delta;
+                           
+                           // Check if accumulated text contains function call content
+                           if (isFunctionCallContent(accumulatedText)) {
                               functionCallInProgress = true;
                               functionCallBuffer += delta;
                               return { value: '', done: false };
@@ -569,8 +636,21 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                               functionCallBuffer += delta;
                               return { value: '', done: false };
                            } else {
-                              // Normal text content
-                              return { value: delta, done: false };
+                              // Check if we can safely return accumulated text
+                              const filteredText = filterFunctionCallContent(accumulatedText);
+                              if (filteredText !== accumulatedText) {
+                                 // Function call was detected and filtered, reset and return clean text
+                                 accumulatedText = '';
+                                 return { value: filteredText, done: false };
+                              } else if (!accumulatedText.includes('{')) {
+                                 // No JSON detected, safe to return
+                                 const textToReturn = accumulatedText;
+                                 accumulatedText = '';
+                                 return { value: textToReturn, done: false };
+                              } else {
+                                 // Might be partial JSON, continue accumulating
+                                 return { value: '', done: false };
+                              }
                            }
                         }
                      }
@@ -606,6 +686,15 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                         functionCallInProgress = false;
                         functionCallBuffer = '';
                         return { value: '', done: false };
+                     }
+                     
+                     // Handle end of stream with accumulated text
+                     if (chunk.done && accumulatedText) {
+                        const filteredText = filterFunctionCallContent(accumulatedText);
+                        accumulatedText = '';
+                        if (filteredText) {
+                           return { value: filteredText, done: false };
+                        }
                      }
                   }
                }
