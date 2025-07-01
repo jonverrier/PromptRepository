@@ -30,6 +30,9 @@ const mockRaceData: { [key: string]: { driver: string; points: number } } = {
 // Valid race series for strict validation
 const validRaceSeries = ['Formula 1', 'NASCAR', 'IndyCar', 'Formula E', 'WEC'];
 
+// Global call counter for tracking function executions
+let functionCallCount = 0;
+
 // Factory function to create motorsport function with configurable validation
 const createMotorsportFunction = (validationLevel: 'basic' | 'strict' = 'basic'): IFunction => {
    const validateArgs = (args: IFunctionArgs): IFunctionArgs => {
@@ -82,17 +85,35 @@ const createMotorsportFunction = (validationLevel: 'basic' | 'strict' = 'basic')
       },
       validateArgs,
       execute: async (args: IFunctionArgs): Promise<IFunctionArgs> => {
+         // Increment call counter
+         functionCallCount++;
+         
+         // Log the parameters being passed to the execute function
+         console.log(`[Function Execute] get_leading_driver called with parameters:`, JSON.stringify(args, null, 2));
+         
          const raceSeries = args.raceSeries as string;
          const data = mockRaceData[raceSeries] || { driver: 'Unknown Driver', points: 0 };
          
-         return {
+         // Log the result being returned
+         const result = {
             leadingDriver: data.driver,
             raceSeries: raceSeries,
             points: data.points
          };
+         console.log(`[Function Execute] get_leading_driver returning:`, JSON.stringify(result, null, 2));
+         
+         return result;
       }
    };
 };
+
+// Helper function to reset call counter
+const resetCallCounter = () => {
+   functionCallCount = 0;
+};
+
+// Helper function to get current call count
+const getCallCount = () => functionCallCount;
 
 // Helper function to test both streaming and non-streaming responses
 const testFunctionIntegration = async (
@@ -136,6 +157,8 @@ const testFunctionIntegration = async (
       const fullText = chunks.join('');
       expect(expectedValidation(fullText)).toBe(true);
    }).timeout(TEST_TIMEOUT_MS);
+
+   
 };
 
 // Run all tests for each provider
@@ -232,5 +255,142 @@ describe('Function Interface Tests', () => {
       expect(EDataType.kString).toBe('string');
       expect(EDataType.kNumber).toBe('number');
       expect(EDataType.kArray).toBe('array');
+   });
+});
+
+describe('Function Call Counting and Content Verification Tests', () => {
+   beforeEach(() => {
+      resetCallCounter();
+   });
+
+   // Helper function to test function call counting and content verification
+   const testFunctionCallCounting = async (
+      chatDriver: any,
+      testName: string,
+      systemPrompt: string,
+      userPrompt: string,
+      functions: IFunction[],
+      expectedCallCount: number,
+      expectedFacts: string[]
+   ) => {
+      // Test non-streaming response
+      it(`${testName} (getModelResponse)`, async () => {
+         const initialCallCount = getCallCount();
+         const result = await chatDriver.getModelResponse(
+            systemPrompt,
+            userPrompt,
+            undefined, // messageHistory
+            functions
+         );
+         
+         // Log the model response
+         console.log(`[Model Response] ${testName} (getModelResponse):`);
+         console.log(`Model Response: ${result}`);
+         console.log('---');
+         
+         const finalCallCount = getCallCount();
+         const actualCallCount = finalCallCount - initialCallCount;
+         
+         // Verify function was called the expected number of times
+         expect(actualCallCount).toBe(expectedCallCount);
+         
+         // Verify response contains expected facts from function execution
+         const resultLower = result.toLowerCase();
+         expectedFacts.forEach(fact => {
+            expect(resultLower).toContain(fact.toLowerCase());
+         });
+         
+         // Additional verification: check that response is substantial
+         expect(result.length).toBeGreaterThan(50);
+      }).timeout(TEST_TIMEOUT_MS);
+
+      // Test streaming response
+      it(`${testName} (getStreamedModelResponse)`, async () => {
+         const initialCallCount = getCallCount();
+         const iterator = chatDriver.getStreamedModelResponse(
+            systemPrompt,
+            userPrompt,
+            undefined, // messageHistory
+            functions
+         );
+         
+         const chunks: string[] = [];
+         while (true) {
+            const result = await iterator.next();
+            if (result.done) break;
+            if (result.value) {
+               chunks.push(result.value);
+            }
+         }
+         
+         const fullText = chunks.join('');
+         
+         // Log the model response
+         console.log(`[Model Response] ${testName} (getStreamedModelResponse):`);
+         console.log(`Model Response: ${fullText}`);
+         console.log('---');
+         
+         const finalCallCount = getCallCount();
+         const actualCallCount = finalCallCount - initialCallCount;
+         
+         // Verify function was called the expected number of times
+         expect(actualCallCount).toBe(expectedCallCount);
+         
+         // Verify response contains expected facts from function execution
+         const fullTextLower = fullText.toLowerCase();
+         expectedFacts.forEach(fact => {
+            expect(fullTextLower).toContain(fact.toLowerCase());
+         });
+         
+         // Additional verification: check that response is substantial
+         expect(fullText.length).toBeGreaterThan(50);
+      }).timeout(TEST_TIMEOUT_MS);
+   };
+
+   // Run function call counting tests for each provider
+   providers.forEach((provider, index) => {
+      const chatDriver = chatDrivers[index];
+
+      describe(`Function Call Counting Tests (${provider})`, () => {
+         testFunctionCallCounting(
+            chatDriver,
+            'should call function once and return Formula 1 facts',
+            'You are a helpful assistant that can call functions to get motorsport information. When asked about leading drivers, call the get_leading_driver function and provide the information.',
+            'Who is the leading driver in Formula 1?',
+            [createMotorsportFunction('basic')],
+            1, // Expected call count
+            ['max verstappen', '575'] // Expected facts from function
+         );
+
+         testFunctionCallCounting(
+            chatDriver,
+            'should call function once and return NASCAR facts',
+            'You are a helpful assistant that can call functions to get motorsport information. When asked about leading drivers, call the get_leading_driver function and provide the information.',
+            'Who is leading the NASCAR championship?',
+            [createMotorsportFunction('basic')],
+            1, // Expected call count
+            ['kyle larson', '4040'] // Expected facts from function
+         );
+
+         testFunctionCallCounting(
+            chatDriver,
+            'should call function once and return IndyCar facts',
+            'You are a helpful assistant that can call functions to get motorsport information. When asked about leading drivers, call the get_leading_driver function and provide the information.',
+            'Tell me about the IndyCar leader',
+            [createMotorsportFunction('basic')],
+            1, // Expected call count
+            ['alex palou', '656'] // Expected facts from function
+         );
+
+         testFunctionCallCounting(
+            chatDriver,
+            'should handle multiple questions without calling function for non-motorsport queries',
+            'You are a helpful assistant that can call functions to get motorsport information. Only call the get_leading_driver function when specifically asked about motorsport drivers.',
+            'What is the weather like today?',
+            [createMotorsportFunction('basic')],
+            0, // Expected call count (no function should be called)
+            [] // No expected facts
+         );
+      });
    });
 });

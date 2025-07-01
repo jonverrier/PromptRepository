@@ -375,6 +375,10 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       let pendingToolCalls: any[] = [];
       let toolCallBuffer = '';
       let pendingErrorToEmit: string | null = null;
+      let textBuffer = '';
+      let hasStartedFunctionCall = false;
+      let functionCallInProgress = false;
+      let functionCallBuffer = '';
 
       // Capture 'this' reference for use in the iterator
       const self = this;
@@ -404,6 +408,33 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       const resetStream = () => {
          streamPromise = null;
          streamIterator = null;
+         textBuffer = '';
+         hasStartedFunctionCall = false;
+         functionCallInProgress = false;
+         functionCallBuffer = '';
+      };
+
+      // Helper function to detect and filter function call content
+      const isFunctionCallContent = (text: string): boolean => {
+         // Check if text looks like JSON function call arguments
+         const trimmed = text.trim();
+         if (trimmed.startsWith('{') && trimmed.includes('"raceSeries"')) {
+            return true;
+         }
+         // Check for other function call patterns
+         if (trimmed.startsWith('{') && (trimmed.includes('"') || trimmed.includes(':'))) {
+            return true;
+         }
+         return false;
+      };
+
+      const filterFunctionCallContent = (text: string): string => {
+         // Remove function call JSON from the beginning of text
+         const jsonMatch = text.match(/^\{[^}]*"raceSeries"[^}]*\}/);
+         if (jsonMatch) {
+            return text.substring(jsonMatch[0].length);
+         }
+         return text;
       };
 
       return {
@@ -454,12 +485,21 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                         toolCallBuffer = '';
                         isInToolUseMode = false;
                         toolUseRounds++;
+                        textBuffer = '';
+                        hasStartedFunctionCall = false;
                         
                         if (toolUseRounds >= MAX_TOOL_USE_ROUNDS) {
                            throw new Error('Maximum tool use rounds exceeded');
                         }
                         
-                        // Continue with next iteration
+                        // Continue with next iteration to get the final response
+                        return this.next();
+                     }
+                     
+                     // If we had function calls but no more pending calls, we need to get the final response
+                     if (hasStartedFunctionCall && !isInToolUseMode && pendingToolCalls.length === 0) {
+                        // Reset and continue to get the final text response
+                        resetStream();
                         return this.next();
                      }
                      
@@ -472,6 +512,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                      // Check for function call chunks
                      if (chunk.value.type === 'function_call') {
                         isInToolUseMode = true;
+                        hasStartedFunctionCall = true;
                         pendingToolCalls.push(chunk.value);
                         return { value: '', done: false };
                      }
@@ -479,29 +520,58 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                      // Check for function call completion in output_item.done
                      if (chunk.value.type === 'response.output_item.done' && chunk.value.item && chunk.value.item.type === 'function_call') {
                         isInToolUseMode = true;
+                        hasStartedFunctionCall = true;
                         pendingToolCalls.push(chunk.value.item);
                         return { value: '', done: false };
                      }
                      
                      // Check for text chunks - handle different streaming formats
                      if ('delta' in chunk.value && typeof chunk.value.delta === 'string') {
-                        if (isInToolUseMode) {
-                           // Buffer text during tool use mode
-                           toolCallBuffer += chunk.value.delta;
+                        const delta = chunk.value.delta;
+                        
+                        if (isInToolUseMode || hasStartedFunctionCall) {
+                           // Buffer text during tool use mode or after function call started
+                           toolCallBuffer += delta;
                            return { value: '', done: false };
                         } else {
-                           return { value: chunk.value.delta, done: false };
+                           // Check if this delta contains function call content
+                           if (isFunctionCallContent(delta)) {
+                              functionCallInProgress = true;
+                              functionCallBuffer += delta;
+                              return { value: '', done: false };
+                           } else if (functionCallInProgress) {
+                              // We're in the middle of a function call, continue buffering
+                              functionCallBuffer += delta;
+                              return { value: '', done: false };
+                           } else {
+                              // Normal text content
+                              return { value: delta, done: false };
+                           }
                         }
                      }
                      
                      // Check for response.output_text.delta format
                      if (chunk.value.type === 'response.output_text.delta' && typeof chunk.value.delta === 'string') {
-                        if (isInToolUseMode) {
-                           // Buffer text during tool use mode
-                           toolCallBuffer += chunk.value.delta;
+                        const delta = chunk.value.delta;
+                        
+                        if (isInToolUseMode || hasStartedFunctionCall) {
+                           // Buffer text during tool use mode or after function call started
+                           toolCallBuffer += delta;
                            return { value: '', done: false };
                         } else {
-                           return { value: chunk.value.delta, done: false };
+                           // Check if this delta contains function call content
+                           if (isFunctionCallContent(delta)) {
+                              functionCallInProgress = true;
+                              functionCallBuffer += delta;
+                              return { value: '', done: false };
+                           } else if (functionCallInProgress) {
+                              // We're in the middle of a function call, continue buffering
+                              functionCallBuffer += delta;
+                              return { value: '', done: false };
+                           } else {
+                              // Normal text content
+                              return { value: delta, done: false };
+                           }
                         }
                      }
                      
@@ -513,6 +583,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                         const toolCalls = outputArr.filter((item: any) => item.type === 'function_call');
                         if (toolCalls.length > 0 && functions) {
                            isInToolUseMode = true;
+                           hasStartedFunctionCall = true;
                            pendingToolCalls = toolCalls;
                            return { value: '', done: false };
                         }
@@ -520,8 +591,21 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                         // Check for text output
                         const textContent = self.extractTextFromOutput(outputArr);
                         if (textContent) {
-                           return { value: textContent, done: false };
+                           // Filter out function call content if present
+                           const filteredContent = filterFunctionCallContent(textContent);
+                           if (filteredContent && filteredContent !== textContent) {
+                              return { value: filteredContent, done: false };
+                           } else if (filteredContent && !hasStartedFunctionCall) {
+                              return { value: filteredContent, done: false };
+                           }
                         }
+                     }
+                     
+                     // Handle end of function call content
+                     if (functionCallInProgress && chunk.done) {
+                        functionCallInProgress = false;
+                        functionCallBuffer = '';
+                        return { value: '', done: false };
                      }
                   }
                }
