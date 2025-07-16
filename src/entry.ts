@@ -170,6 +170,7 @@ export interface IUserSessionSummary {
 export interface IChatMessageRequest {
    sessionSummary: IUserSessionSummary;
    limit: number;
+   createdAfter?: string;
    continuation?: string | undefined;
 }
 
