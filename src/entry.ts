@@ -10,6 +10,8 @@ import { IFunction } from './Function';
 
 export { PromptFileRepository, PromptInMemoryRepository } from "./PromptRepository";
 export { ChatDriverFactory } from "./ChatFactory";
+export { EmbeddingDriverFactory } from "./EmbedFactory";
+export { cosineSimilarity as CosineSimilarity } from "./Embed";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError } from "./Asserts";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
 export { IFunction, IFunctionArgs, EDataType } from "./Function";
@@ -195,6 +197,9 @@ export interface IArchiveMessageRequest {
    continuation: string | undefined;  // Token for paginating through results
 }
 
+/**
+ * A response from the archive API.
+ */
 export interface IArchiveMessageResponse {
 
    updatedCount: number;              // Number of records updated
@@ -202,7 +207,7 @@ export interface IArchiveMessageResponse {
 }
 
 /**
- * Interface for a simple chat response
+ * Interface for chat driver - has a number of concrete sub-classes, each of which implements the methods below
  */
 export interface IChatDriver {
 
@@ -265,3 +270,34 @@ export interface IChatDriverFactory {
    create(model: EModel, provider: EModelProvider): IChatDriver;
 }
 
+/**
+ * Interface for drivers that provide text embedding capabilities.
+ * Text embeddings are vector representations of text that capture semantic meaning,
+ * allowing for operations like semantic search and similarity comparisons.
+ * 
+ * @interface IEmbeddingModelDriver
+ */
+export interface IEmbeddingModelDriver {
+
+   deploymentName : string;
+   drivenModelType: EModel;
+   drivenModelProvider: EModelProvider;
+   
+   
+    /**
+     * Converts text into a vector embedding representation.
+     * 
+     * @param {string} text - The input text to be embedded
+     * @returns {Promise<Array<number>>} A promise that resolves to an array of numbers 
+     *         representing the text embedding vector
+     */
+    embed(text: string): Promise<Array<number>>;
+}
+
+/**
+ * Interface for a simple factory class for creating embedding drivers
+ */
+export interface IEmbeddingDriverFactory {
+
+   create(model: EModel, provider: EModelProvider): IEmbeddingModelDriver;
+}
