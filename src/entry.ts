@@ -301,3 +301,19 @@ export interface IEmbeddingDriverFactory {
 
    create(model: EModel, provider: EModelProvider): IEmbeddingModelDriver;
 }
+
+/**
+ * Interface for a chunk of text and its embedding
+ */
+export interface IChunk {
+   text: string;
+   embedding: number[];
+}
+
+/**
+ * Interface for a store of chunks of text and their embeddings
+ */
+export interface IChunkStore {
+   checkCount: number;
+   chunks: IChunk[];
+}
