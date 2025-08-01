@@ -1,7 +1,7 @@
 /**
- * @module EmbedFactory
+ * @module Sanitize
  * 
- * Factory for creating embedding driver instances.
+ * Sanitization functions for input and output strings.
  */
 // Copyright (c) 2025 Jon Verrier
 
