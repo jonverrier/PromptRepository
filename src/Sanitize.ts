@@ -1,0 +1,35 @@
+/**
+ * @module EmbedFactory
+ * 
+ * Factory for creating embedding driver instances.
+ */
+// Copyright (c) 2025 Jon Verrier
+
+/**
+ * Sanitizes a string input by removing potentially dangerous characters
+ * @param input The string to sanitize
+ * @returns Sanitized string
+ */
+export function sanitizeInputString(input: string | null | undefined): string {
+    if (!input) return '';
+    // Remove control characters and HTML tags
+    return input.replace(/[\x00-\x1F\x7F-\x9F]/g, '')
+                .replace(/<[^>]*>/g, '')
+                .trim();
+}
+
+/**
+ * Sanitizes a string by removing potentially dangerous characters and sensitive information
+ * @param input The string to sanitize
+ * @returns A sanitized string with control characters, HTML tags, and sensitive data (emails, credit cards, phone numbers) removed
+ */
+export function sanitizeOutputString (input: string | null | undefined): string {
+   if (!input) return '';
+   return input
+       .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Remove control characters
+       .replace(/<[^>]*>/g, '') // Remove HTML tags
+       .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL]') // Replace email addresses
+       .replace(/\b\d{16,19}\b/g, '[CARD]') // Replace credit card numbers
+       .replace(/(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})(?:\s?(?:ext|x|extension)\.?\s?\d+)?/g, '[PHONE]') // Replace phone numbers
+       .trim();
+}
