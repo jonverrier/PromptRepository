@@ -15,6 +15,7 @@ export { cosineSimilarity as CosineSimilarity } from "./Embed";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError } from "./Asserts";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
 export { IFunction, IFunctionArgs, EDataType } from "./Function";
+export { sanitizeInputString, sanitizeOutputString } from "./Sanitize";
 
 /**
  * Enum representing parameter types as strings
