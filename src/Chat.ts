@@ -436,7 +436,17 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                await initializeStream();
 
                if (streamIterator) {
-                  const chunk = await streamIterator.next();
+                  let chunk;
+                  try {
+                     chunk = await streamIterator.next();
+                  } catch (error) {
+                     // Handle mid-stream errors gracefully
+                     return { 
+                        value: '\n\nSorry, it looks like the response was interrupted. Please try again.', 
+                        done: true 
+                     };
+                  }
+                  
                   if (chunk.done) {
                      // Check if we have a complete response to process
                      if (isInToolUseMode && pendingToolCalls.length > 0 && functions) {
@@ -640,10 +650,11 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                return { value: '', done: false };
             } catch (error) {
                resetStream();
-               if (error instanceof Error) {
-                  throw new Error(`Stream error: ${error.message}`);
-               }
-               throw error;
+               // Handle any unhandled streaming errors gracefully
+               return { 
+                  value: '\n\nSorry, it looks like the response was interrupted. Please try again.', 
+                  done: true 
+               };
             }
          },
          return(): Promise<IteratorResult<string>> {

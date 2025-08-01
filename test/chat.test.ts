@@ -548,6 +548,78 @@ describe('Exponential Backoff Tests', () => {
       expect(elapsedTime).toBeGreaterThan(800);
       expect(elapsedTime).toBeLessThan(2000);
    }).timeout(5000);
+
+   it('should handle mid-stream errors gracefully', async () => {
+      // Mock that returns some chunks then throws an error
+      mockDriver.setMockCreate(async () => {
+         let chunkCount = 0;
+         return {
+            [Symbol.asyncIterator]: () => ({
+               next: async () => {
+                  chunkCount++;
+                  if (chunkCount <= 3) {
+                     // Return successful chunks
+                     return {
+                        value: {
+                           type: 'response.output_text.delta',
+                           delta: `Chunk ${chunkCount} `
+                        },
+                        done: false
+                     };
+                  } else {
+                     // Throw error after a few chunks
+                     const error: any = new Error('Network connection lost');
+                     error.status = 500;
+                     throw error;
+                  }
+               }
+            })
+         };
+      });
+
+      const iterator = mockDriver.getStreamedModelResponse('You are helpful', 'say Hi');
+      const chunks: string[] = [];
+      let finalResult: any;
+      let hitError = false;
+
+      try {
+         while (true) {
+            const result = await iterator.next();
+            if (result.done) {
+               finalResult = result;
+               // Also add the final value if it exists (this could be the interruption message)
+               if (result.value) {
+                  chunks.push(result.value);
+               }
+               break;
+            }
+            if (result.value) {
+               chunks.push(result.value);
+            }
+         }
+      } catch (error) {
+         hitError = true;
+      }
+
+      // Should not throw an exception - should handle gracefully
+      expect(hitError).toBe(false);
+      
+      // Should have received the successful chunks
+      expect(chunks.length).toBe(4); // 3 data chunks + 1 interruption message
+      expect(chunks.join('')).toContain('Chunk 1');
+      expect(chunks.join('')).toContain('Chunk 2');
+      expect(chunks.join('')).toContain('Chunk 3');
+      
+      // Should have received the interruption message as the final chunk
+      const allContent = chunks.join('');
+      expect(allContent).toContain('Sorry, it looks like the response was interrupted. Please try again.');
+      
+      // Stream should be marked as done
+      expect(finalResult.done).toBe(true);
+      
+      // Verify the interruption message is the last chunk
+      expect(chunks[chunks.length - 1]).toContain('Sorry, it looks like the response was interrupted. Please try again.');
+   }).timeout(5000);
 });
 
 
