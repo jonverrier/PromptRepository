@@ -167,6 +167,12 @@ describe('sanitizeOutputString', () => {
     expect(result).toBe('Try [EMAIL]');
   });
 
+  it('should replace escaped email addresses with [EMAIL]', () => {
+    const inputWithEscapedEmail = 'Contact linda\\@cleanedbyashley.com for cleaning services';
+    const result = sanitizeOutputString(inputWithEscapedEmail);
+    expect(result).toBe('Contact [EMAIL] for cleaning services');
+  });
+
   it('should replace 16-digit credit card numbers with [CARD]', () => {
     const inputWithCard16 = 'My card number is 1234567890123456 for payment';
     const result = sanitizeOutputString(inputWithCard16);
@@ -233,6 +239,30 @@ describe('sanitizeOutputString', () => {
     const inputWithExtSpelled = 'Try 555.123.4567 extension 42 if needed';
     const result = sanitizeOutputString(inputWithExtSpelled);
     expect(result).toBe('Try [PHONE] if needed');
+  });
+
+  it('should replace international phone numbers like 0758 4323 309', () => {
+    const inputWithIntlPhone = 'Call me at 0758 4323 309 for support';
+    const result = sanitizeOutputString(inputWithIntlPhone);
+    expect(result).toBe('Call me at [PHONE] for support');
+  });
+
+  it('should replace UK phone numbers like 020 4576 2064', () => {
+    const inputWithUKPhone = 'London office: 020 4576 2064 during business hours';
+    const result = sanitizeOutputString(inputWithUKPhone);
+    expect(result).toBe('London office: [PHONE] during business hours');
+  });
+
+  it('should replace UK phone numbers like 01246 866275', () => {
+    const inputWithUKPhone2 = 'Contact us at 01246 866275 for more information';
+    const result = sanitizeOutputString(inputWithUKPhone2);
+    expect(result).toBe('Contact us at [PHONE] for more information');
+  });
+
+  it('should replace multiple international phone formats in one string', () => {
+    const inputWithMultipleIntl = 'Call 0758 4323 309, 020 4576 2064, or 01246 866275 for help';
+    const result = sanitizeOutputString(inputWithMultipleIntl);
+    expect(result).toBe('Call [PHONE], [PHONE], or [PHONE] for help');
   });
 
   it('should handle mixed sensitive data types', () => {
