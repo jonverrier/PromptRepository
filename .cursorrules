@@ -1,0 +1,204 @@
+# PromptRepository - Cursor Rules
+
+## Project Overview
+You are working on the PromptRepository library, a generic TypeScript library for managing AI prompt templates and their interactions with language models. This is a reusable library that provides standardized interfaces and implementations for prompt management, chat drivers, and embedding operations.
+
+## Library Purpose
+PromptRepository is designed to be a foundational library that can be used across multiple projects to:
+- Manage AI prompt templates with parameter validation
+- Provide standardized interfaces for different LLM providers (OpenAI, Azure OpenAI)
+- Handle chat completions and streaming responses
+- Support embedding operations for semantic search
+- Offer both file-based and in-memory prompt storage options
+
+## Technology Stack
+- **Language**: TypeScript (strict mode, ES2022 target)
+- **Runtime**: Node.js + Browser compatible
+- **Module System**: CommonJS for broad compatibility
+- **Testing**: Mocha with ts-node
+- **AI Providers**: OpenAI, Azure OpenAI
+- **Build**: TypeScript compiler
+
+## Code Style & Conventions
+
+### TypeScript Standards
+- Use **strict TypeScript** with `noImplicitAny: true`
+- **Interface prefix**: All interfaces start with `I` (e.g., `IPrompt`, `IChatDriver`, `IPromptRepository`)
+- **Enum prefix**: All enums start with `E` (e.g., `EModel`, `EModelProvider`, `EChatRole`)
+- **Module system**: Use CommonJS (`module: "CommonJS"`) for broad compatibility
+- **Target**: ES2022 with DOM lib support for browser compatibility
+- **Exports**: Always use explicit exports, prefer named exports over default
+
+### Documentation Standards
+- **JSDoc required** for all public functions, classes, and interfaces
+- Use `@module` comment at the top of each file with brief description
+- Document all `@param` and `@returns` for functions
+- Include copyright header: `// Copyright (c) 2025 Jon Verrier`
+- Add detailed interface documentation with usage examples
+- Document generic type parameters and constraints
+
+### File Organization
+```
+src/
+├── entry.ts                # Main exports and core interfaces
+├── [ModuleName].ts         # Core implementation files
+├── [ModuleName].Factory.ts # Factory pattern implementations
+├── Prompts.json           # Prompt templates data
+└── README.C4Diagrammer.md # Auto-generated documentation
+
+test/
+├── [modulename].test.ts   # Unit tests (lowercase naming)
+└── template-prompt.json   # Test data
+
+dist/
+└── src/                   # Compiled TypeScript output
+```
+
+### Naming Conventions
+- **Files**: PascalCase for TypeScript files (e.g., `ChatFactory.ts`, `PromptRepository.ts`)
+- **Test Files**: Lowercase with dots (e.g., `chat.test.ts`, `promptrepository.test.ts`)
+- **Functions**: camelCase (e.g., `getPrompt`, `expandUserPrompt`, `throwIfUndefined`)
+- **Variables**: camelCase (e.g., `chatDriver`, `systemPrompt`, `modelProvider`)
+- **Constants**: camelCase for exports (e.g., `ChatMessageClassName`) or UPPER_SNAKE_CASE for internal constants
+- **Types/Interfaces**: PascalCase with `I` prefix (e.g., `IPrompt`, `IChatDriver`)
+- **Enums**: PascalCase with `E` prefix and `k` value prefix (e.g., `EModel.kLarge`, `EChatRole.kUser`)
+
+## Architecture Patterns
+
+### Repository Pattern
+- **Interface-driven**: Use `IPromptRepository` interface for different storage implementations
+- **Multiple implementations**: Support both file-based (`PromptFileRepository`) and in-memory (`PromptInMemoryRepository`) storage
+- **Parameter validation**: Validate prompt parameters against their specifications
+- **Template expansion**: Support placeholder replacement in prompt templates
+
+### Factory Pattern
+- **Driver factories**: Use factory classes for creating chat and embedding drivers
+- **Provider abstraction**: Abstract different LLM providers behind common interfaces
+- **Configuration**: Support different model sizes and providers through enum parameters
+
+### Error Handling
+- **Custom error classes**: Use `InvalidParameterError`, `InvalidOperationError`
+- **Type-safe assertions**: Implement assertion utilities (`throwIfUndefined`, `throwIfNull`, `throwIfFalse`)
+- **Graceful degradation**: Handle environment differences (Node.js vs browser)
+- **Parameter validation**: Validate prompt parameters against their type specifications
+
+### API Design
+- **Structured interfaces**: Use well-defined interfaces for all data structures
+- **Optional parameters**: Support optional parameters with proper typing
+- **Generic support**: Use TypeScript generics for type-safe operations
+- **Async/Iterator patterns**: Support both Promise-based and streaming APIs
+
+### Environment Compatibility
+- **Universal compatibility**: Support both Node.js and browser environments
+- **Conditional imports**: Use try-catch for environment-specific modules (e.g., fs)
+- **Feature detection**: Check for environment capabilities before using them
+
+## Core Library Patterns
+
+### Prompt Management
+- **Template system**: Support parameterized prompt templates with type validation
+- **Version management**: Include version and schema version tracking
+- **Parameter specifications**: Define parameter types, requirements, and default values
+- **Validation**: Validate parameters against their specifications before template expansion
+
+### LLM Integration
+- **Provider abstraction**: Support multiple LLM providers through common interfaces
+- **Model variants**: Support different model sizes (large, mini) through enum configuration
+- **Streaming support**: Provide both synchronous and streaming response patterns
+- **Function calling**: Support OpenAI-style function calling with proper typing
+- **Schema validation**: Support JSON schema validation for constrained responses
+
+### Type Safety
+- **Interface-driven design**: Use TypeScript interfaces for all public APIs
+- **Generic types**: Leverage TypeScript generics for type-safe operations
+- **Enum types**: Use string enums for better serialization and debugging
+- **Assertion utilities**: Provide type-safe runtime assertion functions
+
+## Testing Standards
+- **Unit Tests**: Test all public functions and classes with Mocha
+- **Environment Testing**: Test both Node.js and browser compatibility where applicable
+- **Mock External APIs**: Mock OpenAI and Azure OpenAI API calls for testing
+- **Parameter Validation**: Test parameter validation and error conditions
+- **Template Testing**: Test prompt template expansion with various parameter combinations
+
+## Security & Validation
+- **Input Sanitization**: Sanitize all external inputs (API responses, user parameters)
+- **Parameter Validation**: Validate all prompt parameters against their specifications
+- **API Key Security**: Handle API keys securely, support environment variable configuration
+- **Error Message Sanitization**: Ensure error messages don't leak sensitive information
+
+## Performance Considerations
+- **Lazy Loading**: Load resources on demand where possible
+- **Caching**: Implement appropriate caching for prompt templates and embeddings
+- **Streaming**: Support streaming responses for large language model outputs
+- **Memory Management**: Efficient memory usage for in-memory prompt storage
+
+## Library Design Principles
+- **Reusability**: Design for use across multiple projects and domains
+- **Extensibility**: Allow for easy extension with new providers and storage implementations
+- **Backward Compatibility**: Maintain API stability across versions
+- **Environment Agnostic**: Work in both Node.js and browser environments
+- **Type Safety**: Leverage TypeScript for compile-time safety and better developer experience
+
+## File Patterns to Follow
+```typescript
+/**
+ * @module ModuleName
+ * Brief description of module purpose and functionality.
+ * Explain how this module fits into the overall library architecture.
+ */
+// Copyright (c) 2025 Jon Verrier
+
+import { ... } from './OtherModule';
+import { IInterface, EEnum } from './entry';
+
+/**
+ * Interface description with usage examples
+ * @interface IModuleInterface
+ * @property {string} property - Property description
+ */
+export interface IModuleInterface {
+   property: string;
+}
+
+/**
+ * Enum description
+ */
+export enum EModuleEnum {
+   kValue = "value",
+   kOtherValue = "otherValue"
+}
+
+/**
+ * Function description with detailed parameter and return information
+ * @param param1 - Parameter description with type information
+ * @param param2 - Optional parameter description
+ * @returns Return value description
+ * @throws {InvalidParameterError} When parameter validation fails
+ */
+export async function moduleFunction(param1: string, param2?: number): Promise<string> {
+   // Implementation with error handling
+}
+
+/**
+ * Class description with usage examples
+ */
+export class ModuleClass implements IModuleInterface {
+   /**
+    * Constructor description
+    * @param config - Configuration object description
+    */
+   constructor(private config: IConfig) {
+      // Initialization
+   }
+}
+```
+
+## Development Workflow
+1. **Interface First**: Define TypeScript interfaces before implementation
+2. **Test-Driven**: Write tests alongside implementation
+3. **Documentation**: Update JSDoc and README files
+4. **Environment Testing**: Test in both Node.js and browser environments
+5. **Backward Compatibility**: Ensure changes don't break existing APIs
+
+Remember: This is a generic, reusable library for prompt management and LLM integration. Focus on creating clean, well-documented APIs that can be used across different domains and projects.
