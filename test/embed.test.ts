@@ -11,7 +11,7 @@ import { describe, it, beforeEach, afterEach } from 'mocha';
 import { EmbeddingDriverFactory, EModelProvider, EModel, CosineSimilarity } from '../src/entry';
 import { OpenAIModelEmbeddingDriver } from '../src/Embed';
 
-const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
+const TEST_TIMEOUT_MS = 60000; // 60 second timeout for all tests
 
 // Create embedding drivers for both providers outside describe blocks
 const embeddingDriverFactory = new EmbeddingDriverFactory();

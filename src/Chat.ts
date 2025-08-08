@@ -64,8 +64,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       const config: any = {
          model: this.getModelName(),
          input: formattedMessages,
-         ...(systemPrompt && { instructions: systemPrompt }),
-         temperature: 0.25
+         ...(systemPrompt && { instructions: systemPrompt })
       };
 
       // Add functions to the configuration if provided
@@ -331,7 +330,22 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       const initializeStream = async () => {
          if (!streamPromise) {
             const config = createStreamConfig();
-            streamPromise = retryWithExponentialBackoff(() => self.openai.responses.create(config));
+            streamPromise = retryWithExponentialBackoff(async () => {
+               try {
+                  return await self.openai.responses.create(config);
+               } catch (error: any) {
+                  // Check if this is a streaming verification error
+                  if (error?.code === 'unsupported_value' && error?.param === 'stream') {
+                     // Fall back to non-streaming and simulate chunks
+                     console.warn('OpenAI streaming not available, falling back to simulated streaming');
+                     const nonStreamConfig = { ...config };
+                     delete nonStreamConfig.stream;
+                     return await self.openai.responses.create(nonStreamConfig);
+                  } else {
+                     throw error;
+                  }
+               }
+            });
          }
          
          if (!streamIterator) {
@@ -339,7 +353,8 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
             if (Symbol.asyncIterator in stream) {
                streamIterator = (stream as unknown as AsyncResponse)[Symbol.asyncIterator]();
             } else {
-               throw new Error('Stream does not support async iteration');
+               // This is likely a non-streaming response, create a simulated iterator
+               streamIterator = self.createSimulatedStreamIterator(stream);
             }
          }
       };
@@ -435,19 +450,19 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
                await initializeStream();
 
-               if (streamIterator) {
-                  let chunk;
-                  try {
-                     chunk = await streamIterator.next();
-                  } catch (error) {
-                     // Handle mid-stream errors gracefully
-                     return { 
-                        value: '\n\nSorry, it looks like the response was interrupted. Please try again.', 
-                        done: true 
-                     };
-                  }
-                  
-                  if (chunk.done) {
+                  if (streamIterator) {
+                     let chunk;
+                     try {
+                        chunk = await streamIterator.next();
+                     } catch (error) {
+                        // Handle mid-stream errors gracefully
+                        return { 
+                           value: '\n\nSorry, it looks like the response was interrupted. Please try again.', 
+                           done: true 
+                        };
+                     }
+                     
+                     if (chunk.done) {
                      // Check if we have a complete response to process
                      if (isInToolUseMode && pendingToolCalls.length > 0 && functions) {
                         // Process tool calls
@@ -664,6 +679,72 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          throw(error: any): Promise<IteratorResult<string>> {
             resetStream();
             return Promise.reject(error);
+         }
+      };
+   }
+
+   /**
+    * Creates a simulated stream iterator for non-streaming responses
+    * This is used as a fallback when streaming is not available
+    */
+   private createSimulatedStreamIterator(response: any): AsyncIterator<any> {
+      let content = '';
+      let isDone = false;
+      
+      // Extract content from the response
+      if (response.output && response.output.length > 0) {
+         content = response.output[0].content || '';
+      }
+      
+      // If no content found, return empty iterator
+      if (!content) {
+         return {
+            async next(): Promise<IteratorResult<any>> {
+               return { done: true, value: undefined };
+            }
+         };
+      }
+      
+      // Split content into smaller chunks for more realistic streaming (1-2 words per chunk)
+      const words = content.split(' ').filter(word => word.trim().length > 0);
+      const chunks: string[] = [];
+      
+      for (let i = 0; i < words.length; i += 2) { // Group 2 words together
+         const chunk = words.slice(i, i + 2).join(' ');
+         chunks.push(chunk);
+      }
+      
+
+      
+      let currentIndex = 0;
+      
+      return {
+         async next(): Promise<IteratorResult<any>> {
+            if (isDone || currentIndex >= chunks.length) {
+               return { done: true, value: undefined };
+            }
+            
+            const chunk = chunks[currentIndex];
+            currentIndex++;
+            
+            // Add space after chunk except for last chunk
+            const chunkText = currentIndex < chunks.length ? chunk + ' ' : chunk;
+            
+            if (currentIndex >= chunks.length) {
+               isDone = true;
+            }
+            
+            return {
+               done: false,
+               value: {
+                  type: 'response.output_text.delta',
+                  delta: chunkText
+               }
+            };
+         },
+         async return(): Promise<IteratorResult<any>> {
+            isDone = true;
+            return { done: true, value: undefined };
          }
       };
    }
