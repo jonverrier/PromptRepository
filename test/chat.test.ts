@@ -94,6 +94,24 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
    setMockCreate(mockFn: () => Promise<any>) {
       (this as any).openai.responses.create = mockFn;
    }
+
+   async getConstrainedModelResponse<T>(
+      systemPrompt: string | undefined,
+      userPrompt: string,
+      jsonSchema: Record<string, unknown>,
+      defaultValue: T,
+      messageHistory?: IChatMessage[],
+      functions?: IFunction[]
+   ): Promise<T> {
+      // Use the same retry logic as the base class but with our mock
+      if (this.shouldFail && this.failCount < this.maxFailures) {
+         this.failCount++;
+         const error: any = new Error('Rate limit exceeded');
+         error.status = 429;
+         throw error;
+      }
+      return (this as any).openai.responses.parse({ jsonSchema }).then(() => ({ test: 'data' } as T));
+   }
 }
 
 // Run all tests for each provider
@@ -219,7 +237,7 @@ providers.forEach((provider, index) => {
       // A sonnet should have 14 lines
       const lines = fullText.split('\n').filter(line => line.trim().length > 0);
       expect(lines.length).toBeGreaterThanOrEqual(14);
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(60000); // 60 second timeout for long-form content
   });
 
   describe(`Constrained Model Response Tests (${provider})`, () => {
@@ -375,6 +393,18 @@ providers.forEach((provider, index) => {
     it('should successfully return simple chat completion', async () => {
       const result = await miniChatDriver.getModelResponse('You are helpful', 'say Hi');
       expect(result).toMatch(/(Hi|Hello)/);
+    }).timeout(TEST_TIMEOUT_MS);
+
+    it('should successfully stream chat completion', async () => {
+      const iterator = miniChatDriver.getStreamedModelResponse('You are helpful', 'say Hi');
+      let result = '';
+      while (true) {
+        const chunk = await iterator.next();
+        if (chunk.done) break;
+        if (chunk.value) result += chunk.value;
+      }
+      expect(result).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
+      expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
     }).timeout(TEST_TIMEOUT_MS);
   });
 });

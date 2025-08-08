@@ -26,7 +26,7 @@ export class OpenAIChatDriver extends OpenAIModelChatDriver {
 
    constructor(modelType: EModel) {
       super(modelType);
-      this.model = modelType === EModel.kLarge ? 'gpt-4.1' : 'gpt-4.1-mini';
+      this.model = modelType === EModel.kLarge ? 'gpt-5' : 'gpt-5-mini';
 
       if (!process.env.OPENAI_API_KEY) {
          throw new Error('OPENAI_API_KEY environment variable is not set');
