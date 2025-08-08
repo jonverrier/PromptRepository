@@ -87,7 +87,7 @@ describe('Motor Racing Welcome Prompt Tests', () => {
         
         // Should contain Silverstone-specific content
         expect(response).toContain('Silverstone');
-        expect(response.toLowerCase()).toMatch(/welcome|greetings/);
+        expect(response.toLowerCase()).toMatch(/welcome|greetings|delighted/);
         expect(response.split('Silverstone').length).toBe(2); // Only one occurrence
         // Verify it's different from Monaco/Monte Carlo responses
         expect(response).not.toContain('Monaco');

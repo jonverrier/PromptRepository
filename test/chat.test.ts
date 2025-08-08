@@ -103,14 +103,20 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
       messageHistory?: IChatMessage[],
       functions?: IFunction[]
    ): Promise<T> {
-      // Use the same retry logic as the base class but with our mock
-      if (this.shouldFail && this.failCount < this.maxFailures) {
-         this.failCount++;
-         const error: any = new Error('Rate limit exceeded');
-         error.status = 429;
-         throw error;
-      }
-      return (this as any).openai.responses.parse({ jsonSchema }).then(() => ({ test: 'data' } as T));
+      // Use retry wrapper like the base class - import retryWithExponentialBackoff
+      const { retryWithExponentialBackoff } = await import('../src/DriverHelpers');
+      
+      const response = await retryWithExponentialBackoff(async () => {
+         if (this.shouldFail && this.failCount < this.maxFailures) {
+            this.failCount++;
+            const error: any = new Error('Rate limit exceeded');
+            error.status = 429;
+            throw error;
+         }
+         return (this as any).openai.responses.parse({ jsonSchema });
+      });
+      
+      return ({ test: 'data' } as T);
    }
 }
 
