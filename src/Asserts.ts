@@ -37,13 +37,13 @@ export class InvalidOperationError extends Error {
 }
 
 export const throwIfUndefined: <T, >(x: T | undefined) => asserts x is T = x => {
-   if (typeof x === "undefined") throw new ReferenceError ("Object is undefined.");
+   if (typeof x === "undefined") throw new ReferenceError("Value is undefined.");
 }
 
 export const throwIfNull: <T, >(x: T | null) => asserts x is T = x => {
-   if (x === null) throw new ReferenceError ("Object is null.");
+   if (x === null) throw new ReferenceError("Value is null.");
 }
 
 export const throwIfFalse: (x: boolean) => asserts x is true = x => {
-   if (!x) throw new ReferenceError ("Value is false.");
+   if (!x) throw new ReferenceError("Value is false.");
 }
