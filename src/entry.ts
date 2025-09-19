@@ -304,14 +304,9 @@ export interface IEmbeddingDriverFactory {
 }
 
 /**
- * Interface for a chunk of text and its embedding
+ * Interface for a chunk of text 
  */
-export interface IChunk {
-   text: string;            // enriched content
-   embedding: number[];     // vector embedding
- }
 
- /*
  export interface IChunk {
    id: string;              // SHA-256 hash of content
    title: string;           // Human-readable title (5-10 words)
@@ -324,7 +319,6 @@ export interface IChunk {
      totalChunks: number;   // Total chunks in source
    };
  }
-*/
 
 /**
  * Interface for a store of chunks of text and their embeddings
