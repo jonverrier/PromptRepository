@@ -6,7 +6,7 @@
 // Copyright (c) 2025 Jon Verrier
 
 import OpenAI from 'openai';
-import { EChatRole } from './entry';
+import { EChatRole, EVerbosity } from './entry';
 import { IChatDriver, EModel, IChatMessage, IFunction } from './entry';
 import { retryWithExponentialBackoff } from './DriverHelpers';
 
@@ -40,6 +40,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
    protected createCompletionConfig(
       systemPrompt: string | undefined,
       messages: IChatMessage[],
+      verbosity: EVerbosity,
       functions?: IFunction[],
       useToolMessages?: boolean
    ): any {
@@ -61,9 +62,17 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          return baseMessage;
       });
 
+      // Map EVerbosity enum to OpenAI API verbosity values
+      const verbosityMap: Record<EVerbosity, string> = {
+         [EVerbosity.kLow]: 'low',
+         [EVerbosity.kMedium]: 'medium',
+         [EVerbosity.kHigh]: 'high'
+      };
+
       const config: any = {
          model: this.getModelName(),
          input: formattedMessages,
+         text: { verbosity: verbosityMap[verbosity] },
          ...(systemPrompt && { instructions: systemPrompt })
       };
 
@@ -231,10 +240,11 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
    protected async handleToolUseLoop(
       systemPrompt: string | undefined,
       messages: IChatMessage[],
+      verbosity: EVerbosity,
       functions: IFunction[] | undefined,
       createResponse: (config: any) => Promise<any>
    ): Promise<string> {
-      let config = this.createCompletionConfig(systemPrompt, messages, functions, false);
+      let config = this.createCompletionConfig(systemPrompt, messages, verbosity, functions, false);
       let response = await createResponse(config);
 
       // Tool use loop: keep handling tool calls until we get a text response or hit max rounds
@@ -258,7 +268,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                ];
                
                // Re-invoke the model with the tool result(s)
-               config = this.createCompletionConfig(systemPrompt, currentMessages, functions, false);
+               config = this.createCompletionConfig(systemPrompt, currentMessages, verbosity, functions, false);
                response = await createResponse(config);
                toolUseRounds++;
                continue;
@@ -276,6 +286,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
    async getModelResponse(systemPrompt: string | undefined, 
       userPrompt: string, 
+      verbosity: EVerbosity,
       messageHistory?: IChatMessage[],
       functions?: IFunction[]): Promise<string> {
 
@@ -285,6 +296,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          return await this.handleToolUseLoop(
             systemPrompt,
             messages,
+            verbosity,
             functions,
             (config) => retryWithExponentialBackoff(() => this.openai.responses.create(config))
          );
@@ -298,6 +310,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
    getStreamedModelResponse(systemPrompt: string | undefined, 
       userPrompt: string, 
+      verbosity: EVerbosity,
       messageHistory?: IChatMessage[],
       functions?: IFunction[]): AsyncIterator<string> {
          
@@ -322,7 +335,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       const self = this;
 
       const createStreamConfig = () => {
-         const config = self.createCompletionConfig(systemPrompt, currentMessages, functions, false);
+         const config = self.createCompletionConfig(systemPrompt, currentMessages, verbosity, functions, false);
          config.stream = true;
          return config;
       };
@@ -752,6 +765,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
    async getConstrainedModelResponse<T>(
       systemPrompt: string | undefined,
       userPrompt: string,
+      verbosity: EVerbosity,
       jsonSchema: Record<string, unknown>,
       defaultValue: T,
       messageHistory?: IChatMessage[],
@@ -759,8 +773,11 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
    ): Promise<T> {
       const messages = this.buildMessageArray(messageHistory, userPrompt);
 
-      const config = this.createCompletionConfig(systemPrompt, messages, functions, false);
-      config.text = { format: { type: "json_schema", strict: true, name: "constrainedOutput", schema: jsonSchema } };
+      const config = this.createCompletionConfig(systemPrompt, messages, verbosity, functions, false);
+      config.text = { 
+         ...config.text,
+         format: { type: "json_schema", strict: true, name: "constrainedOutput", schema: jsonSchema } 
+      };
 
       const response = await retryWithExponentialBackoff(() => 
          this.openai.responses.parse(config)
