@@ -12,7 +12,7 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { IPrompt, IPromptRepository, EModel, EModelProvider } from '../src/entry';
+import { IPrompt, IPromptRepository, EModel, EModelProvider, EVerbosity } from '../src/entry';
 import { ChatDriverFactory } from '../src/ChatFactory';
 import { PromptInMemoryRepository } from '../src/PromptRepository';
 import prompts from './template-prompt.json';
@@ -34,7 +34,7 @@ describe('Motor Racing Welcome Prompt Tests', () => {
         const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
         const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Monaco' });
         
-        const response = await chatDriver.getModelResponse(systemPrompt, userPrompt);
+        const response = await chatDriver.getModelResponse(systemPrompt, userPrompt, EVerbosity.kMedium);
         
         // The response should contain 'Monaco' but not duplicate these words
         expect(response).toContain('Monaco');
@@ -50,7 +50,7 @@ describe('Motor Racing Welcome Prompt Tests', () => {
       const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
       const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Monaco Monaco' });
       
-      const response = await chatDriver.getModelResponse(systemPrompt, userPrompt);
+      const response = await chatDriver.getModelResponse(systemPrompt, userPrompt, EVerbosity.kMedium);
       
       // Should follow same pattern as Monaco test since Monte Carlo is the same location
       expect(response).toContain('Monaco');
@@ -66,7 +66,7 @@ describe('Motor Racing Welcome Prompt Tests', () => {
         const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
         const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Monaco Grand Prix' });
         
-        const response = await chatDriver.getModelResponse(systemPrompt, userPrompt);
+        const response = await chatDriver.getModelResponse(systemPrompt, userPrompt, EVerbosity.kMedium);
         
         // Should follow same pattern as Monaco test since Monte Carlo is the same location
         expect(response).toContain('Monaco');
@@ -83,7 +83,7 @@ describe('Motor Racing Welcome Prompt Tests', () => {
         const systemPrompt = promptRepo.expandSystemPrompt(prompt!, {});
         const userPrompt = promptRepo.expandUserPrompt(prompt!, { LOCATION: 'Silverstone' });
         
-        const response = await chatDriver.getModelResponse(systemPrompt, userPrompt);
+        const response = await chatDriver.getModelResponse(systemPrompt, userPrompt, EVerbosity.kMedium);
         
         // Should contain Silverstone-specific content
         expect(response).toContain('Silverstone');

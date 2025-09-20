@@ -128,6 +128,13 @@ export enum EChatRole {
    kTool = 'tool'
 }
 
+/** Hint on how much text to generate  */
+export enum EVerbosity {
+   kLow = "kLow",
+   kMedium = "kMedium",
+   kHigh = "kHigh"
+}
+
 export interface IQueryReturnable {
    id: string | undefined;  // The id of the object. Can be undefined if the object has not yet ben saved to DB
    className: string;       // The class name of the object.   
@@ -216,6 +223,7 @@ export interface IChatDriver {
     * Retrieves a chat response from the model
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model
+    * @param verbosity The verbosity of the response
     * @param messageHistory Optional array of previous chat messages
     * @param functions Optional array of functions to pass to the model
     * @returns The response from the model
@@ -223,6 +231,7 @@ export interface IChatDriver {
    getModelResponse(
       systemPrompt: string | undefined,
       userPrompt: string,
+      verbosity: EVerbosity,
       messageHistory?: IChatMessage[],
       functions?: IFunction[]
    ): Promise<string>;
@@ -231,6 +240,7 @@ export interface IChatDriver {
     * Retrieves a streamed chat response from the model
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model
+    * @param verbosity The verbosity of the response
     * @param messageHistory Optional array of previous chat messages
     * @param functions Optional array of functions to pass to the model
     * @returns The response from the model
@@ -238,6 +248,7 @@ export interface IChatDriver {
    getStreamedModelResponse(
       systemPrompt: string | undefined,
       userPrompt: string,
+      verbosity: EVerbosity,      
       messageHistory?: IChatMessage[],
       functions?: IFunction[]
    ): AsyncIterator<string>;
@@ -247,6 +258,7 @@ export interface IChatDriver {
     * Retrieves a chat response from the model with JSON schema validation
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model 
+    * @param verbosity The verbosity of the response
     * @param jsonSchema The JSON schema to constrain the model output
     * @param defaultValue The default value to return if the model output does not match the schema
     * @param messageHistory Optional array of previous chat messages
@@ -256,6 +268,7 @@ export interface IChatDriver {
    getConstrainedModelResponse<T>(
       systemPrompt: string | undefined,
       userPrompt: string,
+      verbosity: EVerbosity,
       jsonSchema: Record<string, unknown>,
       defaultValue: T,
       messageHistory?: IChatMessage[],

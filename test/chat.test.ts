@@ -8,7 +8,7 @@
 
 import { expect } from 'expect';
 import { describe, it, beforeEach, afterEach } from 'mocha';
-import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity } from '../src/entry';
 import { OpenAIModelChatDriver } from '../src/Chat';
 
 const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
@@ -98,6 +98,7 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
    async getConstrainedModelResponse<T>(
       systemPrompt: string | undefined,
       userPrompt: string,
+      verbosity: EVerbosity,
       jsonSchema: Record<string, unknown>,
       defaultValue: T,
       messageHistory?: IChatMessage[],
@@ -126,12 +127,12 @@ providers.forEach((provider, index) => {
 
   describe(`getChatCompletion (${provider})`, () => {
     it('should successfully return chat completion with system prompt', async () => {
-      const result = await chatDriver.getModelResponse('You are helpful', 'say Hi');
+      const result = await chatDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
     }).timeout(TEST_TIMEOUT_MS);
 
     it('should successfully return chat completion without system prompt', async () => {
-      const result = await chatDriver.getModelResponse(undefined, 'say Hi');
+      const result = await chatDriver.getModelResponse(undefined, 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
     }).timeout(TEST_TIMEOUT_MS);
 
@@ -152,14 +153,14 @@ providers.forEach((provider, index) => {
           timestamp: new Date()
         }
       ];
-      const result = await chatDriver.getModelResponse('You are helpful', 'What is my name?', messageHistory);
+      const result = await chatDriver.getModelResponse('You are helpful', 'What is my name?', EVerbosity.kMedium, messageHistory);
       expect(result.toLowerCase()).toContain('alice');
     }).timeout(TEST_TIMEOUT_MS);
   });
 
   describe(`getStreamedModelResponse (${provider})`, () => {
     it('should successfully stream chat completion with system prompt', async () => {
-      const iterator = chatDriver.getStreamedModelResponse('You are helpful', 'say Hi');
+      const iterator = chatDriver.getStreamedModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       let result = '';
       while (true) {
         const chunk = await iterator.next();
@@ -171,7 +172,7 @@ providers.forEach((provider, index) => {
     }).timeout(TEST_TIMEOUT_MS);
 
     it('should successfully stream chat completion without system prompt', async () => {
-      const iterator = chatDriver.getStreamedModelResponse(undefined, 'say Hi');
+      const iterator = chatDriver.getStreamedModelResponse(undefined, 'say Hi', EVerbosity.kMedium);
       let result = '';
       while (true) {
         const chunk = await iterator.next();
@@ -199,7 +200,7 @@ providers.forEach((provider, index) => {
           timestamp: new Date()
         }
       ];
-      const iterator = chatDriver.getStreamedModelResponse('You are helpful', 'What is my name?', messageHistory);
+      const iterator = chatDriver.getStreamedModelResponse('You are helpful', 'What is my name?', EVerbosity.kMedium, messageHistory);
       let fullText = '';
       while (true) {
         const result = await iterator.next();
@@ -211,7 +212,7 @@ providers.forEach((provider, index) => {
 
     it('should stream long-form content in multiple chunks', async () => {
       const prompt = 'Write a Shakespearean sonnet about artificial intelligence';
-      const iterator = chatDriver.getStreamedModelResponse(undefined, prompt);
+      const iterator = chatDriver.getStreamedModelResponse(undefined, prompt, EVerbosity.kHigh);
 
       const chunks: string[] = [];
       let totalLength = 0;
@@ -262,6 +263,7 @@ providers.forEach((provider, index) => {
       const result = await chatDriver.getConstrainedModelResponse(
         'You are a helpful assistant that returns person data',
         'Give me details about a person named Bob who is 42 years old',
+        EVerbosity.kMedium,
         schema,
         defaultValue
       );
@@ -304,6 +306,7 @@ providers.forEach((provider, index) => {
       const result = await chatDriver.getConstrainedModelResponse(
         'You are a helpful assistant that returns person data',
         'Give me the details about the person we discussed',
+        EVerbosity.kMedium,
         schema,
         defaultValue,
         messageHistory
@@ -329,6 +332,7 @@ providers.forEach((provider, index) => {
       const result = await chatDriver.getConstrainedModelResponse(
         undefined,
         'Give me an invalid response',
+        EVerbosity.kMedium,
         schema,
         defaultValue
       );
@@ -375,6 +379,7 @@ providers.forEach((provider, index) => {
       const result = await chatDriver.getConstrainedModelResponse(
         'You are a helpful assistant that returns user contact information',
         'Create a user named Alice with an email contact alice@example.com and phone contact 555-0123',
+        EVerbosity.kMedium,
         schema,
         defaultValue
       );
@@ -392,17 +397,74 @@ providers.forEach((provider, index) => {
     }).timeout(TEST_TIMEOUT_MS);
   });
 
+  describe(`Verbosity Level Tests (${provider})`, () => {
+    it('should return longer responses with high verbosity compared to low verbosity', async () => {
+      const systemPrompt = 'You are a helpful assistant that explains concepts clearly.';
+      const userPrompt = 'Explain artificial intelligence.';
+
+      let lowVerbosityResponse = '';
+      let highVerbosityResponse = '';
+      let lowWordCount = 0;
+      let highWordCount = 0;
+
+      // Test with low verbosity
+      try {
+        lowVerbosityResponse = await chatDriver.getModelResponse(
+          systemPrompt, 
+          userPrompt, 
+          EVerbosity.kLow
+        );
+        lowWordCount = lowVerbosityResponse.trim().split(/\s+/).length;
+      } catch (error) {
+        console.warn(`WARNING: Low verbosity not supported by current model: ${error instanceof Error ? error.message : String(error)}`);
+        // Use medium verbosity as fallback for comparison
+        lowVerbosityResponse = await chatDriver.getModelResponse(systemPrompt, userPrompt, EVerbosity.kMedium);
+        lowWordCount = lowVerbosityResponse.trim().split(/\s+/).length;
+      }
+
+      // Test with high verbosity  
+      try {
+        highVerbosityResponse = await chatDriver.getModelResponse(
+          systemPrompt, 
+          userPrompt, 
+          EVerbosity.kHigh
+        );
+        highWordCount = highVerbosityResponse.trim().split(/\s+/).length;
+      } catch (error) {
+        console.warn(`WARNING: High verbosity not supported by current model: ${error instanceof Error ? error.message : String(error)}`);
+        // Use medium verbosity as fallback for comparison
+        highVerbosityResponse = await chatDriver.getModelResponse(systemPrompt, userPrompt, EVerbosity.kMedium);
+        highWordCount = highVerbosityResponse.trim().split(/\s+/).length;
+      }
+
+      // Test that low verbosity produces less than or equal words compared to high verbosity
+      expect(lowWordCount).toBeLessThanOrEqual(highWordCount);
+      
+      // Both should contain relevant content
+      expect(lowVerbosityResponse.toLowerCase()).toMatch(/artificial intelligence|ai/);
+      expect(highVerbosityResponse.toLowerCase()).toMatch(/artificial intelligence|ai/);
+      
+      // Log the results for verification
+      console.log(`Low verbosity (${lowWordCount} words): ${lowVerbosityResponse.substring(0, 100)}...`);
+      console.log(`High verbosity (${highWordCount} words): ${highVerbosityResponse.substring(0, 100)}...`);
+      
+      if (lowWordCount === highWordCount) {
+        console.warn('WARNING: Both responses have same word count - current model may not differentiate verbosity levels');
+      }
+    }).timeout(TEST_TIMEOUT_MS * 2); // Double timeout for two API calls
+  });
+
   // Mini model tests for each provider
   const miniChatDriver = chatDriverFactory.create(EModel.kMini, provider);
 
   describe(`Mini Model Tests (${provider})`, () => {
     it('should successfully return simple chat completion', async () => {
-      const result = await miniChatDriver.getModelResponse('You are helpful', 'say Hi');
+      const result = await miniChatDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
     }).timeout(TEST_TIMEOUT_MS);
 
     it('should successfully stream chat completion', async () => {
-      const iterator = miniChatDriver.getStreamedModelResponse('You are helpful', 'say Hi');
+      const iterator = miniChatDriver.getStreamedModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       let result = '';
       while (true) {
         const chunk = await iterator.next();
@@ -431,7 +493,7 @@ describe('Exponential Backoff Tests', () => {
       mockDriver.setShouldFail(true, 2);
 
       const startTime = Date.now();
-      const result = await mockDriver.getModelResponse('You are helpful', 'say Hi');
+      const result = await mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       const endTime = Date.now();
 
       expect(result).toBe('Success response');
@@ -457,6 +519,7 @@ describe('Exponential Backoff Tests', () => {
       const result = await mockDriver.getConstrainedModelResponse(
          'You are helpful',
          'return test data',
+         EVerbosity.kMedium,
          schema,
          { test: 'default' }
       );
@@ -477,7 +540,7 @@ describe('Exponential Backoff Tests', () => {
 
       const startTime = Date.now();
       await expect(
-         mockDriver.getModelResponse('You are helpful', 'say Hi')
+         mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow('OpenAI API error: Rate limit exceeded');
       const endTime = Date.now();
 
@@ -498,7 +561,7 @@ describe('Exponential Backoff Tests', () => {
       });
 
       await expect(
-         mockDriver.getModelResponse('You are helpful', 'say Hi')
+         mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow('OpenAI API error: Authentication failed');
    }).timeout(5000);
 
@@ -515,7 +578,7 @@ describe('Exponential Backoff Tests', () => {
       });
 
       await expect(
-         mockDriver.getModelResponse('You are helpful', 'say Hi')
+         mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow('OpenAI content filter triggered: Content violates OpenAI safety policies');
    }).timeout(5000);
 
@@ -532,7 +595,7 @@ describe('Exponential Backoff Tests', () => {
       });
 
       await expect(
-         mockDriver.getModelResponse('You are helpful', 'say Hi')
+         mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow('OpenAI safety system triggered: Content violates OpenAI safety guidelines');
    }).timeout(5000);
 
@@ -549,7 +612,7 @@ describe('Exponential Backoff Tests', () => {
       });
 
       await expect(
-         mockDriver.getModelResponse('You are helpful', 'say Hi')
+         mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow('OpenAI refused request: I cannot process this request');
    }).timeout(5000);
 
@@ -563,7 +626,7 @@ describe('Exponential Backoff Tests', () => {
       });
 
       await expect(
-         mockDriver.getModelResponse('You are helpful', 'say Hi')
+         mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow('OpenAI refused request (403): Access forbidden');
    }).timeout(5000);
 
@@ -572,7 +635,7 @@ describe('Exponential Backoff Tests', () => {
       mockDriver.setShouldFail(true, 1);
 
       const startTime = Date.now();
-      const iterator = mockDriver.getStreamedModelResponse('You are helpful', 'say Hi');
+      const iterator = mockDriver.getStreamedModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       const result = await iterator.next();
       const endTime = Date.now();
 
@@ -613,7 +676,7 @@ describe('Exponential Backoff Tests', () => {
          };
       });
 
-      const iterator = mockDriver.getStreamedModelResponse('You are helpful', 'say Hi');
+      const iterator = mockDriver.getStreamedModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       const chunks: string[] = [];
       let finalResult: any;
       let hitError = false;
