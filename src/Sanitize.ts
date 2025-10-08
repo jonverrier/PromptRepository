@@ -21,12 +21,19 @@ export function sanitizeInputString(input: string | null | undefined): string {
 /**
  * Sanitizes a string by removing potentially dangerous characters and sensitive information
  * @param input The string to sanitize
+ * @param preserveLineFeeds Optional flag to preserve line feeds (\n) and carriage returns (\r). Defaults to false.
  * @returns A sanitized string with control characters, HTML tags, and sensitive data (emails, credit cards, phone numbers) removed
  */
-export function sanitizeOutputString (input: string | null | undefined): string {
+export function sanitizeOutputString (input: string | null | undefined, preserveLineFeeds: boolean = false): string {
    if (!input) return '';
+   
+   // Create control character regex based on preserveLineFeeds flag
+   const controlCharRegex = preserveLineFeeds 
+       ? /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g  // Exclude \x09 (tab), \x0A (LF), \x0D (CR)
+       : /[\x00-\x1F\x7F-\x9F]/g;                    // Remove all control characters
+   
    return input
-       .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Remove control characters
+       .replace(controlCharRegex, '') // Remove control characters (conditionally preserving line feeds)
        .replace(/<[^>]*>/g, '') // Remove HTML tags
        .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL]') // Replace email addresses
        .replace(/[a-zA-Z0-9._%+-]+\\@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL]') // Replace escaped email addresses
