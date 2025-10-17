@@ -36,6 +36,34 @@ export class InvalidOperationError extends Error {
    }
 }
 
+/**
+ * Represents an error thrown when a connection operation fails.
+ * @param {string} message - The error message describing the connection failure.
+ */
+export class ConnectionError extends Error {
+   constructor(message?: string) {
+      super(message);
+      // see: typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html
+      Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
+      this.name = ConnectionError.name; // stack traces display correctly now
+   }
+}
+
+/**
+ * Represents an error thrown when an object is in an invalid state for the requested operation.
+ * @param {string} message - The error message describing the invalid state.
+ */
+export class InvalidStateError extends Error {
+   constructor(message?: string) {
+      super(message);
+      // see: typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html
+      Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
+      this.name = InvalidStateError.name; // stack traces display correctly now
+   }
+}
+
+
+
 export const throwIfUndefined: <T, >(x: T | undefined) => asserts x is T = x => {
    if (typeof x === "undefined") throw new ReferenceError("Value is undefined.");
 }

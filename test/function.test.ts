@@ -8,7 +8,7 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { ChatDriverFactory, EModelProvider, EModel } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EVerbosity } from '../src/entry';
 import { IFunction, EDataType, IFunctionArgs } from '../src/Function';
 
 const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
@@ -287,9 +287,10 @@ describe('Function Call Counting and Content Verification Tests', () => {
       // Test non-streaming response
       it(`${testName} (getModelResponse)`, async () => {
          const initialCallCount = getCallCount();
-         const result = await chatDriver.getModelResponse(
+         const result = await chatDriver.getModelResponseWithForcedTools(
             systemPrompt,
             userPrompt,
+            EVerbosity.kMedium,
             undefined, // messageHistory
             functions
          );
@@ -325,9 +326,10 @@ describe('Function Call Counting and Content Verification Tests', () => {
       // Test streaming response
       it(`${testName} (getStreamedModelResponse)`, async () => {
          const initialCallCount = getCallCount();
-         const iterator = chatDriver.getStreamedModelResponse(
+         const iterator = chatDriver.getStreamedModelResponseWithForcedTools(
             systemPrompt,
             userPrompt,
+            EVerbosity.kMedium,
             undefined, // messageHistory
             functions
          );
@@ -407,15 +409,56 @@ describe('Function Call Counting and Content Verification Tests', () => {
             ['alex palou', '656'] // Expected facts from function
          );
 
-         testFunctionCallCounting(
-            chatDriver,
-            'should handle multiple questions without calling function for non-motorsport queries',
-            'You are a helpful assistant that can call functions to get motorsport information. Only call the get_leading_driver function when specifically asked about motorsport drivers.',
-            'What is the weather like today?',
-            [createMotorsportFunction('basic')],
-            0, // Expected call count (no function should be called)
-            [] // No expected facts
-         );
+         // Test non-motorsport queries (should NOT call functions)
+         it('should handle multiple questions without calling function for non-motorsport queries (getModelResponse)', async () => {
+            const initialCallCount = getCallCount();
+            const result = await chatDriver.getModelResponse(
+               'You are a helpful assistant that can call functions to get motorsport information. Only call the get_leading_driver function when specifically asked about motorsport drivers.',
+               'What is the weather like today?',
+               EVerbosity.kMedium,
+               undefined, // messageHistory
+               [createMotorsportFunction('basic')]
+            );
+            
+            const finalCallCount = getCallCount();
+            const actualCallCount = finalCallCount - initialCallCount;
+            
+            // Verify function was NOT called
+            expect(actualCallCount).toBe(0);
+            
+            // Verify response is reasonable for weather query
+            expect(result.length).toBeGreaterThan(10);
+         }).timeout(TEST_TIMEOUT_MS);
+
+         it('should handle multiple questions without calling function for non-motorsport queries (getStreamedModelResponse)', async () => {
+            const initialCallCount = getCallCount();
+            const iterator = chatDriver.getStreamedModelResponse(
+               'You are a helpful assistant that can call functions to get motorsport information. Only call the get_leading_driver function when specifically asked about motorsport drivers.',
+               'What is the weather like today?',
+               EVerbosity.kMedium,
+               undefined, // messageHistory
+               [createMotorsportFunction('basic')]
+            );
+            
+            const chunks: string[] = [];
+            while (true) {
+               const result = await iterator.next();
+               if (result.done) break;
+               if (result.value) {
+                  chunks.push(result.value);
+               }
+            }
+            
+            const finalCallCount = getCallCount();
+            const actualCallCount = finalCallCount - initialCallCount;
+            
+            // Verify function was NOT called
+            expect(actualCallCount).toBe(0);
+            
+            // Verify response is reasonable for weather query
+            const fullText = chunks.join('');
+            expect(fullText.length).toBeGreaterThan(10);
+         }).timeout(TEST_TIMEOUT_MS);
       });
    });
 });

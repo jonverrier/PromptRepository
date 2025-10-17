@@ -12,7 +12,7 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { IPrompt, IPromptRepository, EModel, EModelProvider, EVerbosity } from '../src/entry';
+import { IPrompt, IPromptRepository, EModel, EModelProvider, EVerbosity, TEST_TARGET_SUPPORTS_VERBOSITY } from '../src/entry';
 import { ChatDriverFactory } from '../src/ChatFactory';
 import { PromptInMemoryRepository } from '../src/PromptRepository';
 import prompts from './template-prompt.json';
