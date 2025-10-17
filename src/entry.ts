@@ -12,10 +12,17 @@ export { PromptFileRepository, PromptInMemoryRepository } from "./PromptReposito
 export { ChatDriverFactory } from "./ChatFactory";
 export { EmbeddingDriverFactory } from "./EmbedFactory";
 export { cosineSimilarity as CosineSimilarity } from "./Embed";
-export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError } from "./Asserts";
+export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError, ConnectionError, InvalidStateError } from "./Asserts";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
 export { IFunction, IFunctionArgs, EDataType } from "./Function";
 export { sanitizeInputString, sanitizeOutputString } from "./Sanitize";
+
+/**
+ * Global test configuration flag to control verbosity parameter usage.
+ * Set to false when testing with models that don't support EVerbosity.kLow/kHigh (e.g., GPT-4).
+ * Set to true when testing with models that support all verbosity levels.
+ */
+export const TEST_TARGET_SUPPORTS_VERBOSITY = false;
 
 /**
  * Enum representing parameter types as strings
@@ -249,6 +256,40 @@ export interface IChatDriver {
       systemPrompt: string | undefined,
       userPrompt: string,
       verbosity: EVerbosity,      
+      messageHistory?: IChatMessage[],
+      functions?: IFunction[]
+   ): AsyncIterator<string>;
+
+   /**
+    * Retrieves a chat response from the model with forced tool usage
+    * @param systemPrompt The system prompt to send to the model
+    * @param userPrompt The user prompt to send to the model
+    * @param verbosity The verbosity of the response
+    * @param messageHistory Optional array of previous chat messages
+    * @param functions Optional array of functions to pass to the model
+    * @returns The response from the model
+    */
+   getModelResponseWithForcedTools(
+      systemPrompt: string | undefined,
+      userPrompt: string,
+      verbosity: EVerbosity,
+      messageHistory?: IChatMessage[],
+      functions?: IFunction[]
+   ): Promise<string>;
+
+   /**
+    * Retrieves a streamed chat response from the model with forced tool usage
+    * @param systemPrompt The system prompt to send to the model
+    * @param userPrompt The user prompt to send to the model
+    * @param verbosity The verbosity of the response
+    * @param messageHistory Optional array of previous chat messages
+    * @param functions Optional array of functions to pass to the model
+    * @returns The response from the model
+    */
+   getStreamedModelResponseWithForcedTools(
+      systemPrompt: string | undefined,
+      userPrompt: string,
+      verbosity: EVerbosity,
       messageHistory?: IChatMessage[],
       functions?: IFunction[]
    ): AsyncIterator<string>;

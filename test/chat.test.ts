@@ -8,7 +8,7 @@
 
 import { expect } from 'expect';
 import { describe, it, beforeEach, afterEach } from 'mocha';
-import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, TEST_TARGET_SUPPORTS_VERBOSITY } from '../src/entry';
 import { OpenAIModelChatDriver } from '../src/Chat';
 
 const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
@@ -28,8 +28,9 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
       super(EModel.kLarge);
       // Mock the OpenAI client
       (this as any).openai = {
-         responses: {
-            create: async (config: any) => {
+         chat: {
+            completions: {
+               create: async (config: any) => {
                if (this.shouldFail && this.failCount < this.maxFailures) {
                   this.failCount++;
                   const error: any = new Error('Rate limit exceeded');
@@ -42,31 +43,41 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
                   return {
                      [Symbol.asyncIterator]: () => ({
                         next: async () => ({
-                           value: { delta: 'Success response' },
+                           value: { 
+                              choices: [{ 
+                                 delta: { content: 'Success response' } 
+                              }] 
+                           },
                            done: false
                         })
                      })
                   };
                }
                
-               // Return new API format with output array
+               // Return OpenAI chat completions format
+               if (config.response_format) {
+                  // For constrained responses, return JSON
+                  return { 
+                     choices: [
+                        {
+                           message: {
+                              content: JSON.stringify({ test: 'data' })
+                           }
+                        }
+                     ]
+                  };
+               }
+               
                return { 
-                  output: [
+                  choices: [
                      {
-                        type: 'text',
-                        content: 'Success response'
+                        message: {
+                           content: 'Success response'
+                        }
                      }
                   ]
                };
-            },
-            parse: async (config: any) => {
-               if (this.shouldFail && this.failCount < this.maxFailures) {
-                  this.failCount++;
-                  const error: any = new Error('Rate limit exceeded');
-                  error.status = 429;
-                  throw error;
                }
-               return { output_parsed: { test: 'data' } };
             }
          }
       };
@@ -92,7 +103,7 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
 
    // Method to override the mock for specific tests
    setMockCreate(mockFn: () => Promise<any>) {
-      (this as any).openai.responses.create = mockFn;
+      (this as any).openai.chat.completions.create = mockFn;
    }
 
    async getConstrainedModelResponse<T>(
@@ -114,10 +125,28 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
             error.status = 429;
             throw error;
          }
-         return (this as any).openai.responses.parse({ jsonSchema });
+         return (this as any).openai.chat.completions.create({ 
+            response_format: { 
+               type: "json_schema", 
+               json_schema: { 
+                  strict: true, 
+                  name: "constrainedOutput", 
+                  schema: jsonSchema 
+               } 
+            } 
+         });
       });
       
-      return ({ test: 'data' } as T);
+      // Parse the JSON content from the response
+      const content = response.choices?.[0]?.message?.content;
+      if (content) {
+         try {
+            return JSON.parse(content) as T;
+         } catch (parseError) {
+            return defaultValue;
+         }
+      }
+      return defaultValue;
    }
 }
 
@@ -398,7 +427,12 @@ providers.forEach((provider, index) => {
   });
 
   describe(`Verbosity Level Tests (${provider})`, () => {
-    it('should return longer responses with high verbosity compared to low verbosity', async () => {
+    it('should return longer responses with high verbosity compared to low verbosity', async function() {
+      if (!TEST_TARGET_SUPPORTS_VERBOSITY) {
+        this.skip();
+        return;
+      }
+
       const systemPrompt = 'You are a helpful assistant that explains concepts clearly.';
       const userPrompt = 'Explain artificial intelligence.';
 
@@ -660,8 +694,9 @@ describe('Exponential Backoff Tests', () => {
                      // Return successful chunks
                      return {
                         value: {
-                           type: 'response.output_text.delta',
-                           delta: `Chunk ${chunkCount} `
+                           choices: [{
+                              delta: { content: `Chunk ${chunkCount} ` }
+                           }]
                         },
                         done: false
                      };
