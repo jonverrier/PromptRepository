@@ -11,8 +11,8 @@ import { EModel, EModelProvider } from './entry';
 import { OpenAIModelEmbeddingDriver } from './Embed';
 
 const AZURE_DEPLOYMENTS = {
-   LARGE: "StudioEmbeddingLarge",
-   MINI: "StudioEmbeddingSmall"
+   LARGE: "text-embedding-3-large",
+   MINI: "text-embedding-3-small"
 } as const;
 
 /**
@@ -45,7 +45,7 @@ export class AzureOpenAIEmbeddingDriver extends OpenAIModelEmbeddingDriver {
          apiKey: process.env.AZURE_OPENAI_API_KEY,
          endpoint: process.env.AZURE_OPENAI_ENDPOINT,
          deployment: this.deploymentName,
-         apiVersion: "2024-06-01"
+         apiVersion: "2024-02-01"
       });
    }
 
