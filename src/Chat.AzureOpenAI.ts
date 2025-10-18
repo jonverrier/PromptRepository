@@ -12,8 +12,8 @@ import { EModel, IChatMessage, IFunction } from './entry';
 import { OpenAIModelChatDriver } from './Chat';
 
 const AZURE_DEPLOYMENTS = {
-   LARGE: "Studio41Large",
-   MINI: "Studio41Small"
+   LARGE: "gpt-4.1",
+   MINI: "gpt-4.1-mini"
 } as const;
 
 /**
@@ -44,7 +44,7 @@ export class AzureOpenAIChatDriver extends OpenAIModelChatDriver {
          apiKey: process.env.AZURE_OPENAI_API_KEY,
          endpoint: process.env.AZURE_OPENAI_ENDPOINT,
          deployment: this.deployment,
-         apiVersion: "2025-03-01-preview"
+         apiVersion: "2024-12-01-preview"
       });
    }
 
