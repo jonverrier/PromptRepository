@@ -17,7 +17,7 @@
     "watch": "tsc -b -w",
     "clean": "rimraf dist",
     "test": "mocha --require ts-node/register --extensions ts,js Test/**/*.test.ts --exit",
-    "test-mini": "mocha --require ts-node/register --extensions ts,js Test/**/*.test.ts -g \"stream\" --exit"    
+    "test-mini": "mocha --require ts-node/register --extensions ts,js Test/**/*.test.ts -g \"slack\" --exit"    
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
