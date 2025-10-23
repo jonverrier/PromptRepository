@@ -226,7 +226,18 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 5. Push to the branch (`git push origin feature/AmazingFeature`)
 6. Open a Pull Request against the development branch in the main repo.
 
-**Note**: The CI/CD pipeline runs basic unit tests only. Ensure your local integration tests pass before submitting PRs. 
+**Note**: The CI/CD pipeline runs basic unit tests only. Ensure your local integration tests pass before submitting PRs.
+
+## Publishing Releases
+
+This package is automatically published to GitHub Packages when you create a release:
+
+1. **Update version**: `npm version patch|minor|major` (updates package.json and creates git tag)
+2. **Push changes**: `git push && git push --tags`
+3. **Create GitHub Release**: Go to GitHub → Releases → Create new release using the version tag
+4. **Automatic Publishing**: The GitHub Actions workflow will automatically build, test, and publish the package
+
+The package is **only** published on releases, not on every commit, to maintain clean version management.
 
 Copyright (c) 2025 Jon Verrier
 
