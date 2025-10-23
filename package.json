@@ -25,7 +25,8 @@
   "scripts": {
     "start": "ts-node entry.ts",
     "build": "tsc -b",
-    "install": "echo \"No local packages.\"",
+    "prepare": "npm run build",
+    "dev": "npm run build && npm run watch",
     "make_prompt_ids": "ts-node src/MakePromptIds.ts",
     "watch": "tsc -b -w",
     "clean": "rimraf dist",
@@ -33,6 +34,9 @@
     "test:ci": "mocha --require ts-node/register --extensions ts,js test/promptrepository.test.ts test/prompts.test.ts test/makepromptids.test.ts test/sanitize.test.ts --exit",
     "test:integration": "mocha --require ts-node/register --extensions ts,js test/chat.test.ts test/embed.test.ts test/function.test.ts test/prompts.eval.test.ts --exit",
     "test-mini": "mocha --require ts-node/register --extensions ts,js test/**/*.test.ts -g \"slack\" --exit"    
+  },
+  "peerDependencies": {
+    "openai": "^4.89.1"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
