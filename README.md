@@ -80,11 +80,30 @@ This approach (bundling a framework with prompts to generate code to use the fra
 
 ## Usage - Prompt Respository
 
-1. Install the package:
+1. Install the package from GitHub Packages:
+
+First, configure npm to use GitHub Packages for the `@jonverrier` scope by creating or updating your `.npmrc` file:
 
 ```bash
-npm install /path/to/PromptRepository/
-``` 
+echo "@jonverrier:registry=https://npm.pkg.github.com" >> ~/.npmrc
+```
+
+Then install the package:
+
+```bash
+npm install @jonverrier/prompt-repository
+```
+
+**Note**: You'll need a GitHub personal access token with `read:packages` permission to install packages from GitHub Packages. Set it as an environment variable:
+
+```bash
+export NODE_AUTH_TOKEN=your_github_token_here
+```
+
+Or add it to your `.npmrc` file:
+```
+//npm.pkg.github.com/:_authToken=your_github_token_here
+```
 
 Ensure you have set your OpenAI API key as an environment variable: OPENAI_API_KEY
 
@@ -132,7 +151,7 @@ Ensure you have set your OpenAI API key as an environment variable: OPENAI_API_K
 3. Use the prompts in your TypeScript project:
 
 ```typescript
-import { PromptFileRepository} from "PromptRepository";
+import { PromptFileRepository} from "@jonverrier/prompt-repository";
 
 const fileName = "template-prompt.json";
 const filePath = path.join(__dirname, fileName);

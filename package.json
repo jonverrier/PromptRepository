@@ -1,11 +1,24 @@
 {
-  "name": "prompt-repository",
+  "name": "@jonverrier/prompt-repository",
   "version": "0.2.0",
   "description": "Managing Prompts and standardised Unit Evals ",
   "main": "dist/src/entry.js",
+  "types": "dist/src/entry.d.ts",
   "directories": {
     "src": "src",
     "test": "test"
+  },
+  "files": [
+    "dist/src/**/*",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonverrier/PromptRepository.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "author": "Jon Verrier",
   "license": "MIT",
