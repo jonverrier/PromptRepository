@@ -186,15 +186,47 @@ You should see something like this:
 
 Run the prompt & Cursor should generate a decent set of Unit-test level Evals for you. 
 
+## Testing Strategy
+
+This project uses a tiered testing approach to balance comprehensive testing with CI/CD efficiency:
+
+### Local Development (Full Test Suite)
+```bash
+npm test                    # Run all tests (requires OpenAI API key)
+npm run test:integration    # Run only integration tests (requires API key)
+```
+
+### CI/CD (Basic Unit Tests)
+```bash
+npm run test:ci            # Run unit tests only (no API key required)
+```
+
+**Test Categories:**
+- **Unit Tests** (`test:ci`): Core functionality without external dependencies
+  - Prompt repository operations
+  - Parameter validation and templating
+  - String sanitization
+  - ID generation utilities
+- **Integration Tests** (`test:integration`): Full LLM interactions
+  - Chat completions with OpenAI/Azure OpenAI
+  - Embedding generation
+  - Function calling
+  - Streaming responses
+
+The GitHub Actions workflow runs only the unit tests to avoid requiring API keys in CI/CD, while developers run the full test suite locally before pushing to main.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request against the development branch in the main repo. 
+3. **Run the full test suite locally** (`npm test`) to ensure integration tests pass
+4. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+5. Push to the branch (`git push origin feature/AmazingFeature`)
+6. Open a Pull Request against the development branch in the main repo.
+
+**Note**: The CI/CD pipeline runs basic unit tests only. Ensure your local integration tests pass before submitting PRs. 
 
 Copyright (c) 2025 Jon Verrier
 
