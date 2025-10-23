@@ -30,6 +30,8 @@
     "watch": "tsc -b -w",
     "clean": "rimraf dist",
     "test": "mocha --require ts-node/register --extensions ts,js test/**/*.test.ts --exit",
+    "test:ci": "mocha --require ts-node/register --extensions ts,js test/promptrepository.test.ts test/prompts.test.ts test/makepromptids.test.ts test/sanitize.test.ts --exit",
+    "test:integration": "mocha --require ts-node/register --extensions ts,js test/chat.test.ts test/embed.test.ts test/function.test.ts test/prompts.eval.test.ts --exit",
     "test-mini": "mocha --require ts-node/register --extensions ts,js test/**/*.test.ts -g \"slack\" --exit"    
   },
   "devDependencies": {

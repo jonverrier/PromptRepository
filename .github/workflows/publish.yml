@@ -34,8 +34,8 @@ jobs:
       - name: Build package
         run: npm run build
         
-      - name: Run tests
-        run: npm test
+      - name: Run CI tests (no API keys required)
+        run: npm run test:ci
         
       - name: Publish to GitHub Packages
         run: npm publish
