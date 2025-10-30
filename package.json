@@ -27,13 +27,19 @@
     "build": "tsc -b",
     "prepare": "npm run build",
     "dev": "npm run build && npm run watch",
-    "make_prompt_ids": "ts-node src/MakePromptIds.ts",
+    "make_prompt_ids": "ts-node scripts/MakePromptIds.ts",
     "watch": "tsc -b -w",
     "clean": "rimraf dist",
     "test": "mocha --require ts-node/register --extensions ts,js test/**/*.test.ts --exit",
     "test:ci": "mocha --require ts-node/register --extensions ts,js test/promptrepository.test.ts test/prompts.test.ts test/makepromptids.test.ts test/sanitize.test.ts --exit",
     "test:integration": "mocha --require ts-node/register --extensions ts,js test/chat.test.ts test/embed.test.ts test/function.test.ts test/prompts.eval.test.ts --exit",
+<<<<<<< HEAD
     "test-mini": "mocha --require ts-node/register --extensions ts,js test/**/*.test.ts -g \"slack\" --exit"
+=======
+    "test-mini": "mocha --require ts-node/register --extensions ts,js test/**/*.test.ts -g \"slack\" --exit",
+    "cover": "nyc --reporter=html --reporter=text --reporter=lcov --extension .ts --exclude \"**/*.test.ts\" --exclude \"test/**\" npm run test",
+    "cover:json": "nyc --reporter=json --report-dir=.nyc_output --extension .ts --exclude \"**/*.test.ts\" --exclude \"test/**\" npm run test"    
+>>>>>>> develop
   },
   "peerDependencies": {
     "openai": "^4.89.1"
@@ -43,10 +49,36 @@
     "@types/node": "^22.13.8",
     "expect": "^29.7.0",
     "mocha": "^11.0.1",
+    "nyc": "^17.1.0",
     "openai": "^4.89.1",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
     "typescript": "^5.7.3"
+  },
+  "nyc": {
+    "include": [
+      "src/**/*.ts",
+      "src/**/*.tsx"
+    ],
+    "extension": [
+      ".ts",
+      ".tsx"
+    ],
+    "exclude": [
+      "**/*.d.ts",
+      "**/*.test.ts",
+      "test/**",
+      "dist/**",
+      "coverage/**",
+      "node_modules/**"
+    ],
+    "reporter": [
+      "html",
+      "text",
+      "lcov"
+    ],
+    "all": true,
+    "check-coverage": false
   }
 }

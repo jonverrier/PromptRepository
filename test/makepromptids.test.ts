@@ -16,7 +16,7 @@ import { expect } from 'expect';
 import { describe, it, afterEach } from 'mocha';
 import fs from 'fs';
 import path from 'path';
-import { generateJsonIds } from '../src/MakePromptIds';
+import { generateJsonIds } from '../scripts/MakePromptIds';
 
 
 describe('generateJsonIds', () => {

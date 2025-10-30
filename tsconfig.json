@@ -25,6 +25,7 @@
    "references": [],
    "include": [
       "**/*.json",
-      "src/**/*.ts"
+      "src/**/*.ts",
+      "scripts/**/*.ts"
    ]
 }
