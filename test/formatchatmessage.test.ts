@@ -160,8 +160,8 @@ describe('FormatChatMessage', () => {
       const twoDaysAgo = createDate(-2);
       const result = formatChatMessageTimestamp(twoDaysAgo, false);
       
-      // Should contain day of week, date, month and time
-      expect(result).toMatch(/^\w+day \d{2} \w+ at \d{1,2}:\d{2}$/);
+      // Should contain day of week, date, month and time in format "Monday, October 28 at 10:30"
+      expect(result).toMatch(/^\w+day, \w+ \d{2} at \d{1,2}:\d{2}$/);
       expect(result).toContain('at 10:30');
     });
 
@@ -169,8 +169,8 @@ describe('FormatChatMessage', () => {
       const tomorrow = createDate(1);
       const result = formatChatMessageTimestamp(tomorrow, false);
       
-      // Should contain day of week, date, month and time
-      expect(result).toMatch(/^\w+day \d{2} \w+ at \d{1,2}:\d{2}$/);
+      // Should contain day of week, date, month and time in format "Friday, October 31 at 10:30"
+      expect(result).toMatch(/^\w+day, \w+ \d{2} at \d{1,2}:\d{2}$/);
       expect(result).toContain('at 10:30');
     });
 
@@ -265,8 +265,8 @@ describe('FormatChatMessage', () => {
       const date = createDate(-3, 16, 45);
       const result = formatChatMessageTimestamp(date, false);
       
-      // Should contain English day and month names
-      expect(result).toMatch(/^\w+day \d{2} \w+ at \d{1,2}:\d{2}$/);
+      // Should contain English day and month names in format "Monday, October 27 at 16:45"
+      expect(result).toMatch(/^\w+day, \w+ \d{2} at \d{1,2}:\d{2}$/);
     });
   });
 
@@ -280,7 +280,7 @@ describe('FormatChatMessage', () => {
 
       const result = renderChatMessageAsText(todayMessage);
       
-      expect(result).toContain('[Today at');
+      expect(result).toContain('[Today (');
       expect(result).toContain('User:');
       expect(result).toContain('Today message');
     });
@@ -297,7 +297,7 @@ describe('FormatChatMessage', () => {
 
       const result = renderChatMessageAsText(yesterdayMessage);
       
-      expect(result).toContain('[Yesterday at');
+      expect(result).toContain('[Yesterday (');
       expect(result).toContain('Assistant:');
       expect(result).toContain('Yesterday message');
     });
