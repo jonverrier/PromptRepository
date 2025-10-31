@@ -85,8 +85,5 @@
     ],
     "all": true,
     "check-coverage": false
-  },
-  "dependencies": {
-    "@jonverrier/assistant-common": "^0.1.1"
   }
 }
