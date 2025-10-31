@@ -47,7 +47,7 @@
     "openai": "^4.89.1"
   },
   "dependencies": {
-    "@jonverrier/assistant-common": "^0.1.0"
+    "@jonverrier/assistant-common": "^0.1.1"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
