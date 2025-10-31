@@ -12,10 +12,9 @@ export { PromptFileRepository, PromptInMemoryRepository } from "./PromptReposito
 export { ChatDriverFactory } from "./ChatFactory";
 export { EmbeddingDriverFactory } from "./EmbedFactory";
 export { cosineSimilarity as CosineSimilarity } from "./Embed";
-export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError, ConnectionError, InvalidStateError } from "./Asserts";
+export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError, ConnectionError, InvalidStateError, sanitizeInputString, sanitizeOutputString } from "@jonverrier/assistant-common";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
 export { IFunction, IFunctionArgs, EDataType } from "./Function";
-export { sanitizeInputString, sanitizeOutputString } from "./Sanitize";
 
 /**
  * Global test configuration flag to control verbosity parameter usage.

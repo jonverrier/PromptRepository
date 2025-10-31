@@ -19,7 +19,7 @@ import path from 'path';
 import os from 'os';
 import { PromptFileRepository, replacePromptPlaceholders } from '../src/PromptRepository';
 import { IPrompt, IPromptParameterSpec, ParameterTypeNumber, ParameterTypeString } from '../src/entry';
-import { throwIfUndefined } from '../src/Asserts';
+import { throwIfUndefined } from '@jonverrier/assistant-common';
 
 let requiredNameParam : IPromptParameterSpec = {
    name: "name",
@@ -110,7 +110,9 @@ describe('PromptRepository', function () {
       expect(prompt?.userPrompt).toEqual("Hello {name}");
 
       throwIfUndefined(prompt);
-      let result = replacePromptPlaceholders(prompt.userPrompt, [requiredNameParam], { name: "Jon" });
+      // TypeScript now knows prompt is defined
+      const definedPrompt: IPrompt = prompt;
+      let result = replacePromptPlaceholders(definedPrompt.userPrompt, [requiredNameParam], { name: "Jon" });
       expect(result).toEqual("Hello Jon");
    });
 
@@ -129,7 +131,9 @@ describe('PromptRepository', function () {
       expect(prompt?.userPrompt).toEqual("Hello {name}");
 
       throwIfUndefined(prompt);
-      let result = replacePromptPlaceholders(prompt.userPrompt, [optionalNameParam], {});
+      // TypeScript now knows prompt is defined
+      const definedPrompt: IPrompt = prompt;
+      let result = replacePromptPlaceholders(definedPrompt.userPrompt, [optionalNameParam], {});
       expect(result).toEqual("Hello Name");
    });
 
@@ -142,13 +146,15 @@ describe('PromptRepository', function () {
 
       // Verify the prompt data
       expect(prompt).toBeDefined();
-      throwIfUndefined(prompt);      
-      prompt.userPrompt = "Hello {age}";      
-      expect(prompt?.id).toEqual("test-prompt-1");
-      expect(prompt?.version).toEqual("1.0");
-      expect(prompt?.systemPrompt).toEqual("You are a test bot");
+      throwIfUndefined(prompt);
+      // TypeScript now knows prompt is defined
+      const definedPrompt: IPrompt = prompt;
+      definedPrompt.userPrompt = "Hello {age}";      
+      expect(definedPrompt?.id).toEqual("test-prompt-1");
+      expect(definedPrompt?.version).toEqual("1.0");
+      expect(definedPrompt?.systemPrompt).toEqual("You are a test bot");
 
-      let result = replacePromptPlaceholders(prompt.userPrompt, [optionalAgeParam], { age: "30" });
+      let result = replacePromptPlaceholders(definedPrompt.userPrompt, [optionalAgeParam], { age: "30" });
       expect(result).toEqual("Hello 30");
    });
 
@@ -167,7 +173,9 @@ describe('PromptRepository', function () {
       expect(prompt?.userPrompt).toEqual("Hello {name}");
 
       throwIfUndefined(prompt);
-      expect(() => replacePromptPlaceholders(prompt.userPrompt, [requiredNameParam], {})).toThrow();
+      // TypeScript now knows prompt is defined
+      const definedPrompt: IPrompt = prompt;
+      expect(() => replacePromptPlaceholders(definedPrompt.userPrompt, [requiredNameParam], {})).toThrow();
    });
 
    it('should correctly load target prompts with replacement parameters', async function () {
@@ -183,12 +191,14 @@ describe('PromptRepository', function () {
       const prompt: IPrompt | undefined = await repo.getPrompt(promptId1);
       expect(prompt).toBeDefined();
       throwIfUndefined(prompt);
+      // TypeScript now knows prompt is defined
+      const definedPrompt: IPrompt = prompt;
 
-      let result = repo.expandSystemPrompt(prompt, { ROLE_DESCRIPTION: "Teaches French", TASK_DESCRIPTION: "Teach the user how to say 'Hello' in French" });
+      let result = repo.expandSystemPrompt(definedPrompt, { ROLE_DESCRIPTION: "Teaches French", TASK_DESCRIPTION: "Teach the user how to say 'Hello' in French" });
       expect(result).toContain("Teaches French");
       expect(result).toContain("Teach the user how to say 'Hello' in French");
 
-      let result2 = repo.expandUserPrompt(prompt, { USER_REQUEST: "How do I say 'Hello' in French?", CONTEXT: "The user is a beginner to French" });
+      let result2 = repo.expandUserPrompt(definedPrompt, { USER_REQUEST: "How do I say 'Hello' in French?", CONTEXT: "The user is a beginner to French" });
       expect(result2).toContain("How do I say 'Hello' in French?");
       expect(result2).toContain("The user is a beginner to French");
    });
