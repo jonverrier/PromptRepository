@@ -1,32 +1,36 @@
-name: Continuous Integration
+name: CI
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main, develop ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          
+          node-version: '22.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@jonverrier'
+
       - name: Install dependencies
         run: npm ci
-        
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build package
         run: npm run build
-        
-      - name: Run CI tests (no API keys required)
+
+      - name: Run CI tests
         run: npm run test:ci
-        
-      - name: Type check
-        run: npx tsc --noEmit
