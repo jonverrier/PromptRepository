@@ -84,6 +84,6 @@
     "check-coverage": false
   },
   "dependencies": {
-    "@jonverrier/assistant-common": "^0.1.0"
+    "@jonverrier/assistant-common": "^0.1.1"
   }
 }
