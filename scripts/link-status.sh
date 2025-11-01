@@ -1,21 +1,9 @@
 #!/bin/bash
-# Check if local AssistantCommon is linked
+# Check if local packages are linked
+# This script calls the shared script from AssistantBuild
 
-echo "🔍 Checking link status..."
-echo ""
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SHARED_SCRIPT="$SCRIPT_DIR/../../AssistantBuild/scripts/git-hooks/link-status.sh"
 
-if [ -L "node_modules/@jonverrier/assistant-common" ]; then
-    TARGET=$(readlink "node_modules/@jonverrier/assistant-common")
-    echo "✅ LINKED to local: $TARGET"
-    echo ""
-    echo "Using local development version"
-else
-    PKG_VERSION=$(node -p "require('./node_modules/@jonverrier/assistant-common/package.json').version" 2>/dev/null)
-    if [ $? -eq 0 ]; then
-        echo "📦 Using GitHub Package version: $PKG_VERSION"
-    else
-        echo "❌ assistant-common not found"
-        echo "   Run: npm install"
-    fi
-fi
-
+# Pass package dependencies to check
+exec "$SHARED_SCRIPT" "@jonverrier/assistant-common"

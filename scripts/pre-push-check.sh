@@ -1,35 +1,9 @@
 #!/bin/bash
 # Pre-push hook to verify main branch doesn't have linked packages
-# This prevents pushing main branch with linked packages
+# This script calls the shared script from AssistantBuild
 
-BRANCH=$(git branch --show-current 2>/dev/null || echo "")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SHARED_SCRIPT="$SCRIPT_DIR/../../AssistantBuild/scripts/git-hooks/pre-push-check.sh"
 
-if [ -z "$BRANCH" ]; then
-    # Not in git repo, skip check
-    exit 0
-fi
-
-# Only enforce on main/master branches
-if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
-    if [ -L "node_modules/@jonverrier/assistant-common" ]; then
-        echo ""
-        echo "❌ PRE-PUSH CHECK FAILED"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo ""
-        echo "Cannot push to '$BRANCH' branch with linked packages!"
-        echo ""
-        echo "Main branch must use GitHub Packages only (not local links)."
-        echo ""
-        echo "To fix:"
-        echo "  1. Run: npm run unlink-local"
-        echo "  2. Verify: npm run link-status"
-        echo "  3. Then push again"
-        echo ""
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo ""
-        exit 1
-    fi
-fi
-
-exit 0
-
+# Pass package dependencies to check
+exec "$SHARED_SCRIPT" "@jonverrier/assistant-common"
