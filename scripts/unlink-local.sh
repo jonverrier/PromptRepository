@@ -1,13 +1,9 @@
 #!/bin/bash
-# Unlink local AssistantCommon and restore GitHub package
+# Unlink local packages and restore GitHub packages
+# This script calls the shared script from AssistantBuild
 
-echo "🔓 Unlinking local AssistantCommon..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SHARED_SCRIPT="$SCRIPT_DIR/../../AssistantBuild/scripts/git-hooks/unlink-local.sh"
 
-# Unlink in PromptRepository
-npm unlink @jonverrier/assistant-common
-
-echo "📦 Reinstalling from GitHub Packages..."
-npm install
-
-echo "✅ Done! Now using @jonverrier/assistant-common from GitHub Packages"
-
+# Pass package dependencies to unlink
+exec "$SHARED_SCRIPT" "@jonverrier/assistant-common"
