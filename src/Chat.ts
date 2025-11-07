@@ -283,8 +283,9 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
       // Tool use loop: keep handling tool calls until we get a text response or hit max rounds
       let toolUseRounds = 0;
-      const MAX_TOOL_USE_ROUNDS = 50;
+      const MAX_TOOL_USE_ROUNDS = 5; // Reduce to prevent infinite loops
       let currentMessages = messages;
+      let lastFunctionCall: string | null = null;
       
       while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
          // Check for function/tool calls in Responses API format
@@ -293,9 +294,28 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
             // Extract text content from the output array
             const textContent = this.extractTextFromOutput(output);
             
-            // Check for tool calls in the response
-            if (response.tool_calls && response.tool_calls.length > 0 && functions) {
-               const toolMessages = await this.processOpenAIToolCalls(response.tool_calls, functions);
+            // Check for function calls in the output array (Responses API format)
+            const functionCalls = output.filter((item: any) => item.type === 'function_call');
+            if (functionCalls.length > 0 && functions) {
+               // Check for repeated function calls to prevent infinite loops
+               const currentFunctionCall = `${functionCalls[0].name}:${functionCalls[0].arguments}`;
+               if (lastFunctionCall === currentFunctionCall) {
+                  // Return a helpful message instead of looping
+                  return "I apologize, but I'm having trouble with the function call. Let me provide a direct response instead.";
+               }
+               lastFunctionCall = currentFunctionCall;
+               
+               // Convert Responses API function calls to OpenAI tool call format
+               const convertedCalls = functionCalls.map((call: any) => ({
+                  type: 'function',
+                  function: {
+                     name: call.name,
+                     arguments: call.arguments || '{}'
+                  },
+                  id: call.call_id
+               }));
+               
+               const toolMessages = await this.processOpenAIToolCalls(convertedCalls, functions);
                
                // Add assistant message and tool messages to the conversation history
                const assistantMessage: IChatMessage = {
@@ -323,7 +343,9 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
             if (textContent) {
                return textContent;
             }
-         }            
+         }
+         
+         break;
       }
       throw new Error('No response content received from OpenAI');
    }
@@ -343,8 +365,9 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
       // Tool use loop: keep handling tool calls until we get a text response or hit max rounds
       let toolUseRounds = 0;
-      const MAX_TOOL_USE_ROUNDS = 50;
+      const MAX_TOOL_USE_ROUNDS = 5; // Reduce to prevent infinite loops
       let currentMessages = messages;
+      let lastFunctionCall: string | null = null;
       
       while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
          // Check for function/tool calls in Responses API format

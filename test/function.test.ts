@@ -129,6 +129,7 @@ const testFunctionIntegration = async (
       const result = await chatDriver.getModelResponse(
          systemPrompt,
          userPrompt,
+         EVerbosity.kMedium,
          undefined, // messageHistory
          functions
       );
@@ -141,6 +142,7 @@ const testFunctionIntegration = async (
       const iterator = chatDriver.getStreamedModelResponse(
          systemPrompt,
          userPrompt,
+         EVerbosity.kMedium,
          undefined, // messageHistory
          functions
       );
