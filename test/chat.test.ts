@@ -668,10 +668,17 @@ describe('Exponential Backoff Tests', () => {
 
       const startTime = Date.now();
       const iterator = mockDriver.getStreamedModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
-      const result = await iterator.next();
+      
+      // Collect all chunks to get the complete response
+      let fullResponse = '';
+      while (true) {
+         const result = await iterator.next();
+         if (result.done) break;
+         if (result.value) fullResponse += result.value;
+      }
       const endTime = Date.now();
 
-      expect(result.value).toBe('Success response');
+      expect(fullResponse).toBe('Success response');
       expect(mockDriver.getFailCount()).toBe(1);
 
       // Verify exponential backoff timing
