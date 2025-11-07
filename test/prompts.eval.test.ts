@@ -21,7 +21,7 @@ const typedPrompts = prompts as IPrompt[];
 
 describe('Motor Racing Welcome Prompt Tests', () => {
 
-   const TEST_TIMEOUT = 10000; // 10 seconds
+   const TEST_TIMEOUT = 60000; // 60 seconds (same as other tests for GPT-5 compatibility)
    let prompt: IPrompt = typedPrompts.find(p => p.id === "template-prompt-002")!;
    const promptRepo : IPromptRepository= new PromptInMemoryRepository([prompt]);
    const chatDriverFactory = new ChatDriverFactory();

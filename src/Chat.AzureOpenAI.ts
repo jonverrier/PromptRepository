@@ -1,7 +1,7 @@
 /**
  * @module Chat.AzureOpenAI
  * 
- * Concrete implementation of OpenAIModelChatDriver for Azure OpenAI model.
+ * Concrete implementation of GenericOpenAIChatDriver for Azure OpenAI model.
  * Provides specific configuration for Azure OpenAI model.
  */
 // Copyright (c) 2025 Jon Verrier
@@ -9,7 +9,7 @@
 import { AzureOpenAI } from 'openai';
 import { EChatRole } from './entry';
 import { EModel, IChatMessage, IFunction } from './entry';
-import { OpenAIModelChatDriver } from './Chat';
+import { GenericOpenAIChatDriver } from './Chat.GenericOpenAI';
 
 const AZURE_DEPLOYMENTS = {
    LARGE: "gpt-4.1",
@@ -17,15 +17,15 @@ const AZURE_DEPLOYMENTS = {
 } as const;
 
 /**
- * Concrete implementation of OpenAIModelDriver for Azure OpenAI model.
+ * Concrete implementation of GenericOpenAIChatDriver for Azure OpenAI model.
  * Provides specific configuration for Azure OpenAI model.
  * 
- * @extends {OpenAIModelChatDriver}
+ * @extends {GenericOpenAIChatDriver}
  * 
  * @property {string} model - The Azure OpenAI model identifier to use
  * @property {OpenAI} openai - Instance of Azure OpenAI API client
  */
-export class AzureOpenAIChatDriver extends OpenAIModelChatDriver {
+export class AzureOpenAIChatDriver extends GenericOpenAIChatDriver {
    private deployment: string;
    protected declare openai: AzureOpenAI;
 
@@ -44,7 +44,7 @@ export class AzureOpenAIChatDriver extends OpenAIModelChatDriver {
          apiKey: process.env.AZURE_OPENAI_API_KEY,
          endpoint: process.env.AZURE_OPENAI_ENDPOINT,
          deployment: this.deployment,
-         apiVersion: "2024-12-01-preview"
+         apiVersion: "2025-03-01-preview"
       });
    }
 
