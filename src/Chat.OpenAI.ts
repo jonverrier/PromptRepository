@@ -1,7 +1,7 @@
 /**
  * @module Chat.OpenAI
  * 
- * Concrete implementation of OpenAIModelChatDriver for OpenAI model.
+ * Concrete implementation of GenericOpenAIChatDriver for OpenAI model.
  * Provides specific configuration for OpenAI model.
  */
 // Copyright (c) 2025 Jon Verrier
@@ -9,18 +9,18 @@
 import OpenAI from 'openai';
 import { EChatRole } from './entry';
 import { EModel, IChatMessage, IFunction } from './entry';
-import { OpenAIModelChatDriver } from './Chat';
+import { GenericOpenAIChatDriver } from './Chat.GenericOpenAI';
 
 /**
- * Concrete implementation of OpenAIModelDriver for OpenAI model.
+ * Concrete implementation of GenericOpenAIChatDriver for OpenAI model.
  * Provides specific configuration for OpenAI model.
  * 
- * @extends {OpenAIModelChatDriver}
+ * @extends {GenericOpenAIChatDriver}
  * 
  * @property {string} model - The OpenAI model identifier to use
  * @property {OpenAI} openai - Instance of OpenAI API client
  */
-export class OpenAIChatDriver extends OpenAIModelChatDriver {
+export class OpenAIChatDriver extends GenericOpenAIChatDriver {
    private model: string;
    protected declare openai: OpenAI;
 

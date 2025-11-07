@@ -9,7 +9,7 @@
 import { expect } from 'expect';
 import { describe, it, beforeEach, afterEach } from 'mocha';
 import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, TEST_TARGET_SUPPORTS_VERBOSITY } from '../src/entry';
-import { OpenAIModelChatDriver } from '../src/Chat';
+import { GenericOpenAIChatDriver } from '../src/Chat.GenericOpenAI';
 
 const TEST_TIMEOUT_MS = 60000; // 60 second timeout for all tests (OpenAI GPT-5 can be slow)
 
@@ -19,18 +19,21 @@ const providers = [EModelProvider.kOpenAI, EModelProvider.kAzureOpenAI];
 const chatDrivers = providers.map(provider => chatDriverFactory.create(EModel.kLarge, provider));
 
 // Mock class for testing exponential backoff
-class MockOpenAIChatDriver extends OpenAIModelChatDriver {
+class MockOpenAIChatDriver extends GenericOpenAIChatDriver {
    private failCount = 0;
    private shouldFail = false;
    private maxFailures = 0;
 
    constructor() {
       super(EModel.kLarge);
-      // Mock the OpenAI client
+      // Initialize with default mock
+      this.resetMock();
+   }
+
+   private resetMock() {
       (this as any).openai = {
-         chat: {
-            completions: {
-               create: async (config: any) => {
+         responses: {
+            create: async (config: any) => {
                if (this.shouldFail && this.failCount < this.maxFailures) {
                   this.failCount++;
                   const error: any = new Error('Rate limit exceeded');
@@ -38,46 +41,31 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
                   throw error;
                }
                
-               // If streaming is requested, return a mock stream
-               if (config.stream) {
-                  return {
-                     [Symbol.asyncIterator]: () => ({
-                        next: async () => ({
-                           value: { 
-                              choices: [{ 
-                                 delta: { content: 'Success response' } 
-                              }] 
-                           },
-                           done: false
-                        })
-                     })
-                  };
-               }
-               
-               // Return OpenAI chat completions format
-               if (config.response_format) {
-                  // For constrained responses, return JSON
+               // Return Responses API format
+               if (config.text?.format) {
                   return { 
-                     choices: [
-                        {
-                           message: {
-                              content: JSON.stringify({ test: 'data' })
-                           }
-                        }
-                     ]
+                     output: [{ type: 'text', text: JSON.stringify({ test: 'data' }) }]
                   };
                }
                
                return { 
-                  choices: [
-                     {
-                        message: {
-                           content: 'Success response'
-                        }
-                     }
-                  ]
+                  output: [{ type: 'text', text: 'Success response' }]
                };
+            },
+            stream: async (config: any) => {
+               if (this.shouldFail && this.failCount < this.maxFailures) {
+                  this.failCount++;
+                  const error: any = new Error('Rate limit exceeded');
+                  error.status = 429;
+                  throw error;
                }
+               
+               return {
+                  [Symbol.asyncIterator]: async function* () {
+                     yield { type: 'response.output_text.delta', delta: 'Success ' };
+                     yield { type: 'response.output_text.delta', delta: 'response' };
+                  }
+               };
             }
          }
       };
@@ -95,6 +83,8 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
       this.shouldFail = shouldFail;
       this.maxFailures = maxFailures;
       this.failCount = 0;
+      // Reset to default mock functions
+      this.resetMock();
    }
 
    getFailCount() {
@@ -103,7 +93,8 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
 
    // Method to override the mock for specific tests
    setMockCreate(mockFn: () => Promise<any>) {
-      (this as any).openai.chat.completions.create = mockFn;
+      (this as any).openai.responses.create = mockFn;
+      (this as any).openai.responses.stream = mockFn;
    }
 
    async getConstrainedModelResponse<T>(
@@ -119,26 +110,19 @@ class MockOpenAIChatDriver extends OpenAIModelChatDriver {
       const { retryWithExponentialBackoff } = await import('../src/DriverHelpers');
       
       const response = await retryWithExponentialBackoff(async () => {
-         if (this.shouldFail && this.failCount < this.maxFailures) {
-            this.failCount++;
-            const error: any = new Error('Rate limit exceeded');
-            error.status = 429;
-            throw error;
-         }
-         return (this as any).openai.chat.completions.create({ 
-            response_format: { 
-               type: "json_schema", 
-               json_schema: { 
-                  strict: true, 
+         return (this as any).openai.responses.create({ 
+            text: {
+               format: {
+                  type: "json_schema", 
                   name: "constrainedOutput", 
                   schema: jsonSchema 
-               } 
-            } 
+               }
+            }
          });
       });
       
-      // Parse the JSON content from the response
-      const content = response.choices?.[0]?.message?.content;
+      // Parse the JSON content from the Responses API format
+      const content = response.output?.[0]?.text;
       if (content) {
          try {
             return JSON.parse(content) as T;
