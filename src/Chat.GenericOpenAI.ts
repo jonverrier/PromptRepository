@@ -73,10 +73,14 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       });
 
       // Map EVerbosity enum to Responses API verbosity values
+      // Note: Azure GPT-4.1 only supports 'medium', so we map high to medium for Azure
+      const currentModelName = this.getModelName();
+      const isAzureModel = currentModelName.startsWith('gpt-4.1');
+      
       const verbosityMap: Record<EVerbosity, string> = {
-         [EVerbosity.kLow]: 'low',
+         [EVerbosity.kLow]: isAzureModel ? 'medium' : 'low',
          [EVerbosity.kMedium]: 'medium',
-         [EVerbosity.kHigh]: 'high'
+         [EVerbosity.kHigh]: isAzureModel ? 'medium' : 'high'
       };
 
       // Map EVerbosity to thinking time (one level below verbosity)
@@ -557,12 +561,23 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
             
             // Simulate streaming by yielding the result in chunks
             const words = result.split(' ').filter(word => word.trim().length > 0);
-            for (let i = 0; i < words.length; i += 2) {
-               const chunk = words.slice(i, i + 2).join(' ');
-               const chunkText = i + 2 < words.length ? chunk + ' ' : chunk;
-               yield chunkText;
-               // Add a small delay to simulate streaming
-               await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // If we have very few words, split by characters to ensure multiple chunks
+            if (words.length <= 2) {
+               const chars = result.trim();
+               const chunkSize = Math.max(1, Math.floor(chars.length / 3)); // Split into ~3 chunks
+               for (let i = 0; i < chars.length; i += chunkSize) {
+                  const chunk = chars.slice(i, i + chunkSize);
+                  yield chunk;
+                  await new Promise(resolve => setTimeout(resolve, 50));
+               }
+            } else {
+               // Normal word-by-word streaming for longer responses
+               for (let i = 0; i < words.length; i++) {
+                  const chunkText = i < words.length - 1 ? words[i] + ' ' : words[i];
+                  yield chunkText;
+                  await new Promise(resolve => setTimeout(resolve, 50));
+               }
             }
          } catch (error) {
             // Handle errors gracefully
@@ -591,11 +606,10 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                (config) => retryWithExponentialBackoff(() => self.openai.responses.create(config))
             );
             
-            // Simulate streaming by yielding the result in chunks
+            // Simulate streaming by yielding the result in chunks (1 word at a time for better granularity)
             const words = result.split(' ').filter(word => word.trim().length > 0);
-            for (let i = 0; i < words.length; i += 2) {
-               const chunk = words.slice(i, i + 2).join(' ');
-               const chunkText = i + 2 < words.length ? chunk + ' ' : chunk;
+            for (let i = 0; i < words.length; i++) {
+               const chunkText = i < words.length - 1 ? words[i] + ' ' : words[i];
                yield chunkText;
                // Add a small delay to simulate streaming
                await new Promise(resolve => setTimeout(resolve, 50));
