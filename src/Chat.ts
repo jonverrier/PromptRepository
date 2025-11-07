@@ -37,7 +37,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
    protected abstract getModelName(): string;
 
-   protected createCompletionConfig(
+   protected createResponseConfig(
       systemPrompt: string | undefined,
       messages: IChatMessage[],
       verbosity: EVerbosity,
@@ -63,7 +63,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          return baseMessage;
       });
 
-      // Map EVerbosity enum to OpenAI API verbosity values
+      // Map EVerbosity enum to Responses API verbosity values
       const verbosityMap: Record<EVerbosity, string> = {
          [EVerbosity.kLow]: 'low',
          [EVerbosity.kMedium]: 'medium',
@@ -75,15 +75,20 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          ? [{ role: 'system', content: systemPrompt }, ...formattedMessages]
          : formattedMessages;
 
+      // For Responses API, we use a different structure
       const config: any = {
          model: this.getModelName(),
-         messages: allMessages
+         input: allMessages,
+         text: {
+            verbosity: verbosityMap[verbosity] // Add verbosity parameter for GPT-5
+         }
       };
 
       // Add functions to the configuration if provided
       if (functions && functions.length > 0) {
          config.tools = functions.map(func => ({
             type: 'function',
+            name: func.name, // Add name at tool level for Responses API
             function: {
                name: func.name,
                description: func.description,
@@ -241,20 +246,23 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
     * Extracts text content from response output array
     */
    protected extractTextFromOutput(outputArr: any[]): string | null {
-      const textOutput = outputArr.find((item: any) => 
-         item.type === 'text' || 
-         (item.type === 'message' && item.content && Array.isArray(item.content) && 
-          item.content.find((c: any) => c.type === 'output_text'))
-      );
-      
-      if (textOutput) {
-         if (textOutput.type === 'text' && textOutput.content) {
-            return textOutput.content;
-         } else if (textOutput.type === 'message' && textOutput.content) {
-            const textContent = textOutput.content.find((c: any) => c.type === 'output_text');
-            if (textContent && textContent.text) {
-               return textContent.text;
+      // Handle different possible output structures
+      for (const item of outputArr) {
+         if (item.type === 'text' && item.text) {
+            return item.text;
+         } else if (item.type === 'message' && item.content) {
+            if (typeof item.content === 'string') {
+               return item.content;
+            } else if (Array.isArray(item.content)) {
+               const textContent = item.content.find((c: any) => c.type === 'text' || c.type === 'output_text');
+               if (textContent && textContent.text) {
+                  return textContent.text;
+               }
             }
+         } else if (typeof item === 'string') {
+            return item;
+         } else if (item.content && typeof item.content === 'string') {
+            return item.content;
          }
       }
       return null;
@@ -270,7 +278,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       functions: IFunction[] | undefined,
       createResponse: (config: any) => Promise<any>
    ): Promise<string> {
-      let config = this.createCompletionConfig(systemPrompt, messages, verbosity, functions, false, false);
+      let config = this.createResponseConfig(systemPrompt, messages, verbosity, functions, false, false);
       let response = await createResponse(config);
 
       // Tool use loop: keep handling tool calls until we get a text response or hit max rounds
@@ -279,17 +287,20 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       let currentMessages = messages;
       
       while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
-         // Check for function/tool calls in OpenAI chat completions format
-         const choice = response.choices?.[0];
-         if (choice) {
-            // Check for tool calls
-            if (choice.message?.tool_calls && choice.message.tool_calls.length > 0 && functions) {
-               const toolMessages = await this.processOpenAIToolCalls(choice.message.tool_calls, functions);
+         // Check for function/tool calls in Responses API format
+         const output = response.output;
+         if (output) {
+            // Extract text content from the output array
+            const textContent = this.extractTextFromOutput(output);
+            
+            // Check for tool calls in the response
+            if (response.tool_calls && response.tool_calls.length > 0 && functions) {
+               const toolMessages = await this.processOpenAIToolCalls(response.tool_calls, functions);
                
                // Add assistant message and tool messages to the conversation history
                const assistantMessage: IChatMessage = {
                   role: EChatRole.kAssistant,
-                  content: choice.message.content || '',
+                  content: textContent || '',
                   function_call: undefined,
                   timestamp: new Date(),
                   id: `assistant-${Date.now()}`,
@@ -302,15 +313,15 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                ];
                
                // Re-invoke the model with the tool result(s)
-               config = this.createCompletionConfig(systemPrompt, currentMessages, verbosity, functions, false, false);
+               config = this.createResponseConfig(systemPrompt, currentMessages, verbosity, functions, false, false);
                response = await createResponse(config);
                toolUseRounds++;
                continue;
             }
             
             // If we have text content, return it
-            if (choice.message?.content) {
-               return choice.message.content;
+            if (textContent) {
+               return textContent;
             }
          }            
       }
@@ -327,7 +338,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       functions: IFunction[] | undefined,
       createResponse: (config: any) => Promise<any>
    ): Promise<string> {
-      let config = this.createCompletionConfig(systemPrompt, messages, verbosity, functions, false, true);
+      let config = this.createResponseConfig(systemPrompt, messages, verbosity, functions, false, true);
       let response = await createResponse(config);
 
       // Tool use loop: keep handling tool calls until we get a text response or hit max rounds
@@ -336,17 +347,20 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       let currentMessages = messages;
       
       while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
-         // Check for function/tool calls in OpenAI chat completions format
-         const choice = response.choices?.[0];
-         if (choice) {
+         // Check for function/tool calls in Responses API format
+         const output = response.output;
+         if (output) {
+            // Extract text content from the output array
+            const textContent = this.extractTextFromOutput(output);
+            
             // Check for tool calls
-            if (choice.message?.tool_calls && choice.message.tool_calls.length > 0 && functions) {
-               const toolMessages = await this.processOpenAIToolCalls(choice.message.tool_calls, functions);
+            if (response.tool_calls && response.tool_calls.length > 0 && functions) {
+               const toolMessages = await this.processOpenAIToolCalls(response.tool_calls, functions);
                
                // Add assistant message and tool messages to the conversation history
                const assistantMessage: IChatMessage = {
                   role: EChatRole.kAssistant,
-                  content: choice.message.content || '',
+                  content: textContent || '',
                   function_call: undefined,
                   timestamp: new Date(),
                   id: `assistant-${Date.now()}`,
@@ -359,15 +373,15 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                ];
                
                // Re-invoke the model with the tool result(s) - don't force tools on subsequent calls
-               config = this.createCompletionConfig(systemPrompt, currentMessages, verbosity, functions, false, false);
+               config = this.createResponseConfig(systemPrompt, currentMessages, verbosity, functions, false, false);
                response = await createResponse(config);
                toolUseRounds++;
                continue;
             }
             
             // If we have text content, return it
-            if (choice.message?.content) {
-               return choice.message.content;
+            if (textContent) {
+               return textContent;
             }
          }            
       }
@@ -388,7 +402,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
             messages,
             verbosity,
             functions,
-            (config) => retryWithExponentialBackoff(() => this.openai.chat.completions.create(config))
+            (config) => retryWithExponentialBackoff(() => this.openai.responses.create(config))
          );
       } catch (error) {
          if (error instanceof Error) {
@@ -412,7 +426,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
             messages,
             verbosity,
             functions,
-            (config) => retryWithExponentialBackoff(() => this.openai.chat.completions.create(config))
+            (config) => retryWithExponentialBackoff(() => this.openai.responses.create(config))
          );
       } catch (error) {
          if (error instanceof Error) {
@@ -433,19 +447,19 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
       return (async function* () {
          try {
-            const config = self.createCompletionConfig(systemPrompt, messages, verbosity, functions, false, false);
-            config.stream = true;
+            const config = self.createResponseConfig(systemPrompt, messages, verbosity, functions, false, false);
 
+            // Add stream parameter to config
+            const streamConfig = { ...config, stream: true };
+            
             const stream = await retryWithExponentialBackoff(async () => {
                try {
-                  return await self.openai.chat.completions.create(config);
+                  return await self.openai.responses.stream(streamConfig);
                } catch (error: any) {
                   // Check if streaming is not supported, fall back to non-streaming
                   if (error?.code === 'unsupported_value' && error?.param === 'stream') {
                      console.warn('OpenAI streaming not available, falling back to simulated streaming');
-                     const nonStreamConfig = { ...config };
-                     delete nonStreamConfig.stream;
-                     return await self.openai.chat.completions.create(nonStreamConfig);
+                     return await self.openai.responses.create(config);
                   }
                   throw error;
                }
@@ -453,16 +467,16 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
 
             // Check if we got a streaming response
             if (Symbol.asyncIterator in stream) {
-               // Real streaming response
+               // Real streaming response - Responses API uses different format
                for await (const chunk of stream as any) {
-                  const delta = chunk.choices?.[0]?.delta?.content;
-                  if (delta) {
-                     yield delta;
+                  // Handle Responses API streaming format
+                  if (chunk.type === 'response.output_text.delta' && chunk.delta) {
+                     yield chunk.delta;
                   }
                }
             } else {
                // Non-streaming response, simulate streaming
-               const content = stream.choices?.[0]?.message?.content || '';
+               const content = self.extractTextFromOutput(stream.output || []);
                if (content) {
                   // Split into words and yield them as chunks
                   const words = content.split(' ').filter(word => word.trim().length > 0);
@@ -499,7 +513,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
                messages,
                verbosity,
                functions,
-               (config) => retryWithExponentialBackoff(() => self.openai.chat.completions.create(config))
+               (config) => retryWithExponentialBackoff(() => self.openai.responses.create(config))
             );
             
             // Simulate streaming by yielding the result in chunks
@@ -529,22 +543,23 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
    ): Promise<T> {
       const messages = this.buildMessageArray(messageHistory, userPrompt);
 
-      const config = this.createCompletionConfig(systemPrompt, messages, verbosity, functions, false, false);
-      config.response_format = { 
-         type: "json_schema", 
-         json_schema: { 
-            strict: true, 
-            name: "constrainedOutput", 
-            schema: jsonSchema 
-         } 
+      const config = this.createResponseConfig(systemPrompt, messages, verbosity, functions, false, false);
+      // Merge the format configuration with existing text configuration
+      config.text = {
+         ...config.text,
+         format: {
+            type: "json_schema", 
+            name: "constrainedOutput",
+            schema: jsonSchema
+         }
       };
 
       try {
       const response = await retryWithExponentialBackoff(() => 
-            this.openai.chat.completions.create(config)
+            this.openai.responses.create(config)
          );
          
-         const content = response.choices?.[0]?.message?.content;
+         const content = this.extractTextFromOutput(response.output || []);
          if (content) {
             try {
                return JSON.parse(content) as T;
