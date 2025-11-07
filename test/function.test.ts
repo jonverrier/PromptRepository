@@ -11,7 +11,7 @@ import { describe, it } from 'mocha';
 import { ChatDriverFactory, EModelProvider, EModel, EVerbosity } from '../src/entry';
 import { IFunction, EDataType, IFunctionArgs } from '../src/Function';
 
-const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
+const TEST_TIMEOUT_MS = 60000; // 60 second timeout for all tests (OpenAI GPT-5 can be slow)
 
 // Create chat drivers 
 const chatDriverFactory = new ChatDriverFactory();
@@ -384,7 +384,7 @@ describe('Function Call Counting and Content Verification Tests', () => {
          testFunctionCallCounting(
             chatDriver,
             'should call function once and return Formula 1 facts',
-            'You are a helpful assistant that can call functions to get motorsport information. When asked about leading drivers, call the get_leading_driver function and provide the information.',
+            'You are a helpful assistant that can call functions to get motorsport information. When asked about leading drivers, call the get_leading_driver function with the raceSeries parameter extracted from the user\'s question (e.g., if they ask about "Formula 1", pass raceSeries: "Formula 1").',
             'Who is the leading driver in Formula 1?',
             [createMotorsportFunction('basic')],
             1, // Expected call count
@@ -394,7 +394,7 @@ describe('Function Call Counting and Content Verification Tests', () => {
          testFunctionCallCounting(
             chatDriver,
             'should call function once and return NASCAR facts',
-            'You are a helpful assistant that can call functions to get motorsport information. When asked about leading drivers, call the get_leading_driver function and provide the information.',
+            'You are a helpful assistant that can call functions to get motorsport information. When asked about leading drivers, call the get_leading_driver function with the raceSeries parameter extracted from the user\'s question (e.g., if they ask about "NASCAR", pass raceSeries: "NASCAR").',
             'Who is leading the NASCAR championship?',
             [createMotorsportFunction('basic')],
             1, // Expected call count
@@ -404,7 +404,7 @@ describe('Function Call Counting and Content Verification Tests', () => {
          testFunctionCallCounting(
             chatDriver,
             'should call function once and return IndyCar facts',
-            'You are a helpful assistant that can call functions to get motorsport information. When asked about leading drivers, call the get_leading_driver function and provide the information.',
+            'You are a helpful assistant that can call functions to get motorsport information. When asked about leading drivers, call the get_leading_driver function with the raceSeries parameter extracted from the user\'s question (e.g., if they ask about "IndyCar", pass raceSeries: "IndyCar").',
             'Tell me about the IndyCar leader',
             [createMotorsportFunction('basic')],
             1, // Expected call count

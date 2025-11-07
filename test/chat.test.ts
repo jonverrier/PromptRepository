@@ -11,7 +11,7 @@ import { describe, it, beforeEach, afterEach } from 'mocha';
 import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, TEST_TARGET_SUPPORTS_VERBOSITY } from '../src/entry';
 import { OpenAIModelChatDriver } from '../src/Chat';
 
-const TEST_TIMEOUT_MS = 30000; // 30 second timeout for all tests
+const TEST_TIMEOUT_MS = 60000; // 60 second timeout for all tests (OpenAI GPT-5 can be slow)
 
 // Create chat drivers for both providers outside describe blocks
 const chatDriverFactory = new ChatDriverFactory();

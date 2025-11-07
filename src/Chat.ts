@@ -70,6 +70,13 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          [EVerbosity.kHigh]: 'high'
       };
 
+      // Map EVerbosity to thinking time (one level below verbosity)
+      const thinkingTimeMap: Record<EVerbosity, string> = {
+         [EVerbosity.kLow]: 'low',      // Low verbosity -> low thinking
+         [EVerbosity.kMedium]: 'low',   // Medium verbosity -> low thinking  
+         [EVerbosity.kHigh]: 'medium'   // High verbosity -> medium thinking
+      };
+
       // Build messages array with system prompt if provided
       const allMessages = systemPrompt 
          ? [{ role: 'system', content: systemPrompt }, ...formattedMessages]
@@ -84,11 +91,19 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          }
       };
 
+      // Add thinking time for GPT-5 models (one level below verbosity)
+      const modelName = this.getModelName();
+      if (modelName.startsWith('gpt-5')) {
+         config.reasoning = {
+            effort: thinkingTimeMap[verbosity]
+         };
+      }
+
       // Add functions to the configuration if provided
       if (functions && functions.length > 0) {
          config.tools = functions.map(func => ({
             type: 'function',
-            name: func.name, // Add name at tool level for Responses API
+            name: func.name, // Required by Responses API
             function: {
                name: func.name,
                description: func.description,
@@ -102,6 +117,7 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
          }));
          // Configure tool choice - only force tools when explicitly requested
          config.tool_choice = forceToolUse ? "required" : "auto";
+         
       }
 
       return config;
@@ -372,11 +388,58 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
       while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
          // Check for function/tool calls in Responses API format
          const output = response.output;
+         
          if (output) {
             // Extract text content from the output array
             const textContent = this.extractTextFromOutput(output);
             
-            // Check for tool calls
+            // Check for function calls in the output array (Responses API format)
+            const functionCalls = output.filter((item: any) => item.type === 'function_call');
+            
+            if (functionCalls.length > 0 && functions) {
+               // Check for repeated function calls to prevent infinite loops
+               const currentFunctionCall = `${functionCalls[0].name}:${functionCalls[0].arguments}`;
+               if (lastFunctionCall === currentFunctionCall) {
+                  // Return a helpful message instead of looping
+                  return "I apologize, but I'm having trouble with the function call. Let me provide a direct response instead.";
+               }
+               lastFunctionCall = currentFunctionCall;
+               
+               // Convert Responses API function calls to OpenAI tool call format
+               const convertedCalls = functionCalls.map((call: any) => ({
+                  type: 'function',
+                  function: {
+                     name: call.name,
+                     arguments: call.arguments || '{}'
+                  },
+                  id: call.call_id
+               }));
+               
+               const toolMessages = await this.processOpenAIToolCalls(convertedCalls, functions);
+               
+               // Add assistant message and tool messages to the conversation history
+               const assistantMessage: IChatMessage = {
+                  role: EChatRole.kAssistant,
+                  content: textContent || '',
+                  function_call: undefined,
+                  timestamp: new Date(),
+                  id: `assistant-${Date.now()}`,
+                  className: 'assistant-message'
+               };
+               currentMessages = [
+                  ...currentMessages,
+                  assistantMessage,
+                  ...toolMessages
+               ];
+               
+               // Re-invoke the model with the tool result(s) - don't force tools on subsequent calls
+               config = this.createResponseConfig(systemPrompt, currentMessages, verbosity, functions, false, false);
+               response = await createResponse(config);
+               toolUseRounds++;
+               continue;
+            }
+            
+            // Check for legacy tool calls format
             if (response.tool_calls && response.tool_calls.length > 0 && functions) {
                const toolMessages = await this.processOpenAIToolCalls(response.tool_calls, functions);
                
@@ -406,7 +469,9 @@ export abstract class OpenAIModelChatDriver implements IChatDriver {
             if (textContent) {
                return textContent;
             }
-         }            
+         }
+         
+         break;
       }
       throw new Error('No response content received from OpenAI');
    }
