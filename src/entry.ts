@@ -149,12 +149,12 @@ export interface IQueryReturnable {
 /**
  * Generic interface for function calls from any LLM provider
  * Represents a function call request in a provider-agnostic way
- * @property {string} [id] - Unique identifier (required for multiple tool calls, optional for single calls)
+ * @property {string} id - Unique identifier for the function call
  * @property {string} name - The name of the function to call
  * @property {string} arguments - JSON string of function arguments
  */
 export interface IFunctionCall {
-   id?: string; // Required for multiple tool calls, optional for single function calls
+   id: string; // Required unique identifier for all function calls
    name: string;
    arguments: string; // JSON string of arguments
 }
@@ -170,8 +170,8 @@ export interface IFunctionCall {
  * @property {string | undefined} content - Message content (undefined for function calls)
  * @property {Date} timestamp - When the message was created
  * @property {string} [name] - Function name for function/tool messages
- * @property {IFunctionCall} [function_call] - Single function call (legacy format, id optional)
- * @property {IFunctionCall[]} [tool_calls] - Multiple function calls (id required for each)
+ * @property {IFunctionCall} [function_call] - Single function call (legacy format)
+ * @property {IFunctionCall[]} [tool_calls] - Multiple function calls
  * @property {string} [tool_call_id] - ID linking tool response to tool call
  * @property {string} [type] - Message type for Responses API (e.g., 'function_call_output')
  * @property {string} [call_id] - Call ID for Responses API function outputs

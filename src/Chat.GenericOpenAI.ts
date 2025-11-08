@@ -34,7 +34,7 @@ interface AsyncResponse {
  */
 function convertToOpenAIToolCalls(functionCalls: IFunctionCall[]): IOpenAIToolCall[] {
    return functionCalls.map(call => ({
-      id: call.id || '', // OpenAI requires id, so provide empty string if not set
+      id: call.id, // ID is now required in IFunctionCall
       type: 'function' as const,
       function: {
          name: call.name,
@@ -700,18 +700,36 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
          console.log(`🔄 Tool use round ${toolUseRounds + 1}/${MAX_TOOL_USE_ROUNDS}`);
          
-         // Step 2: Create config with current input_list (following official example structure)
-         // We should always include tools when they are available, so the API can continue making tool calls
-         const hasFunctionOutputs = inputList.some((item: any) => item.type === 'function_call_output');
-         const shouldIncludeTools = functions && functions.length > 0; // Always include tools if available
+      // Step 2: The Responses API works differently than Chat Completions
+      // It expects all function calls to happen in a single request, not across multiple rounds
+      // If we already have function outputs, we should NOT continue the loop
+      const hasFunctionOutputs = inputList.some((item: any) => item.type === 'function_call_output');
+      
+      if (hasFunctionOutputs) {
+         console.log('🛑 Function outputs detected - Responses API does not support multi-round function calling');
+         console.log('📝 Returning summary of executed functions');
          
-         const config = this.createResponsesInputConfig(
-            systemPrompt, 
-            inputList, 
-            verbosity, 
-            shouldIncludeTools ? functions : undefined, // Only include tools if no function outputs
-            forceToolUse && toolUseRounds === 0  // Only force on first round
-         );
+         // Extract the function results and return a summary
+         const functionOutputs = inputList.filter((item: any) => item.type === 'function_call_output');
+         const summaries = functionOutputs.map((output: any) => `Function executed: ${output.output}`);
+         return `Function execution completed:\n${summaries.join('\n')}`;
+      }
+      
+      const shouldIncludeTools = functions && functions.length > 0;
+      
+      const config = this.createResponsesInputConfig(
+         systemPrompt, 
+         inputList, 
+         verbosity, 
+         shouldIncludeTools ? functions : undefined,
+         forceToolUse && toolUseRounds === 0  // Only force on first round
+      );
+      
+      // Add max_tool_calls to encourage multiple function calls in a single response
+      // This is the key: the model should make ALL necessary calls in one response
+      if (shouldIncludeTools && functions && functions.length > 0) {
+         config.max_tool_calls = 10; // Allow up to 10 tool calls in a single response
+      }
          
          // Debug: Log the exact config being sent
          console.log('🔍 Sending config to API:', JSON.stringify(config, null, 2));
@@ -732,7 +750,14 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
 
          // Extract text content and function calls from output
          const textContent = this.extractTextFromOutput(output);
-         const functionCalls = output.filter((item: any) => item.type === 'function_call');
+         const rawFunctionCalls = output.filter((item: any) => item.type === 'function_call');
+         
+         // Convert API function calls to our IFunctionCall format with proper ID assignment
+         const functionCalls: IFunctionCall[] = rawFunctionCalls.map((call: any, index: number) => ({
+            id: call.call_id || `generated_${Date.now()}_${index}`, // Ensure ID is always present
+            name: call.name,
+            arguments: call.arguments || '{}'
+         }));
          
          console.log('📄 Text content:', textContent);
          console.log('🔧 Function calls found:', functionCalls.length);
@@ -747,44 +772,8 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
             return textContent || 'Response completed successfully.';
          }
          
-         // If this is the first round and we have function calls, execute them and return a summary
-         // This is a simpler approach that avoids the complex conversation continuation
-         if (toolUseRounds === 0) {
-            console.log(`🔧 First round with ${functionCalls.length} function call(s) - executing and returning summary`);
-            
-            const functionResults: string[] = [];
-            
-            // Execute all function calls in this response
-            for (const functionCall of functionCalls) {
-               const currentFunctionName = functionCall.name || functionCall.function?.name;
-               const functionArgs = functionCall.arguments || functionCall.function?.arguments || '{}';
-               
-               console.log(`🔧 Executing ${currentFunctionName} with args: ${functionArgs}`);
-               
-               const func = functions?.find(f => f.name === currentFunctionName);
-               if (func) {
-                  try {
-                     const parsedArgs = JSON.parse(functionArgs);
-                     const validatedArgs = func.validateArgs(parsedArgs);
-                     const result = await func.execute(validatedArgs);
-                     
-                     functionResults.push(`${currentFunctionName}: ${JSON.stringify(result)}`);
-                     console.log(`✅ ${currentFunctionName} executed successfully`);
-                  } catch (error) {
-                     functionResults.push(`${currentFunctionName}: Error - ${error instanceof Error ? error.message : String(error)}`);
-                     console.log(`❌ ${currentFunctionName} failed: ${error}`);
-                  }
-               } else {
-                  functionResults.push(`${currentFunctionName}: Function not found`);
-               }
-            }
-            
-            // Return a summary of the function results for all cases
-            // The Responses API seems to work better with single-round execution
-            const summary = `Based on the function calls, here are the results:\n${functionResults.join('\n')}`;
-            console.log('✅ Returning function execution summary');
-            return summary;
-         }
+         // All function calls should use the proper multi-round execution path
+         // to maintain consistent ID handling for the Responses API
 
          // Step 5: This should not be reached with the simplified approach above
          // But keeping the complex logic as fallback
@@ -796,13 +785,13 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
             
             for (let i = 0; i < functionCalls.length; i++) {
                const functionCall = functionCalls[i];
-               // Handle different function name and argument locations in API response
-               const currentFunctionName = functionCall.name || functionCall.function?.name;
-               const functionArgs = functionCall.arguments || functionCall.function?.arguments || '{}';
+               // Get function name and arguments from our standardized IFunctionCall format
+               const currentFunctionName = functionCall.name;
+               const functionArgs = functionCall.arguments;
                const callSignature = `${currentFunctionName}:${functionArgs}`;
                
-               // Extract call_id from the function call - it might be in different places
-               const callId = functionCall.call_id || functionCall.id || `call_${Date.now()}_${i}`;
+               // Extract call_id from the function call - ID is now required in IFunctionCall
+               const callId = functionCall.id;
                
                console.log(`🔧 Processing function call ${i + 1}/${functionCalls.length}: ${currentFunctionName}`);
                console.log(`🔧 Call ID: ${callId}`);
@@ -886,8 +875,9 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                }
             }
 
-            // Step 6: Add function call outputs to input_list (following official example)
-            // The official example shows just adding function_call_output items directly
+            // Step 6: Add function call outputs to input_list
+            // Based on the error, the Responses API doesn't accept function_calls in assistant messages
+            // Let's try just adding the function outputs directly as the official example shows
             console.log(`📝 Adding ${functionResults.length} function results to input_list`);
             for (const result of functionResults) {
                inputList.push({
