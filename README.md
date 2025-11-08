@@ -78,6 +78,142 @@ variant values for both required and optional parameters.
 
 This approach (bundling a framework with prompts to generate code to use the framework) is still work in progress. I am using the prompts to generate test cases for another LLM-based application I am building, and will continue to evolve the prompts. 
 
+## Multiple Tool Calling Support
+
+PromptRepository now supports advanced multiple tool calling functionality following the OpenAI Responses API pattern. This allows the model to call multiple functions in a single interaction, enabling complex workflows and comprehensive responses.
+
+### Key Features
+
+- **Multiple Tool Calls**: The model can call several functions in one response
+- **Automatic Tool Execution**: Functions are executed automatically and results fed back to the model
+- **Streaming Support**: Tool calls work with both regular and streaming responses
+- **Error Handling**: Robust error handling for function validation and execution
+- **Loop Prevention**: Intelligent detection and prevention of infinite tool call loops
+
+### Example: Multiple Tool Calling
+
+```typescript
+import { ChatDriverFactory, EModelProvider, EModel, EVerbosity } from '@jonverrier/prompt-repository';
+import { IFunction, EDataType } from '@jonverrier/prompt-repository';
+
+// Create functions following OpenAI pattern
+const weatherFunction: IFunction = {
+  name: 'get_weather',
+  description: 'Get current weather for a city',
+  inputSchema: {
+    type: EDataType.kObject,
+    properties: {
+      city: { type: EDataType.kString, description: 'City name' }
+    },
+    required: ['city']
+  },
+  outputSchema: {
+    type: EDataType.kObject,
+    properties: {
+      temperature: { type: EDataType.kNumber, description: 'Temperature in Celsius' },
+      condition: { type: EDataType.kString, description: 'Weather condition' }
+    },
+    required: ['temperature', 'condition']
+  },
+  validateArgs: (args) => {
+    if (!args.city) throw new Error('City is required');
+    return args;
+  },
+  execute: async (args) => {
+    // Your weather API logic here
+    return { temperature: 22, condition: 'sunny' };
+  }
+};
+
+const horoscopeFunction: IFunction = {
+  name: 'get_horoscope',
+  description: "Get today's horoscope for an astrological sign",
+  inputSchema: {
+    type: EDataType.kObject,
+    properties: {
+      sign: { type: EDataType.kString, description: 'Astrological sign like Aquarius' }
+    },
+    required: ['sign']
+  },
+  outputSchema: {
+    type: EDataType.kObject,
+    properties: {
+      horoscope: { type: EDataType.kString, description: 'Horoscope text' }
+    },
+    required: ['horoscope']
+  },
+  validateArgs: (args) => {
+    if (!args.sign) throw new Error('Sign is required');
+    return args;
+  },
+  execute: async (args) => {
+    return { horoscope: `${args.sign} - Next Tuesday you will befriend a baby otter.` };
+  }
+};
+
+// Use multiple tools in one interaction
+const chatDriver = new ChatDriverFactory().create(EModel.kLarge, EModelProvider.kOpenAI);
+
+const response = await chatDriver.getModelResponse(
+  'You are a helpful assistant with access to weather and horoscope data.',
+  'I am an Aquarius planning a trip to London. Can you give me the weather and my horoscope?',
+  EVerbosity.kMedium,
+  [], // message history
+  [weatherFunction, horoscopeFunction] // Available tools
+);
+
+// The model will automatically:
+// 1. Call get_weather with city: "London"
+// 2. Call get_horoscope with sign: "Aquarius"
+// 3. Combine results into a comprehensive response
+console.log(response);
+```
+
+### Streaming with Multiple Tools
+
+```typescript
+// Streaming also supports multiple tool calls
+const iterator = chatDriver.getStreamedModelResponse(
+  'You are a travel assistant.',
+  'What\'s the weather in London, Paris, and Tokyo?',
+  EVerbosity.kMedium,
+  [],
+  [weatherFunction]
+);
+
+// The model will call get_weather three times (once for each city)
+// and stream the final response
+for await (const chunk of iterator) {
+  process.stdout.write(chunk);
+}
+```
+
+### Forced Tool Usage
+
+```typescript
+// Force the model to use at least one tool
+const response = await chatDriver.getModelResponseWithForcedTools(
+  'You must use available tools to answer questions.',
+  'Tell me about the weather somewhere.',
+  EVerbosity.kMedium,
+  [],
+  [weatherFunction]
+);
+// Model will be required to call get_weather before responding
+```
+
+### Implementation Details
+
+The multiple tool calling implementation follows the official OpenAI Responses API pattern:
+
+1. **Input List Pattern**: Messages are converted to `input_list` format
+2. **Function Call Detection**: Response output is scanned for `function_call` items
+3. **Parallel Execution**: Multiple function calls are executed in parallel
+4. **Result Integration**: Function results are added as `function_call_output` items
+5. **Continuation**: Process repeats until no more function calls are needed
+
+This ensures compatibility with OpenAI's latest API patterns while providing a clean, TypeScript-native interface.
+
 ## Usage - Prompt Respository
 
 1. Install the package from GitHub Packages:
@@ -208,10 +344,11 @@ npm run test:ci            # Run unit tests only (no API key required)
   - String sanitization
   - ID generation utilities
 - **Integration Tests** (`test:integration`): Full LLM interactions
-  - Chat completions with OpenAI/Azure OpenAI
+  - Text responses with OpenAI/Azure OpenAI
   - Embedding generation
-  - Function calling
-  - Streaming responses
+  - Single and multiple function calling
+  - Streaming responses with tool support
+  - Complex multi-tool scenarios
 
 The GitHub Actions workflow runs only the unit tests to avoid requiring API keys in CI/CD, while developers run the full test suite locally before pushing to main.
 

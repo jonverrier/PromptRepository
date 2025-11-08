@@ -14,7 +14,7 @@ export { EmbeddingDriverFactory } from "./EmbedFactory";
 export { cosineSimilarity as CosineSimilarity } from "./Embed";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError, ConnectionError, InvalidStateError, sanitizeInputString, sanitizeOutputString } from "@jonverrier/assistant-common";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
-export { IFunction, IFunctionArgs, EDataType } from "./Function";
+export { IFunction, IFunctionArgs, EDataType, ILLMFunctionCall, IFunctionCallOutput, IFunctionExecutionContext, FunctionExecutionResult } from "./Function";
 
 /**
  * Global test configuration flag to control verbosity parameter usage.
@@ -125,7 +125,7 @@ export enum EModelProvider {
 /**
  * An enumeration of possible chat roles.
  * Used to identify the sender of a message in chat interactions.
- * Follows OpenAI's chat completion API guidelines.
+ * Follows OpenAI's Responses API guidelines.
  */
 export enum EChatRole {
    kUser = 'user',
@@ -147,25 +147,49 @@ export interface IQueryReturnable {
 }
 
 /**
- * Interface for function call information in assistant messages.
- * Follows OpenAI's function calling format.
+ * Generic interface for function calls from any LLM provider
+ * Represents a function call request in a provider-agnostic way
+ * @property {string} id - Unique identifier for the function call
+ * @property {string} name - The name of the function to call
+ * @property {string} arguments - JSON string of function arguments
  */
 export interface IFunctionCall {
+   id: string; // Required unique identifier for all function calls
    name: string;
    arguments: string; // JSON string of arguments
 }
 
 /**
  * A message in a chat interaction.
- * Supports OpenAI's function calling format with optional function_call and name properties.
+ * Supports OpenAI Responses API format with backward compatibility.
+ * Handles single function calls, multiple tool calls, and function call outputs.
+ * 
+ * @interface IChatMessage
+ * @extends IQueryReturnable
+ * @property {EChatRole} role - The role of the message sender
+ * @property {string | undefined} content - Message content (undefined for function calls)
+ * @property {Date} timestamp - When the message was created
+ * @property {string} [name] - Function name for function/tool messages
+ * @property {IFunctionCall} [function_call] - Single function call (legacy format)
+ * @property {IFunctionCall[]} [tool_calls] - Multiple function calls
+ * @property {string} [tool_call_id] - ID linking tool response to tool call
+ * @property {string} [type] - Message type for Responses API (e.g., 'function_call_output')
+ * @property {string} [call_id] - Call ID for Responses API function outputs
+ * @property {string} [output] - Function output for Responses API
  */   
 export interface IChatMessage extends IQueryReturnable {
    role: EChatRole;
-   content: string | undefined; // undefined for assistant messages with function_call
+   content: string | undefined; // undefined for assistant messages with function_call or tool_calls
    timestamp: Date;
    name?: string; // Required for function/tool messages, optional for others
-   function_call?: IFunctionCall; // Present in assistant messages when calling a function
-   tool_call_id?: string; // For tool use pattern
+   function_call?: IFunctionCall; // Present in assistant messages when calling a single function (id optional)
+   tool_calls?: IFunctionCall[]; // Present in assistant messages when calling multiple tools (id required)
+   tool_call_id?: string; // For tool use pattern - links tool response to specific tool call
+   
+   // Responses API specific fields
+   type?: string; // Message type (e.g., 'function_call_output')
+   call_id?: string; // Call ID for function call outputs in Responses API
+   output?: string; // Function execution result for Responses API
 }
 
 export const ChatMessageClassName = "IChatMessage";
@@ -226,13 +250,28 @@ export interface IArchiveMessageResponse {
 export interface IChatDriver {
 
    /**
-    * Retrieves a chat response from the model
+    * Retrieves a chat response from the model with optional function calling support.
+    * Handles both single and multiple tool calls automatically.
+    * 
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model
     * @param verbosity The verbosity of the response
     * @param messageHistory Optional array of previous chat messages
-    * @param functions Optional array of functions to pass to the model
-    * @returns The response from the model
+    * @param functions Optional array of functions available for the model to call
+    * @returns Promise resolving to the final text response from the model
+    * 
+    * @example
+    * ```typescript
+    * const response = await chatDriver.getModelResponse(
+    *   'You are a helpful assistant with access to weather data.',
+    *   'What is the weather in London and Paris?',
+    *   EVerbosity.kMedium,
+    *   [],
+    *   [getWeatherFunction]
+    * );
+    * // Model may call getWeatherFunction twice (for London and Paris)
+    * // and return a combined response
+    * ```
     */
    getModelResponse(
       systemPrompt: string | undefined,
@@ -243,13 +282,30 @@ export interface IChatDriver {
    ): Promise<string>;
 
    /**
-    * Retrieves a streamed chat response from the model
+    * Retrieves a streamed chat response from the model with function calling support.
+    * Function calls are executed during streaming, with final response streamed back.
+    * 
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model
     * @param verbosity The verbosity of the response
     * @param messageHistory Optional array of previous chat messages
-    * @param functions Optional array of functions to pass to the model
-    * @returns The response from the model
+    * @param functions Optional array of functions available for the model to call
+    * @returns AsyncIterator yielding chunks of the final response
+    * 
+    * @example
+    * ```typescript
+    * const iterator = chatDriver.getStreamedModelResponse(
+    *   'You are a helpful assistant.',
+    *   'Get weather for multiple cities',
+    *   EVerbosity.kMedium,
+    *   [],
+    *   [getWeatherFunction]
+    * );
+    * 
+    * for await (const chunk of iterator) {
+    *   process.stdout.write(chunk); // Stream response as it arrives
+    * }
+    * ```
     */
    getStreamedModelResponse(
       systemPrompt: string | undefined,
@@ -260,13 +316,28 @@ export interface IChatDriver {
    ): AsyncIterator<string>;
 
    /**
-    * Retrieves a chat response from the model with forced tool usage
+    * Retrieves a chat response from the model with forced tool usage.
+    * The model MUST call at least one of the provided functions before responding.
+    * Supports multiple tool calls in a single interaction.
+    * 
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model
     * @param verbosity The verbosity of the response
     * @param messageHistory Optional array of previous chat messages
-    * @param functions Optional array of functions to pass to the model
-    * @returns The response from the model
+    * @param functions Array of functions that the model must choose from
+    * @returns Promise resolving to the final text response after tool execution
+    * 
+    * @example
+    * ```typescript
+    * const response = await chatDriver.getModelResponseWithForcedTools(
+    *   'You must use the available tools to answer questions.',
+    *   'I need weather data for London',
+    *   EVerbosity.kMedium,
+    *   [],
+    *   [getWeatherFunction, getLocationFunction]
+    * );
+    * // Model will be forced to call at least one function
+    * ```
     */
    getModelResponseWithForcedTools(
       systemPrompt: string | undefined,
@@ -277,13 +348,30 @@ export interface IChatDriver {
    ): Promise<string>;
 
    /**
-    * Retrieves a streamed chat response from the model with forced tool usage
+    * Retrieves a streamed chat response from the model with forced tool usage.
+    * The model MUST call at least one function, with results streamed back.
+    * 
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model
     * @param verbosity The verbosity of the response
     * @param messageHistory Optional array of previous chat messages
-    * @param functions Optional array of functions to pass to the model
-    * @returns The response from the model
+    * @param functions Array of functions that the model must choose from
+    * @returns AsyncIterator yielding chunks of the final response after tool execution
+    * 
+    * @example
+    * ```typescript
+    * const iterator = chatDriver.getStreamedModelResponseWithForcedTools(
+    *   'Use tools to gather information before responding.',
+    *   'Compare weather in multiple cities',
+    *   EVerbosity.kMedium,
+    *   [],
+    *   [getWeatherFunction]
+    * );
+    * 
+    * for await (const chunk of iterator) {
+    *   console.log(chunk); // Streamed response after tool execution
+    * }
+    * ```
     */
    getStreamedModelResponseWithForcedTools(
       systemPrompt: string | undefined,
@@ -295,15 +383,45 @@ export interface IChatDriver {
 
 
    /**
-    * Retrieves a chat response from the model with JSON schema validation
+    * Retrieves a chat response from the model with JSON schema validation.
+    * The model output will be constrained to match the provided schema.
+    * Functions can still be called during the interaction.
+    * 
     * @param systemPrompt The system prompt to send to the model
     * @param userPrompt The user prompt to send to the model 
     * @param verbosity The verbosity of the response
     * @param jsonSchema The JSON schema to constrain the model output
-    * @param defaultValue The default value to return if the model output does not match the schema
+    * @param defaultValue The default value to return if parsing fails
     * @param messageHistory Optional array of previous chat messages
-    * @param functions Optional array of functions to pass to the model
-    * @returns The response from the model as a validated JSON object
+    * @param functions Optional array of functions available for the model to call
+    * @returns Promise resolving to a validated JSON object of type T
+    * 
+    * @example
+    * ```typescript
+    * interface WeatherSummary {
+    *   cities: string[];
+    *   averageTemp: number;
+    * }
+    * 
+    * const schema = {
+    *   type: 'object',
+    *   properties: {
+    *     cities: { type: 'array', items: { type: 'string' } },
+    *     averageTemp: { type: 'number' }
+    *   },
+    *   required: ['cities', 'averageTemp']
+    * };
+    * 
+    * const result = await chatDriver.getConstrainedModelResponse<WeatherSummary>(
+    *   'Analyze weather data and return structured results.',
+    *   'Get weather for London and Paris, return summary',
+    *   EVerbosity.kMedium,
+    *   schema,
+    *   { cities: [], averageTemp: 0 },
+    *   [],
+    *   [getWeatherFunction]
+    * );
+    * ```
     */
    getConstrainedModelResponse<T>(
       systemPrompt: string | undefined,

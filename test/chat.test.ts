@@ -139,17 +139,17 @@ providers.forEach((provider, index) => {
   const chatDriver = chatDrivers[index];
 
   describe(`getChatCompletion (${provider})`, () => {
-    it('should successfully return chat completion with system prompt', async () => {
+    it('should successfully return text response with system prompt', async () => {
       const result = await chatDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
     }).timeout(TEST_TIMEOUT_MS);
 
-    it('should successfully return chat completion without system prompt', async () => {
+    it('should successfully return text response without system prompt', async () => {
       const result = await chatDriver.getModelResponse(undefined, 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
     }).timeout(TEST_TIMEOUT_MS);
 
-    it('should successfully return chat completion with message history', async () => {
+    it('should successfully return text response with message history', async () => {
       const messageHistory: IChatMessage[] = [
         {
           id: '1',
@@ -172,7 +172,7 @@ providers.forEach((provider, index) => {
   });
 
   describe(`getStreamedModelResponse (${provider})`, () => {
-    it('should successfully stream chat completion with system prompt', async () => {
+    it('should successfully stream text response with system prompt', async () => {
       const iterator = chatDriver.getStreamedModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       let result = '';
       while (true) {
@@ -184,7 +184,7 @@ providers.forEach((provider, index) => {
       expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
     }).timeout(TEST_TIMEOUT_MS);
 
-    it('should successfully stream chat completion without system prompt', async () => {
+    it('should successfully stream text response without system prompt', async () => {
       const iterator = chatDriver.getStreamedModelResponse(undefined, 'say Hi', EVerbosity.kMedium);
       let result = '';
       while (true) {
@@ -196,7 +196,7 @@ providers.forEach((provider, index) => {
       expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
     }).timeout(TEST_TIMEOUT_MS);
 
-    it('should successfully stream chat completion with message history', async () => {
+    it('should successfully stream text response with message history', async () => {
       const messageHistory: IChatMessage[] = [
         {
           id: '1',
@@ -490,12 +490,12 @@ providers.forEach((provider, index) => {
   const miniChatDriver = chatDriverFactory.create(EModel.kMini, provider);
 
   describe(`Mini Model Tests (${provider})`, () => {
-    it('should successfully return simple chat completion', async () => {
+    it('should successfully return simple text response', async () => {
       const result = await miniChatDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
     }).timeout(TEST_TIMEOUT_MS);
 
-    it('should successfully stream chat completion', async () => {
+    it('should successfully stream text response', async () => {
       const iterator = miniChatDriver.getStreamedModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       let result = '';
       while (true) {

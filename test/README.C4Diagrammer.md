@@ -6,7 +6,7 @@ This directory contains the test suite for the PromptRepository system, implemen
 ## Test File Summaries
 
 ### chat.test.ts
-Unit tests for the Chat module that handles LLM interactions. Tests verify successful chat completions with and without system prompts using the OpenAI API. Includes timeout configurations for API calls and basic response validation patterns.
+Unit tests for the Chat module that handles LLM interactions. Tests verify successful text responses with and without system prompts using the OpenAI Responses API. Includes timeout configurations for API calls and basic response validation patterns.
 
 ### promptrepository.test.ts
 Comprehensive unit tests for the PromptRepository module. Tests cover loading prompts from JSON storage, retrieving prompts by ID, parameter validation, and template replacement functionality. Uses temporary test files to validate repository operations in isolation. Includes tests for both required and optional parameters, as well as proper error handling.

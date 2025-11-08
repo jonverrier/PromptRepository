@@ -1,10 +1,14 @@
 /**
- * Interface for functions to pass to the LLM
+ * @module Function
+ * 
+ * Interfaces and types for function calling with LLMs.
+ * Supports OpenAI-style function calling with proper function execution patterns.
+ * Handles both single and multiple function calls in accordance with OpenAI Responses API.
  */
 // Copyright (c) 2025 Jon Verrier
 
 /**
- * Enum for basic data types
+ * Enum for basic data types used in function schemas
  */
 export enum EDataType {
    kObject = "object",
@@ -15,7 +19,8 @@ export enum EDataType {
 }
 
 /**
- * Base interface for argument objects
+ * Base interface for function argument objects
+ * Supports all JSON-serializable types that can be passed to functions
  */
 export interface IFunctionArgs {
    [key: string]: string | number | boolean | string[] | number[] | boolean[] | object | object[] | undefined;   
@@ -23,13 +28,26 @@ export interface IFunctionArgs {
 
 /**
  * Function type for validating function arguments
+ * Should throw an error if validation fails, otherwise return validated args
  */
 export type FnValidateFunctionArgs = (args: IFunctionArgs) => IFunctionArgs;
 
 /**
  * Function type for executing functions
+ * Should return a Promise that resolves to the function result
  */
 export type FnExecuteFunction = (args: IFunctionArgs) => Promise<IFunctionArgs>;
+
+/**
+ * Interface for function execution context
+ * Provides context information during function execution
+ */
+export interface IFunctionExecutionContext {
+   callId: string;
+   functionName: string;
+   timestamp: Date;
+   attempt: number; // For retry logic
+}
 
 export interface ISchemaProperty {
    type: EDataType | string; // Accepts both enum and string literal
@@ -47,20 +65,88 @@ export interface ISchemaProperty {
    additionalProperties?: boolean;
  }
  
- /**
- * Interface for a function
+/**
+ * Interface for a function call as received from the LLM
+ * Follows OpenAI Responses API format for function calls
+ */
+export interface ILLMFunctionCall {
+   type: 'function_call';
+   name: string;
+   arguments: string; // JSON string of arguments
+   call_id?: string; // Unique identifier for this function call
+}
+
+/**
+ * Interface for function call output in Responses API format
+ * Used to provide function execution results back to the LLM
+ */
+export interface IFunctionCallOutput {
+   type: 'function_call_output';
+   call_id: string;
+   output: string; // JSON string of function result
+}
+
+/**
+ * Interface for a function that can be called by the LLM
  * 
  * @interface IFunction
  * @property {string} name - The name of the function
  * @property {string} description - The description of the function
- * @property {object} inputSchema - The input schema of the function
- * @property {object} outputSchema - The output schema of the function
+ * @property {ISchema} inputSchema - The input schema defining expected parameters
+ * @property {ISchema} outputSchema - The output schema defining return value structure
+ * @property {Function} validateArgs - Function to validate input arguments
+ * @property {Function} execute - Function to execute with validated arguments
+ * 
+ * @example
+ * ```typescript
+ * const getWeatherFunction: IFunction = {
+ *   name: 'get_weather',
+ *   description: 'Get current weather for a location',
+ *   inputSchema: {
+ *     type: EDataType.kObject,
+ *     properties: {
+ *       location: { type: EDataType.kString, description: 'City name' }
+ *     },
+ *     required: ['location']
+ *   },
+ *   outputSchema: {
+ *     type: EDataType.kObject,
+ *     properties: {
+ *       temperature: { type: EDataType.kNumber, description: 'Temperature in Celsius' },
+ *       condition: { type: EDataType.kString, description: 'Weather condition' }
+ *     },
+ *     required: ['temperature', 'condition']
+ *   },
+ *   validateArgs: (args) => {
+ *     if (!args.location) throw new Error('Location is required');
+ *     return args;
+ *   },
+ *   execute: async (args) => {
+ *     // Implementation here
+ *     return { temperature: 22, condition: 'sunny' };
+ *   }
+ * };
+ * ```
  */
- export interface IFunction {
+export interface IFunction {
    name: string;
    description: string;
    inputSchema: ISchema;
    outputSchema: ISchema;
    validateArgs: (args: any) => any;
    execute: (args: any) => Promise<any>;
- }
+}
+
+/**
+ * Utility type for function execution results
+ * Can be either successful result or error information
+ */
+export type FunctionExecutionResult = {
+   success: true;
+   result: any;
+} | {
+   success: false;
+   error: string;
+   functionName: string;
+   timestamp: string;
+};
