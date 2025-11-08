@@ -170,7 +170,7 @@ providers.forEach((provider, index) => {
   describe(`Function Integration Tests (${provider})`, () => {
     testFunctionIntegration(
       chatDriver,
-      'should successfully return chat completion with function definition',
+      'should successfully return text response with function definition',
       'You are a helpful assistant that can call functions to get motorsport information.',
       'Who is the leading driver in Formula 1?',
       [createMotorsportFunction('basic')],
