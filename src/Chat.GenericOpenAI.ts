@@ -50,14 +50,29 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
    ): any {
       const filteredMessages = messages.filter(msg => msg.role !== EChatRole.kFunction);
       const formattedMessages = filteredMessages.map(msg => {
+         // Handle function_call_output messages (Responses API format)
+         if ((msg as any).type === "function_call_output") {
+            return {
+               type: "function_call_output",
+               call_id: (msg as any).call_id,
+               output: (msg as any).output
+            };
+         }
+
          const isAssistantWithFunctionCall = msg.role === EChatRole.kAssistant && msg.function_call;
+         const isAssistantWithToolCalls = msg.role === EChatRole.kAssistant && (msg as any).tool_calls;
          const baseMessage: any = {
             role: msg.role === EChatRole.kUser ? 'user' : 
                   msg.role === EChatRole.kAssistant ? 'assistant' : 
                   msg.role === EChatRole.kFunction ? 'function' :
                   msg.role === EChatRole.kTool ? 'tool' : 'user',
-            content: isAssistantWithFunctionCall ? null : (msg.content || '')
+            content: (isAssistantWithFunctionCall || isAssistantWithToolCalls) ? '' : (msg.content || '')
          };
+
+         // Add tool_calls for assistant messages with tool calls (Responses API format)
+         if (isAssistantWithToolCalls) {
+            baseMessage.tool_calls = (msg as any).tool_calls;
+         }
 
          // Add name property for function messages
          if (msg.role === EChatRole.kFunction && msg.name) {
@@ -141,7 +156,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
    /**
     * Handles a single function call and returns the result
     */
-   protected async handleFunctionCall(call: any, functions: IFunction[]): Promise<IChatMessage> {
+   protected async handleFunctionCall(call: any, functions: IFunction[], toolCallId?: string): Promise<IChatMessage> {
       const functionName = call.function_call?.name || call.name;
       let functionArgs: any = {};
       let functionResult: any;
@@ -196,15 +211,24 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
          };
       }
 
-      // For Responses API, always use assistant messages for function results
-      // The Responses API doesn't support 'tool' role messages
-      return {
-         role: EChatRole.kAssistant,
-         content: `Function ${functionName} returned: ${JSON.stringify(functionResult)}`,
+      // For Responses API, use function_call_output format (not assistant messages)
+      // We need to satisfy IChatMessage interface while adding Responses API fields
+      const message: IChatMessage & { type?: string; call_id?: string; output?: string } = {
+         role: EChatRole.kAssistant, // Required by IChatMessage interface
+         content: undefined, // Will be ignored due to type field
+         type: "function_call_output",
+         call_id: toolCallId,
+         output: JSON.stringify(functionResult),
          timestamp: new Date(),
-         id: `assistant-${Date.now()}`,
-         className: 'assistant-message'
+         id: `function-output-${Date.now()}`,
+         className: 'function-output-message'
       };
+      console.log(`[FUNCTION MESSAGE] Created function_call_output message:`, {
+         type: message.type,
+         call_id: message.call_id,
+         output: message.output ? message.output.substring(0, 200) + (message.output.length > 200 ? '...' : '') : ''
+      });
+      return message;
    }
 
    /**
@@ -213,7 +237,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
    protected async processToolCalls(toolCalls: any[], functions: IFunction[]): Promise<IChatMessage[]> {
       const toolMessages: IChatMessage[] = [];
       for (const call of toolCalls) {
-         const toolMessage = await this.handleFunctionCall(call, functions);
+         const toolMessage = await this.handleFunctionCall(call, functions, call.id);
          toolMessages.push(toolMessage);
       }
       return toolMessages;
@@ -233,7 +257,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                arguments: call.function.arguments
             }
          };
-         const toolMessage = await this.handleFunctionCall(convertedCall, functions);
+         const toolMessage = await this.handleFunctionCall(convertedCall, functions, call.id);
          toolMessages.push(toolMessage);
       }
       return toolMessages;
@@ -297,9 +321,9 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                // Check for repeated function calls to prevent infinite loops
                const currentFunctionCall = `${functionCalls[0].name}:${functionCalls[0].arguments}`;
                
-               if (lastFunctionCall === currentFunctionCall) {
+               if (lastFunctionCall === currentFunctionCall && toolUseRounds > 0) {
                   // Return a helpful message instead of looping
-                  return "I apologize, but I'm having trouble with the function call. Let me provide a direct response instead.";
+                  return "Sorry, we had an internal error caling tools. Please try again, or report the error if it recurs.";
                }
                lastFunctionCall = currentFunctionCall;
                
@@ -315,18 +339,27 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                
                const toolMessages = await this.processOpenAIToolCalls(convertedCalls, functions);
                
-               // Add assistant message and tool messages to the conversation history
-               const assistantMessage: IChatMessage = {
+               // Add assistant message from API response AND function_call_output messages
+               // The assistant message must include the tool_calls to match function_call_output call_ids
+               const assistantMessage: IChatMessage & { tool_calls?: any[] } = {
                   role: EChatRole.kAssistant,
                   content: textContent || '',
+                  tool_calls: functionCalls.map((call: any) => ({
+                     id: call.call_id,
+                     type: 'function',
+                     function: {
+                        name: call.name,
+                        arguments: call.arguments || '{}'
+                     }
+                  })),
                   function_call: undefined,
                   timestamp: new Date(),
                   id: `assistant-${Date.now()}`,
                   className: 'assistant-message'
                };
+               
                currentMessages = [
                   ...currentMessages,
-                  assistantMessage,
                   ...toolMessages
                ];
                
@@ -368,6 +401,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       const MAX_TOOL_USE_ROUNDS = 5; // Reduce to prevent infinite loops
       let currentMessages = messages;
       let lastFunctionCall: string | null = null;
+      let consecutiveRepeats = 0;
       
       while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
          // Check for function/tool calls in Responses API format
@@ -384,10 +418,23 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                // Check for repeated function calls to prevent infinite loops
                const currentFunctionCall = `${functionCalls[0].name}:${functionCalls[0].arguments}`;
                
+               // Smart loop detection: only count consecutive repeats of the same function
                if (lastFunctionCall === currentFunctionCall) {
-                  // Return a helpful message instead of looping
-                  return "I apologize, but I'm having trouble with the function call. Let me provide a direct response instead.";
+                  consecutiveRepeats++;
+                  console.log(`[LOOP DETECTION] Round ${toolUseRounds}, Consecutive repeat #${consecutiveRepeats} of: ${currentFunctionCall}`);
+               } else {
+                  // Reset counter when we see a different function call (progress made)
+                  consecutiveRepeats = 0;
+                  console.log(`[LOOP DETECTION] Round ${toolUseRounds}, New function call: ${currentFunctionCall} (reset counter)`);
                }
+               
+               // Only trigger loop detection after 2 consecutive repeats (3 total calls of same function)
+               if (consecutiveRepeats >= 2) {
+                  console.log(`[LOOP DETECTION] Loop detected! ${consecutiveRepeats + 1} consecutive calls to: ${currentFunctionCall}`);
+                  // Return a helpful message instead of looping
+                  return "Sorry, we hit an internal error in our function call loop. Please try again, or report the error if it recurs.";
+               }
+               
                lastFunctionCall = currentFunctionCall;
                
                // Convert Responses API function calls to OpenAI tool call format
@@ -402,32 +449,35 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                
                const toolMessages = await this.processOpenAIToolCalls(convertedCalls, functions);
                
-               // Function calls executed successfully
-               
-               // For forced tool use, return the function result directly instead of continuing the conversation
-               // This avoids the infinite loop issue with the Responses API
-               if (toolMessages.length > 0) {
-                  const functionResult = toolMessages[0].content;
-                  if (functionResult && functionResult.includes('returned:')) {
-                     // Extract the actual result from the function message
-                     const resultMatch = functionResult.match(/returned: (.+)$/);
-                     if (resultMatch) {
-                        try {
-                           const parsedResult = JSON.parse(resultMatch[1]);
-                           // Format a natural response using the function result
-                           if (parsedResult.leadingDriver && parsedResult.raceSeries && parsedResult.points) {
-                              return `The current leading driver in ${parsedResult.raceSeries} is ${parsedResult.leadingDriver}, with ${parsedResult.points} points.`;
-                           }
-                        } catch (e) {
-                           // Fall back to the raw function result
-                           return functionResult;
-                        }
+               // Add assistant message from API response AND function_call_output messages
+               // The assistant message must include the tool_calls to match function_call_output call_ids
+               const assistantMessage: IChatMessage & { tool_calls?: any[] } = {
+                  role: EChatRole.kAssistant,
+                  content: textContent || '',
+                  tool_calls: functionCalls.map((call: any) => ({
+                     id: call.call_id,
+                     type: 'function',
+                     function: {
+                        name: call.name,
+                        arguments: call.arguments || '{}'
                      }
-                  }
-                  return functionResult || 'Function executed successfully.';
-               }
+                  })),
+                  function_call: undefined,
+                  timestamp: new Date(),
+                  id: `assistant-${Date.now()}`,
+                  className: 'assistant-message'
+               };
                
-               // If no tool messages, continue with the normal flow (shouldn't happen in forced mode)
+               currentMessages = [
+                  ...currentMessages,
+                  ...toolMessages
+               ];
+               
+               // Tool messages added to conversation history
+               
+               // Re-invoke the model with the tool result(s) - don't force tools on subsequent calls
+               config = this.createResponseConfig(systemPrompt, currentMessages, verbosity, functions, false, false);
+               response = await createResponse(config);
                toolUseRounds++;
                continue;
             }
@@ -436,10 +486,19 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
             if (response.tool_calls && response.tool_calls.length > 0 && functions) {
                const toolMessages = await this.processOpenAIToolCalls(response.tool_calls, functions);
                
-               // Add assistant message and tool messages to the conversation history
-               const assistantMessage: IChatMessage = {
+               // Add assistant message with tool_calls and function result messages to conversation history
+               // The assistant message must include the tool_calls for Responses API
+               const assistantMessage: IChatMessage & { tool_calls?: any[] } = {
                   role: EChatRole.kAssistant,
-                  content: textContent || '',
+                  content: '',
+                  tool_calls: functionCalls.map((call: any) => ({
+                     id: call.call_id,
+                     type: 'function',
+                     function: {
+                        name: call.name,
+                        arguments: call.arguments || '{}'
+                     }
+                  })),
                   function_call: undefined,
                   timestamp: new Date(),
                   id: `assistant-${Date.now()}`,
@@ -447,7 +506,6 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                };
                currentMessages = [
                   ...currentMessages,
-                  assistantMessage,
                   ...toolMessages
                ];
                

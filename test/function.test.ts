@@ -464,3 +464,256 @@ describe('Function Call Counting and Content Verification Tests', () => {
       });
    });
 });
+
+// Multi-step function calling tests
+describe('Multi-Step Function Calling Tests', () => {
+   let memoryStore: { [key: string]: any } = {};
+   
+   beforeEach(() => {
+      // Reset memory store before each test
+      memoryStore = {};
+      resetCallCounter();
+   });
+
+   // Create a memory management function that lists existing memories
+   const createListMemoriesFunction = (): IFunction => {
+      return {
+         name: 'listMemories',
+         description: 'Lists all stored memories',
+         inputSchema: {
+            type: 'object',
+            properties: {},
+            required: []
+         },
+         outputSchema: {
+            type: EDataType.kObject,
+            properties: {
+               memories: {
+                  type: EDataType.kArray,
+                  description: 'Array of stored memories'
+               },
+               count: {
+                  type: EDataType.kNumber,
+                  description: 'Number of memories stored'
+               },
+               status: {
+                  type: EDataType.kString,
+                  description: 'Status message indicating the result of the operation'
+               },
+               timestamp: {
+                  type: EDataType.kString,
+                  description: 'Timestamp of the operation'
+               }
+            },
+            required: ['memories', 'count', 'status', 'timestamp']
+         },
+         validateArgs: (args: any): any => {
+            return {}; // No validation needed for listing
+         },
+         execute: async (args: any): Promise<any> => {
+            functionCallCount++;
+            console.log(`[FUNCTION CALL] listMemories() called - Call #${functionCallCount}`);
+            const memories = Object.keys(memoryStore).map(key => ({
+               key,
+               value: memoryStore[key]
+            }));
+            const result = {
+               memories,
+               count: memories.length,
+               status: memories.length === 0 ? "No existing memories found. Ready to save new memories." : "Existing memories retrieved successfully.",
+               timestamp: new Date().toISOString()
+            };
+            console.log(`[FUNCTION RESULT] listMemories() returned:`, result);
+            return {
+               memories,
+               count: memories.length,
+               status: memories.length === 0 ? "No existing memories found. Ready to save new memories." : "Existing memories retrieved successfully.",
+               timestamp: new Date().toISOString()
+            };
+         }
+      };
+   };
+
+   // Create a memory management function that saves new memories
+   const createSaveMemoryFunction = (): IFunction => {
+      return {
+         name: 'saveMemory',
+         description: 'Saves a new memory with a key and value',
+         inputSchema: {
+            type: 'object',
+            properties: {
+               key: {
+                  type: 'string',
+                  description: 'The key to store the memory under'
+               },
+               value: {
+                  type: 'string', 
+                  description: 'The value to store'
+               }
+            },
+            required: ['key', 'value']
+         },
+         outputSchema: {
+            type: EDataType.kObject,
+            properties: {
+               success: {
+                  type: EDataType.kBoolean,
+                  description: 'Whether the save operation was successful'
+               },
+               key: {
+                  type: EDataType.kString,
+                  description: 'The key that was used to store the memory'
+               },
+               value: {
+                  type: EDataType.kString,
+                  description: 'The value that was stored'
+               },
+               timestamp: {
+                  type: EDataType.kString,
+                  description: 'Timestamp of the operation'
+               }
+            },
+            required: ['success', 'key', 'value', 'timestamp']
+         },
+         validateArgs: (args: any): any => {
+            if (!args.key || typeof args.key !== 'string') {
+               throw new Error('Key must be a non-empty string');
+            }
+            if (!args.value || typeof args.value !== 'string') {
+               throw new Error('Value must be a non-empty string');
+            }
+            return args;
+         },
+         execute: async (args: any): Promise<any> => {
+            functionCallCount++;
+            console.log(`[FUNCTION CALL] saveMemory() called - Call #${functionCallCount} with args:`, args);
+            memoryStore[args.key] = args.value;
+            console.log(`[FUNCTION RESULT] saveMemory() saved to memory store:`, memoryStore);
+            return {
+               success: true,
+               key: args.key,
+               value: args.value,
+               timestamp: new Date().toISOString()
+            };
+         }
+      };
+   };
+
+   // Helper function to test multi-step function calling
+   const testMultiStepFunctionCalling = async (
+      chatDriver: any,
+      testName: string,
+      systemPrompt: string,
+      userPrompt: string,
+      functions: IFunction[],
+      expectedMinCallCount: number,
+      expectedContent: string[]
+   ) => {
+      // Test non-streaming response with forced tools
+      it(`${testName} (getModelResponseWithForcedTools)`, async () => {
+         const initialCallCount = getCallCount();
+         const result = await chatDriver.getModelResponseWithForcedTools(
+            systemPrompt,
+            userPrompt,
+            EVerbosity.kMedium,
+            undefined, // messageHistory
+            functions
+         );
+         
+         // Log the model response for debugging
+         console.log(`[Multi-Step Test] ${testName}:`);
+         console.log(`Model Response: ${result}`);
+         console.log(`Memory Store: ${JSON.stringify(memoryStore)}`);
+         console.log('---');
+         
+         const finalCallCount = getCallCount();
+         const actualCallCount = finalCallCount - initialCallCount;
+         
+         // Verify at least the minimum expected number of function calls occurred
+         expect(actualCallCount).toBeGreaterThanOrEqual(expectedMinCallCount);
+         
+         // Verify response contains expected content
+         const resultLower = result.toLowerCase();
+         expectedContent.forEach(content => {
+            expect(resultLower).toContain(content.toLowerCase());
+         });
+         
+         // Verify response is substantial (not just a function result)
+         expect(result.length).toBeGreaterThan(100);
+      }).timeout(TEST_TIMEOUT_MS);
+
+      // Test streaming response with forced tools
+      it(`${testName} (getStreamedModelResponseWithForcedTools)`, async () => {
+         // Reset for streaming test
+         memoryStore = {};
+         resetCallCounter();
+         
+         const initialCallCount = getCallCount();
+         const iterator = chatDriver.getStreamedModelResponseWithForcedTools(
+            systemPrompt,
+            userPrompt,
+            EVerbosity.kMedium,
+            undefined, // messageHistory
+            functions
+         );
+         
+         const chunks: string[] = [];
+         while (true) {
+            const result = await iterator.next();
+            if (result.done) break;
+            if (result.value) {
+               chunks.push(result.value);
+            }
+         }
+         
+         const fullText = chunks.join('');
+         const finalCallCount = getCallCount();
+         const actualCallCount = finalCallCount - initialCallCount;
+         
+         // Log the streaming response for debugging
+         console.log(`[Multi-Step Streaming Test] ${testName}:`);
+         console.log(`Streamed Response: ${fullText}`);
+         console.log(`Memory Store: ${JSON.stringify(memoryStore)}`);
+         console.log('---');
+         
+         // Verify at least the minimum expected number of function calls occurred
+         expect(actualCallCount).toBeGreaterThanOrEqual(expectedMinCallCount);
+         
+         // Verify response contains expected content
+         const resultLower = fullText.toLowerCase();
+         expectedContent.forEach(content => {
+            expect(resultLower).toContain(content.toLowerCase());
+         });
+         
+         // Verify response is substantial
+         expect(fullText.length).toBeGreaterThan(100);
+      }).timeout(TEST_TIMEOUT_MS);
+   };
+
+   // Run multi-step tests for each provider
+   providers.forEach((provider, index) => {
+      const chatDriver = chatDrivers[index];
+
+      describe(`Multi-Step Function Calling Tests (${provider})`, () => {
+         testMultiStepFunctionCalling(
+            chatDriver,
+            'should call listMemories then saveMemory when user provides new information',
+            'You are a helpful assistant with memory capabilities. IMPORTANT: Follow these steps in order: 1) FIRST call listMemories() to check existing memories, 2) THEN call saveMemory() to save the new information with an appropriate key, 3) FINALLY provide a helpful response. Do NOT call listMemories() twice - call it once, then call saveMemory(), then respond.',
+            'I am 50 years old and want to improve my snatch technique in weightlifting.',
+            [createListMemoriesFunction(), createSaveMemoryFunction()],
+            2, // Expected minimum call count (listMemories + saveMemory)
+            ['50', 'snatch'] // Expected content in response
+         );
+
+         testMultiStepFunctionCalling(
+            chatDriver,
+            'should handle multiple memory operations for complex user information',
+            'You are a helpful assistant with memory capabilities. When a user provides multiple pieces of information, check existing memories first, then save each distinct piece of information with appropriate keys, and provide a comprehensive response.',
+            'My name is John Smith, I live in Seattle, and I work as a software engineer at Microsoft.',
+            [createListMemoriesFunction(), createSaveMemoryFunction()],
+            3, // Expected minimum call count (listMemories + multiple saveMemory calls)
+            ['john', 'seattle', 'software', 'microsoft'] // Expected content in response
+         );
+      });
+   });
+});
