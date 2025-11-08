@@ -34,13 +34,6 @@ const getExecutionCount = (functionName: string): number => {
 };
 
 // Mock weather data for different cities
-const mockWeatherData: { [key: string]: { temperature: number; condition: string; humidity: number } } = {
-   'london': { temperature: 15, condition: 'cloudy', humidity: 78 },
-   'paris': { temperature: 18, condition: 'sunny', humidity: 65 },
-   'tokyo': { temperature: 22, condition: 'rainy', humidity: 85 },
-   'new york': { temperature: 12, condition: 'snowy', humidity: 70 },
-   'sydney': { temperature: 25, condition: 'sunny', humidity: 60 }
-};
 
 // Mock horoscope data for different signs
 const mockHoroscopeData: { [key: string]: string } = {
@@ -59,70 +52,80 @@ const mockHoroscopeData: { [key: string]: string } = {
 };
 
 /**
- * Creates a weather function following the official OpenAI example pattern
+ * Creates a file reading function that requires separate calls for each file
  */
-const createWeatherFunction = (): IFunction => {
+const createReadFileFunction = (): IFunction => {
    return {
-      name: 'get_weather',
-      description: 'Get current weather information for a specific city',
+      name: 'read_file',
+      description: 'Read the contents of a specific file and return file information',
       inputSchema: {
          type: EDataType.kObject,
          properties: {
-            city: {
+            filename: {
                type: EDataType.kString,
-               description: 'The name of the city to get weather for'
+               description: 'The name of the file to read (e.g., "config.json", "data.txt")'
             }
          },
-         required: ['city']
+         required: ['filename']
       },
       outputSchema: {
          type: EDataType.kObject,
          properties: {
-            city: {
+            filename: {
                type: EDataType.kString,
-               description: 'The city name'
+               description: 'The name of the file that was read'
             },
-            temperature: {
+            size: {
                type: EDataType.kNumber,
-               description: 'Temperature in Celsius'
+               description: 'File size in bytes'
             },
-            condition: {
+            content: {
                type: EDataType.kString,
-               description: 'Weather condition'
+               description: 'File contents or summary'
             },
-            humidity: {
-               type: EDataType.kNumber,
-               description: 'Humidity percentage'
+            last_modified: {
+               type: EDataType.kString,
+               description: 'Last modification timestamp'
             }
          },
-         required: ['city', 'temperature', 'condition', 'humidity']
+         required: ['filename', 'size', 'content', 'last_modified']
       },
       validateArgs: (args: IFunctionArgs): IFunctionArgs => {
-         if (!args.city || typeof args.city !== 'string') {
-            throw new Error('city is required and must be a string');
+         if (!args.filename || typeof args.filename !== 'string') {
+            throw new Error('filename is required and must be a string');
          }
          return args;
       },
       execute: async (args: IFunctionArgs): Promise<IFunctionArgs> => {
-         const city = (args.city as string).toLowerCase();
-         const weatherData = mockWeatherData[city] || { temperature: 20, condition: 'unknown', humidity: 50 };
+         const filename = args.filename as string;
+         
+         // Mock file data based on filename
+         const mockFiles: { [key: string]: { size: number, content: string } } = {
+            'config.json': { size: 1024, content: '{"version": "1.0", "debug": true}' },
+            'data.txt': { size: 2048, content: 'Sample data file with important information' },
+            'readme.md': { size: 512, content: '# Project Documentation\n\nThis is the readme file.' },
+            'log.txt': { size: 4096, content: 'Application log entries from today' },
+            'settings.ini': { size: 256, content: '[Settings]\ntheme=dark\nlanguage=en' }
+         };
+         
+         const fileData = mockFiles[filename.toLowerCase()] || { size: 100, content: `Contents of ${filename}` };
          
          const result = {
-            city: args.city as string,
-            temperature: weatherData.temperature,
-            condition: weatherData.condition,
-            humidity: weatherData.humidity
+            filename: filename,
+            size: fileData.size,
+            content: fileData.content,
+            last_modified: new Date().toISOString()
          };
          
          // Track execution
          functionExecutions.push({
-            functionName: 'get_weather',
+            functionName: 'read_file',
             args: args,
             result: result,
             timestamp: new Date()
          });
          
-         console.log(`[WEATHER FUNCTION] Called for ${args.city}:`, result);
+         console.log(`[FILE READER] Read file ${filename}:`, result);
          return result;
       }
    };
@@ -284,14 +287,6 @@ const testMultipleToolCalling = async (
          functions
       );
       
-      console.log(`[MULTI-TOOL TEST] ${testName}:`);
-      console.log(`User Prompt: ${userPrompt}`);
-      console.log(`Model Response: ${result}`);
-      console.log(`Function Executions: ${functionExecutions.length}`);
-      functionExecutions.forEach((exec, index) => {
-         console.log(`  ${index + 1}. ${exec.functionName}(${JSON.stringify(exec.args)}) -> ${JSON.stringify(exec.result)}`);
-      });
-      console.log('---');
       
       // Verify minimum number of function executions
       expect(functionExecutions.length).toBeGreaterThanOrEqual(expectedMinExecutions);
@@ -360,75 +355,42 @@ providers.forEach((provider, index) => {
 
    describe(`Multiple Tool Calling Tests (${provider})`, () => {
       
-      // Test 1: Multiple weather calls for different cities
-      testMultipleToolCalling(
-         chatDriver,
-         'should call weather function multiple times for different cities',
-         'You are a helpful assistant with access to weather data. When asked about weather in multiple cities, call the get_weather function for each city separately.',
-         'What is the weather like in London and Paris?',
-         [createWeatherFunction()],
-         2, // Expected minimum executions (one for each city)
-         ['get_weather'], // Expected function names
-         (result: string) => {
-            const lowerResult = result.toLowerCase();
-            return lowerResult.includes('london') && lowerResult.includes('paris') && 
-                   (lowerResult.includes('weather') || lowerResult.includes('temperature'));
-         }
-      );
-
-      // Test 2: Mixed function calls (weather + horoscope)
+      // Test 1: Mixed function calls (file reading + horoscope)
       testMultipleToolCalling(
          chatDriver,
          'should call different types of functions in one interaction',
-         'You are a helpful assistant with access to weather and horoscope data. Use the appropriate functions to answer user questions.',
-         'What is the weather in Tokyo and what is my horoscope for Aquarius?',
-         [createWeatherFunction(), createHoroscopeFunction()],
-         2, // Expected minimum executions (weather + horoscope)
-         ['get_weather', 'get_horoscope'], // Expected function names
+         'You are a helpful assistant with access to file reading and horoscope services. CRITICAL: You MUST make ALL necessary function calls in a SINGLE response. When asked about multiple things, call the appropriate functions for EACH request separately. Make ALL these function calls in the SAME response - do not wait for function results before making additional calls. Use parallel function calling to handle ALL requests.',
+         'Please read the file readme.md and give me my horoscope for Aquarius.',
+         [createReadFileFunction(), createHoroscopeFunction()],
+         2, // Expected minimum executions (file reading + horoscope)
+         ['read_file', 'get_horoscope'], // Expected function names
          (result: string) => {
             const lowerResult = result.toLowerCase();
-            return lowerResult.includes('tokyo') && lowerResult.includes('aquarius') &&
-                   (lowerResult.includes('weather') || lowerResult.includes('temperature')) &&
+            return lowerResult.includes('readme.md') && lowerResult.includes('aquarius') &&
+                   (lowerResult.includes('file') || lowerResult.includes('read') || lowerResult.includes('contents')) &&
                    (lowerResult.includes('horoscope') || lowerResult.includes('otter'));
          }
       );
 
-      // Test 3: Complex multi-city, multi-function scenario
-      testMultipleToolCalling(
-         chatDriver,
-         'should handle complex multi-city multi-function requests',
-         'You are a travel assistant with access to weather and timezone information. Help users plan their trips by providing comprehensive information.',
-         'I am planning to visit London, Paris, and Tokyo. Can you tell me the weather and timezone information for each city?',
-         [createWeatherFunction(), createTimeZoneFunction()],
-         6, // Expected minimum executions (3 cities × 2 functions each)
-         ['get_weather', 'get_timezone'], // Expected function names
-         (result: string) => {
-            const lowerResult = result.toLowerCase();
-            return lowerResult.includes('london') && lowerResult.includes('paris') && lowerResult.includes('tokyo') &&
-                   (lowerResult.includes('weather') || lowerResult.includes('temperature')) &&
-                   (lowerResult.includes('timezone') || lowerResult.includes('utc'));
-         }
-      );
-
-      // Test 4: All three functions in one complex request
+      // Test 2: All three functions in one complex request
       testMultipleToolCalling(
          chatDriver,
          'should handle requests requiring all available functions',
-         'You are a comprehensive assistant with access to weather, horoscope, and timezone data. Provide complete information when requested.',
-         'I am an Aquarius planning a trip to Sydney. Can you give me the weather, timezone, and my horoscope?',
-         [createWeatherFunction(), createHoroscopeFunction(), createTimeZoneFunction()],
+         'You are a comprehensive assistant with access to file reading, horoscope, and timezone services. CRITICAL: You MUST make ALL necessary function calls in a SINGLE response. When asked about multiple types of information, call the appropriate functions for EACH request separately. Make ALL these function calls in the SAME response - do not wait for function results before making additional calls. Use parallel function calling to provide ALL requested information.',
+         'I am an Aquarius working in Sydney and need to read the file log.txt. Can you read the file, get the timezone for Sydney, and give me my horoscope?',
+         [createReadFileFunction(), createHoroscopeFunction(), createTimeZoneFunction()],
          3, // Expected minimum executions (one for each function)
-         ['get_weather', 'get_horoscope', 'get_timezone'], // Expected function names
+         ['read_file', 'get_horoscope', 'get_timezone'], // Expected function names
          (result: string) => {
             const lowerResult = result.toLowerCase();
-            return lowerResult.includes('sydney') && lowerResult.includes('aquarius') &&
-                   (lowerResult.includes('weather') || lowerResult.includes('temperature')) &&
+            return lowerResult.includes('log.txt') && lowerResult.includes('sydney') && lowerResult.includes('aquarius') &&
+                   (lowerResult.includes('file') || lowerResult.includes('read') || lowerResult.includes('contents')) &&
                    (lowerResult.includes('horoscope') || lowerResult.includes('otter')) &&
                    (lowerResult.includes('timezone') || lowerResult.includes('australia'));
          }
       );
 
-      // Test 5: Official OpenAI example recreation
+      // Test 3: Official OpenAI example recreation
       testMultipleToolCalling(
          chatDriver,
          'should recreate the official OpenAI horoscope example pattern',
@@ -448,14 +410,14 @@ providers.forEach((provider, index) => {
 
 describe('Multiple Tool Calling Interface Tests', () => {
    it('should validate multiple function interface structures', () => {
-      const weatherFunction = createWeatherFunction();
+      const fileReadingFunction = createReadFileFunction();
       const horoscopeFunction = createHoroscopeFunction();
       const timezoneFunction = createTimeZoneFunction();
       
-      // Validate weather function
-      expect(weatherFunction.name).toBe('get_weather');
-      expect(weatherFunction.inputSchema.properties.city.type).toBe(EDataType.kString);
-      expect(weatherFunction.outputSchema.properties.temperature.type).toBe(EDataType.kNumber);
+      // Validate file reading function
+      expect(fileReadingFunction.name).toBe('read_file');
+      expect(fileReadingFunction.inputSchema.properties.filename.type).toBe(EDataType.kString);
+      expect(fileReadingFunction.outputSchema.properties.content.type).toBe(EDataType.kString);
       
       // Validate horoscope function
       expect(horoscopeFunction.name).toBe('get_horoscope');

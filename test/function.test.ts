@@ -297,11 +297,6 @@ describe('Function Call Counting and Content Verification Tests', () => {
             functions
          );
          
-         // Log the model response
-         console.log(`[Model Response] ${testName} (getModelResponse):`);
-         console.log(`Model Response: ${result}`);
-         console.log('---');
-         
          const finalCallCount = getCallCount();
          const actualCallCount = finalCallCount - initialCallCount;
          
@@ -348,9 +343,6 @@ describe('Function Call Counting and Content Verification Tests', () => {
          const fullText = chunks.join('');
          
          // Log the model response
-         console.log(`[Model Response] ${testName} (getStreamedModelResponse):`);
-         console.log(`Model Response: ${fullText}`);
-         console.log('---');
          
          const finalCallCount = getCallCount();
          const actualCallCount = finalCallCount - initialCallCount;

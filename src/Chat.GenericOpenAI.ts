@@ -26,7 +26,7 @@ interface IOpenAIToolCall {
 }
 
 interface AsyncResponse {
-    [Symbol.asyncIterator](): AsyncIterator<any>;
+   [Symbol.asyncIterator](): AsyncIterator<any>;
 }
 
 /**
@@ -100,10 +100,10 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
          const isAssistantWithFunctionCall = msg.role === EChatRole.kAssistant && msg.function_call;
          const isAssistantWithToolCalls = msg.role === EChatRole.kAssistant && msg.tool_calls;
          const baseMessage: any = {
-            role: msg.role === EChatRole.kUser ? 'user' : 
-                  msg.role === EChatRole.kAssistant ? 'assistant' : 
+            role: msg.role === EChatRole.kUser ? 'user' :
+               msg.role === EChatRole.kAssistant ? 'assistant' :
                   msg.role === EChatRole.kFunction ? 'function' :
-                  msg.role === EChatRole.kTool ? 'tool' : 'user',
+                     msg.role === EChatRole.kTool ? 'tool' : 'user',
             content: (isAssistantWithFunctionCall || isAssistantWithToolCalls) ? '' : (msg.content || '')
          };
 
@@ -129,7 +129,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       // Note: Azure GPT-4.1 only supports 'medium', so we map high to medium for Azure
       const currentModelName = this.getModelName();
       const isAzureModel = currentModelName.startsWith('gpt-4.1');
-      
+
       const verbosityMap: Record<EVerbosity, string> = {
          [EVerbosity.kLow]: isAzureModel ? 'medium' : 'low',
          [EVerbosity.kMedium]: 'medium',
@@ -144,7 +144,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       };
 
       // Build messages array with system prompt if provided
-      const allMessages = systemPrompt 
+      const allMessages = systemPrompt
          ? [{ role: 'system', content: systemPrompt }, ...formattedMessages]
          : formattedMessages;
 
@@ -185,7 +185,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
          });
          // Configure tool choice - only force tools when explicitly requested
          config.tool_choice = forceToolUse ? "required" : "auto";
-         
+
       }
 
       return config;
@@ -205,7 +205,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       // Map EVerbosity enum to Responses API verbosity values
       const currentModelName = this.getModelName();
       const isAzureModel = currentModelName.startsWith('gpt-4.1');
-      
+
       const verbosityMap: Record<EVerbosity, string> = {
          [EVerbosity.kLow]: isAzureModel ? 'medium' : 'low',
          [EVerbosity.kMedium]: 'medium',
@@ -214,7 +214,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
 
       const thinkingTimeMap: Record<EVerbosity, string> = {
          [EVerbosity.kLow]: 'low',
-         [EVerbosity.kMedium]: 'low',   
+         [EVerbosity.kMedium]: 'low',
          [EVerbosity.kHigh]: 'medium'
       };
 
@@ -304,7 +304,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       const functionName = call.function_call?.name || call.name;
       let functionArgs: any = {};
       let functionResult: any;
-      
+
       try {
          // Parse function arguments
          try {
@@ -318,7 +318,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                timestamp: new Date().toISOString()
             };
          }
-         
+
          // Find the function
          const func = functions.find(f => f.name === functionName);
          if (!func) {
@@ -461,8 +461,8 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       return this.handleToolUseWithResponsesAPI(systemPrompt, messages, verbosity, functions, true, createResponse);
    }
 
-   async getModelResponse(systemPrompt: string | undefined, 
-      userPrompt: string, 
+   async getModelResponse(systemPrompt: string | undefined,
+      userPrompt: string,
       verbosity: EVerbosity,
       messageHistory?: IChatMessage[],
       functions?: IFunction[]): Promise<string> {
@@ -485,8 +485,8 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       }
    }
 
-   async getModelResponseWithForcedTools(systemPrompt: string | undefined, 
-      userPrompt: string, 
+   async getModelResponseWithForcedTools(systemPrompt: string | undefined,
+      userPrompt: string,
       verbosity: EVerbosity,
       messageHistory?: IChatMessage[],
       functions?: IFunction[]): Promise<string> {
@@ -509,12 +509,12 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       }
    }
 
-   getStreamedModelResponse(systemPrompt: string | undefined, 
-      userPrompt: string, 
+   getStreamedModelResponse(systemPrompt: string | undefined,
+      userPrompt: string,
       verbosity: EVerbosity,
       messageHistory?: IChatMessage[],
       functions?: IFunction[]): AsyncIterator<string> {
-         
+
       const messages = this.buildMessageArray(messageHistory, userPrompt);
       const self = this;
 
@@ -523,7 +523,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
             // Try to call the API - this might return a streaming iterator for testing
             const config = self.createResponseConfig(systemPrompt, messages, verbosity, functions, false, false);
             const response = await retryWithExponentialBackoff(() => self.openai.responses.create(config));
-            
+
             // Check if the response has an async iterator (for testing)
             if (response && typeof (response as any)[Symbol.asyncIterator] === 'function') {
                // Handle real streaming (for testing)
@@ -541,7 +541,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                }
                return;
             }
-            
+
             // Use the tool use loop to handle function calls properly, then simulate streaming
             const result = await self.handleToolUseLoop(
                systemPrompt,
@@ -550,10 +550,10 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                functions,
                (config) => retryWithExponentialBackoff(() => self.openai.responses.create(config))
             );
-            
+
             // Simulate streaming by yielding the result in chunks
             const words = result.split(' ').filter(word => word.trim().length > 0);
-            
+
             // If we have very few words, split by characters to ensure multiple chunks
             if (words.length <= 2) {
                const chars = result.trim();
@@ -578,12 +578,12 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       })();
    }
 
-   getStreamedModelResponseWithForcedTools(systemPrompt: string | undefined, 
-      userPrompt: string, 
+   getStreamedModelResponseWithForcedTools(systemPrompt: string | undefined,
+      userPrompt: string,
       verbosity: EVerbosity,
       messageHistory?: IChatMessage[],
       functions?: IFunction[]): AsyncIterator<string> {
-         
+
       const messages = this.buildMessageArray(messageHistory, userPrompt);
       const self = this;
 
@@ -597,7 +597,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                functions,
                (config) => retryWithExponentialBackoff(() => self.openai.responses.create(config))
             );
-            
+
             // Simulate streaming by yielding the result in chunks (1 word at a time for better granularity)
             const words = result.split(' ').filter(word => word.trim().length > 0);
             for (let i = 0; i < words.length; i++) {
@@ -631,17 +631,17 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       config.text = {
          ...config.text,
          format: {
-            type: "json_schema", 
+            type: "json_schema",
             name: "constrainedOutput",
             schema: jsonSchema
          }
       };
 
       try {
-      const response = await retryWithExponentialBackoff(() => 
+         const response = await retryWithExponentialBackoff(() =>
             this.openai.responses.create(config)
          );
-         
+
          const content = this.extractTextFromOutput(response.output || []);
          if (content) {
             try {
@@ -686,119 +686,94 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       forceToolUse?: boolean,
       createResponse: (config: any) => Promise<any> = (config) => this.openai.responses.create(config)
    ): Promise<string> {
-      console.log('🚀 Starting Responses API tool use handler with multiple tool support');
-      
       // Step 1: Build initial input_list from message history (following official example)
       let inputList = this.convertMessagesToInputList(messages);
-      console.log('📝 Initial input_list:', JSON.stringify(inputList, null, 2));
 
       // Tool use loop: handle multiple rounds of tool calls
       let toolUseRounds = 0;
       const MAX_TOOL_USE_ROUNDS = 10; // Increased to handle complex multi-tool scenarios
       const executedFunctions = new Set<string>(); // Track executed functions to prevent infinite loops
-      
+
       while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
-         console.log(`🔄 Tool use round ${toolUseRounds + 1}/${MAX_TOOL_USE_ROUNDS}`);
-         
-      // Step 2: The Responses API works differently than Chat Completions
-      // It expects all function calls to happen in a single request, not across multiple rounds
-      // If we already have function outputs, we should NOT continue the loop
-      const hasFunctionOutputs = inputList.some((item: any) => item.type === 'function_call_output');
-      
-      if (hasFunctionOutputs) {
-         console.log('🛑 Function outputs detected - Responses API does not support multi-round function calling');
-         console.log('📝 Returning summary of executed functions');
-         
-         // Extract the function results and return a summary
-         const functionOutputs = inputList.filter((item: any) => item.type === 'function_call_output');
-         const summaries = functionOutputs.map((output: any) => `Function executed: ${output.output}`);
-         return `Function execution completed:\n${summaries.join('\n')}`;
-      }
-      
-      const shouldIncludeTools = functions && functions.length > 0;
-      
-      const config = this.createResponsesInputConfig(
-         systemPrompt, 
-         inputList, 
-         verbosity, 
-         shouldIncludeTools ? functions : undefined,
-         forceToolUse && toolUseRounds === 0  // Only force on first round
-      );
-      
-      // Add max_tool_calls to encourage multiple function calls in a single response
-      // This is the key: the model should make ALL necessary calls in one response
-      if (shouldIncludeTools && functions && functions.length > 0) {
-         config.max_tool_calls = 10; // Allow up to 10 tool calls in a single response
-      }
-         
-         // Debug: Log the exact config being sent
-         console.log('🔍 Sending config to API:', JSON.stringify(config, null, 2));
-         console.log('🔍 Has function outputs:', hasFunctionOutputs, 'Should include tools:', shouldIncludeTools);
-         
-         console.log('⚙️ Config for round', toolUseRounds + 1, ':', JSON.stringify(config, null, 2));
-         
+         // Step 2: The Responses API works differently than Chat Completions
+         // It expects all function calls to happen in a single request, not across multiple rounds
+         // If we already have function outputs, we should NOT continue the loop
+         const hasFunctionOutputs = inputList.some((item: any) => item.type === 'function_call_output');
+
+         if (hasFunctionOutputs) {
+
+            // Extract the function results and return a summary
+            const functionOutputs = inputList.filter((item: any) => item.type === 'function_call_output');
+            const summaries = functionOutputs.map((output: any) => `Function executed: ${output.output}`);
+            return `Function execution completed:\n${summaries.join('\n')}`;
+         }
+
+         const shouldIncludeTools = functions && functions.length > 0;
+
+         const config = this.createResponsesInputConfig(
+            systemPrompt,
+            inputList,
+            verbosity,
+            shouldIncludeTools ? functions : undefined,
+            forceToolUse && toolUseRounds === 0  // Only force on first round
+         );
+
+         // Add max_tool_calls to encourage multiple function calls in a single response
+         // This is the key: the model should make ALL necessary calls in one response
+         if (shouldIncludeTools && functions && functions.length > 0) {
+            config.max_tool_calls = 10; // Allow up to 10 tool calls in a single response
+         }
+
+
          // Step 3: Get response from API
          const response = await createResponse(config);
-         console.log('📨 API Response:', JSON.stringify(response, null, 2));
 
          // Step 4: Process response.output (following official example)
          const output = response.output;
          if (!output || !Array.isArray(output)) {
-            console.log('❌ No valid output array in response');
             return 'Sorry, we received an invalid response from the API.';
          }
 
          // Extract text content and function calls from output
          const textContent = this.extractTextFromOutput(output);
          const rawFunctionCalls = output.filter((item: any) => item.type === 'function_call');
-         
+
          // Convert API function calls to our IFunctionCall format with proper ID assignment
          const functionCalls: IFunctionCall[] = rawFunctionCalls.map((call: any, index: number) => ({
             id: call.call_id || `generated_${Date.now()}_${index}`, // Ensure ID is always present
             name: call.name,
             arguments: call.arguments || '{}'
          }));
-         
-         console.log('📄 Text content:', textContent);
-         console.log('🔧 Function calls found:', functionCalls.length);
-         console.log('🔧 Function call details:', JSON.stringify(functionCalls, null, 2));
-         
-         // Debug: Log the full output structure to understand the API response
-         console.log('🔍 Full output structure:', JSON.stringify(output, null, 2));
+
 
          // If no function calls, return the text response
          if (functionCalls.length === 0) {
-            console.log('✅ No function calls, returning final text response');
             return textContent || 'Response completed successfully.';
          }
-         
+
          // All function calls should use the proper multi-round execution path
          // to maintain consistent ID handling for the Responses API
 
          // Step 5: This should not be reached with the simplified approach above
          // But keeping the complex logic as fallback
          if (functions && functions.length > 0) {
-            console.log(`🔧 Processing ${functionCalls.length} function call(s)`);
-            
+
             // Process each function call in the response
-            const functionResults: Array<{call_id: string, output: string}> = [];
-            
+            const functionResults: Array<{ call_id: string, output: string }> = [];
+
             for (let i = 0; i < functionCalls.length; i++) {
                const functionCall = functionCalls[i];
                // Get function name and arguments from our standardized IFunctionCall format
                const currentFunctionName = functionCall.name;
                const functionArgs = functionCall.arguments;
                const callSignature = `${currentFunctionName}:${functionArgs}`;
-               
+
                // Extract call_id from the function call - ID is now required in IFunctionCall
                const callId = functionCall.id;
-               
-               console.log(`🔧 Processing function call ${i + 1}/${functionCalls.length}: ${currentFunctionName}`);
-               console.log(`🔧 Call ID: ${callId}`);
-               
+
+
                // Check for infinite loops (same function with same args called too many times)
                if (executedFunctions.has(callSignature)) {
-                  console.log(`⚠️ Function ${currentFunctionName} with same args already executed, skipping to prevent loop`);
                   functionResults.push({
                      call_id: callId,
                      output: JSON.stringify({
@@ -809,11 +784,10 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                   });
                   continue;
                }
-               
+
                // Find the matching function definition
                const func = functions.find(f => f.name === currentFunctionName);
                if (!func) {
-                  console.log(`❌ Function ${currentFunctionName} not found in available functions`);
                   functionResults.push({
                      call_id: callId,
                      output: JSON.stringify({
@@ -831,9 +805,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                   try {
                      // Use the functionArgs we extracted earlier
                      parsedFunctionArgs = JSON.parse(functionArgs);
-                     console.log(`📋 Parsed arguments for ${currentFunctionName}:`, parsedFunctionArgs);
                   } catch (parseError) {
-                     console.log(`❌ Failed to parse arguments for ${currentFunctionName}:`, parseError);
                      functionResults.push({
                         call_id: callId,
                         output: JSON.stringify({
@@ -847,23 +819,20 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
 
                   // Validate arguments using function's validation
                   const validatedArgs = func.validateArgs(parsedFunctionArgs);
-                  console.log(`✅ Validated arguments for ${currentFunctionName}:`, validatedArgs);
-                  
+
                   // Execute the function
                   const functionResult = await func.execute(validatedArgs);
-                  console.log(`✅ Function ${currentFunctionName} executed successfully:`, functionResult);
-                  
+
                   // Track this function execution
                   executedFunctions.add(callSignature);
-                  
+
                   // Store result for adding to input_list
                   functionResults.push({
                      call_id: callId,
                      output: JSON.stringify(functionResult)
                   });
-                  
+
                } catch (error) {
-                  console.log(`❌ Function ${currentFunctionName} execution failed:`, error);
                   functionResults.push({
                      call_id: callId,
                      output: JSON.stringify({
@@ -878,7 +847,6 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
             // Step 6: Add function call outputs to input_list
             // Based on the error, the Responses API doesn't accept function_calls in assistant messages
             // Let's try just adding the function outputs directly as the official example shows
-            console.log(`📝 Adding ${functionResults.length} function results to input_list`);
             for (const result of functionResults) {
                inputList.push({
                   type: "function_call_output",
@@ -887,14 +855,13 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                });
             }
 
-            console.log('📝 Updated input_list after function executions:', JSON.stringify(inputList, null, 2));
          }
 
          toolUseRounds++;
-         
+
          // After first round, don't force tool use anymore (let model decide)
          forceToolUse = false;
-         
+
          // Clear executed functions tracking every few rounds to allow re-execution with different contexts
          if (toolUseRounds % 3 === 0) {
             executedFunctions.clear();
