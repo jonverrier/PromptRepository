@@ -15,6 +15,24 @@ import { EVerbosity } from './entry';
 export type ChatAttachmentInput = IChatAttachmentContent | IChatAttachmentReference;
 
 /**
+ * Represents table JSON data extracted from documents (e.g., via LlamaParse).
+ * This structured format provides better fidelity than PDF extraction for tabular data.
+ * 
+ * @interface IChatTableJson
+ * @property {string} name - A descriptive name for the table data (e.g., "Document Tables")
+ * @property {unknown} data - The table JSON data structure (typically an array of table objects or a single table object)
+ * @property {string} [description] - Optional description of what the table data represents
+ */
+export interface IChatTableJson {
+   /** A descriptive name for the table data */
+   name: string;
+   /** The table JSON data structure (can be an array, object, or any valid JSON structure) */
+   data: unknown;
+   /** Optional description of what the table data represents */
+   description?: string;
+}
+
+/**
  * Represents a file attachment provided inline with the request.
  */
 export interface IChatAttachmentContent {
@@ -56,18 +74,21 @@ export abstract class IChatWithAttachmentDriver {
    protected constructor() {}
 
    /**
-    * Executes a model call with optional file attachment support.
+    * Executes a model call with optional file attachment and table JSON support.
     *
     * @param systemPrompt Optional system level instructions.
     * @param userPrompt Required user prompt for the turn.
     * @param verbosity Requested verbosity level for the response.
     * @param attachment Optional attachment provided inline or by reference.
+    * @param tableJson Optional table JSON data extracted from documents (e.g., via LlamaParse).
+    *                  This provides better fidelity for tabular data than PDF extraction.
     */
    abstract getModelResponse(
       systemPrompt: string | undefined,
       userPrompt: string,
       verbosity: EVerbosity,
-      attachment?: ChatAttachmentInput
+      attachment?: ChatAttachmentInput,
+      tableJson?: IChatTableJson
    ): Promise<string>;
 
    /**

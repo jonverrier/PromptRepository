@@ -8,7 +8,7 @@
 
 import OpenAI from 'openai';
 import { EVerbosity } from './entry';
-import { ChatAttachmentInput, IChatAttachmentContent, IChatAttachmentReference, IChatWithAttachmentDriver } from './ChatWithAttachment';
+import { ChatAttachmentInput, IChatAttachmentContent, IChatAttachmentReference, IChatWithAttachmentDriver, IChatTableJson } from './ChatWithAttachment';
 
 const DEFAULT_MODEL = 'gpt-4.1-mini';
 
@@ -47,7 +47,8 @@ export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
       systemPrompt: string | undefined,
       userPrompt: string,
       verbosity: EVerbosity,
-      attachment?: ChatAttachmentInput
+      attachment?: ChatAttachmentInput,
+      tableJson?: IChatTableJson
    ): Promise<string> {
       let fileId: string | undefined;
       let shouldDeleteAfterUse = false;
@@ -64,7 +65,7 @@ export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
       }
 
       try {
-         const input = this.buildInput(systemPrompt, userPrompt, fileId);
+         const input = this.buildInput(systemPrompt, userPrompt, fileId, tableJson);
          const response = await this.openai.responses.create({
             model: this.model,
             input,
@@ -136,11 +137,13 @@ export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
 
          // Create a File object (available in Node.js 18+)
          // If File is not available, fall back to Blob
+         // Convert Buffer to Uint8Array for compatibility with BlobPart type
+         const uint8Array = new Uint8Array(buffer);
          if (typeof File !== 'undefined') {
-            fileData = new File([buffer], attachment.filename, { type: attachment.mimeType });
+            fileData = new File([uint8Array], attachment.filename, { type: attachment.mimeType });
          } else {
             // Fallback to Blob if File is not available
-            fileData = new Blob([buffer], { type: attachment.mimeType });
+            fileData = new Blob([uint8Array], { type: attachment.mimeType });
          }
       }
 
@@ -165,7 +168,7 @@ export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
       return (attachment as IChatAttachmentContent).data !== undefined;
    }
 
-   private buildInput(systemPrompt: string | undefined, userPrompt: string, fileId: string | undefined) {
+   private buildInput(systemPrompt: string | undefined, userPrompt: string, fileId: string | undefined, tableJson?: IChatTableJson) {
       const input: any[] = [];
 
       if (systemPrompt) {
@@ -194,12 +197,44 @@ export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
          });
       }
 
+      if (tableJson) {
+         // Format table JSON as a structured text input
+         // This provides better fidelity than PDF extraction for tabular data
+         const tableJsonText = this.formatTableJson(tableJson);
+         userContent.push({
+            type: 'input_text',
+            text: tableJsonText
+         });
+      }
+
       input.push({
          role: 'user',
          content: userContent
       });
 
       return input;
+   }
+
+   /**
+    * Formats table JSON data as a readable text string for inclusion in the prompt.
+    * The formatted text includes the table name, description (if provided), and the JSON data.
+    * 
+    * @param tableJson The table JSON to format
+    * @returns A formatted string representation of the table JSON
+    */
+   private formatTableJson(tableJson: IChatTableJson): string {
+      const lines: string[] = [];
+      
+      lines.push(`\n[Table Data: ${tableJson.name}]`);
+      
+      if (tableJson.description) {
+         lines.push(`Description: ${tableJson.description}`);
+      }
+      
+      lines.push('Table JSON:');
+      lines.push(JSON.stringify(tableJson.data, null, 2));
+      
+      return lines.join('\n');
    }
 
    private extractTextFromOutput(outputArr: any[]): string | null {

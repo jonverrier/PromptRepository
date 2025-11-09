@@ -15,14 +15,16 @@ import { expect } from 'expect';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { ChatDriverFactory, EModelProvider, EModel, EVerbosity } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EVerbosity, ChatWithAttachmentDriverFactory, IChatTableJson } from '../src/entry';
 
 const TEST_TIMEOUT_MS = 60000; // 1 minute timeout for chat requests
 
 // Create drivers for both providers
 const factory = new ChatDriverFactory();
+const attachmentFactory = new ChatWithAttachmentDriverFactory();
 const providers = [EModelProvider.kOpenAI, EModelProvider.kAzureOpenAI];
 const drivers = providers.map(provider => factory.create(EModel.kLarge, provider));
+const attachmentDrivers = providers.map(provider => attachmentFactory.create(EModel.kLarge, provider));
 
 /**
  * Extracts text content from file data in various formats.
@@ -278,6 +280,223 @@ describe('File Content Injection Integration Tests', () => {
             expect(savedSize).toBe(markdownSizeBytes);
             expect(fs.existsSync(filePath)).toBe(true);
          });
+      });
+   });
+
+   // Table JSON Integration Tests
+   providers.forEach((provider, index) => {
+      const driver = attachmentDrivers[index];
+      const providerName = provider === EModelProvider.kOpenAI ? 'OpenAI' : 'Azure OpenAI';
+
+      describe(`${providerName} - Table JSON Integration Tests`, () => {
+         /**
+          * Generates realistic table JSON that simulates LlamaParse output.
+          * This represents a typical financial report with multiple tables.
+          */
+         const generateFinancialTableJson = (): IChatTableJson => {
+            return {
+               name: 'Financial Report Tables',
+               description: 'Tables extracted from Q1 2024 financial report',
+               data: [
+                  {
+                     table: 'Revenue Summary',
+                     page: 1,
+                     rows: [
+                        { quarter: 'Q1 2024', revenue: 1250000, growth: '12%' },
+                        { quarter: 'Q4 2023', revenue: 1115000, growth: '8%' },
+                        { quarter: 'Q1 2023', revenue: 1032000, growth: '5%' }
+                     ]
+                  },
+                  {
+                     table: 'Expense Breakdown',
+                     page: 2,
+                     rows: [
+                        { category: 'Salaries', amount: 450000, percentage: '36%' },
+                        { category: 'Marketing', amount: 200000, percentage: '16%' },
+                        { category: 'Operations', amount: 150000, percentage: '12%' },
+                        { category: 'Other', amount: 450000, percentage: '36%' }
+                     ]
+                  },
+                  {
+                     table: 'Profit Analysis',
+                     page: 3,
+                     rows: [
+                        { metric: 'Gross Profit', value: 800000, margin: '64%' },
+                        { metric: 'Operating Profit', value: 500000, margin: '40%' },
+                        { metric: 'Net Profit', value: 380000, margin: '30.4%' }
+                     ]
+                  }
+               ]
+            };
+         };
+
+         /**
+          * Generates a simple table JSON for basic testing.
+          */
+         const generateSimpleTableJson = (): IChatTableJson => {
+            return {
+               name: 'Product Inventory',
+               data: {
+                  products: [
+                     { id: 'P001', name: 'Widget A', stock: 150, price: 29.99 },
+                     { id: 'P002', name: 'Widget B', stock: 75, price: 49.99 },
+                     { id: 'P003', name: 'Widget C', stock: 200, price: 19.99 }
+                  ]
+               }
+            };
+         };
+
+         it('processes table JSON and understands revenue data', async () => {
+            const tableJson = generateFinancialTableJson();
+
+            const result = await driver.getModelResponse(
+               'You are a financial analyst. Analyze the provided table data.',
+               'What was the revenue for Q1 2024? Answer with just the number.',
+               EVerbosity.kMedium,
+               undefined,
+               tableJson
+            );
+
+            expect(result).toBeDefined();
+            expect(typeof result).toBe('string');
+            // Should mention the revenue amount (1250000 or 1.25M or similar)
+            expect(result).toMatch(/1250000|1[.,]25\s*[Mm]|1250/);
+         }).timeout(TEST_TIMEOUT_MS);
+
+         it('processes table JSON and calculates totals', async () => {
+            const tableJson = generateFinancialTableJson();
+
+            const result = await driver.getModelResponse(
+               'You are a financial analyst.',
+               'What is the total of all expense categories? Answer with just the number.',
+               EVerbosity.kMedium,
+               undefined,
+               tableJson
+            );
+
+            expect(result).toBeDefined();
+            expect(typeof result).toBe('string');
+            // Total expenses: 450000 + 200000 + 150000 + 450000 = 1250000
+            expect(result).toMatch(/1250000|1[.,]25\s*[Mm]|1250/);
+         }).timeout(TEST_TIMEOUT_MS);
+
+         it('processes table JSON and identifies highest value', async () => {
+            const tableJson = generateSimpleTableJson();
+
+            const result = await driver.getModelResponse(
+               'You are an inventory manager.',
+               'Which product has the highest stock level? Answer with just the product ID.',
+               EVerbosity.kMedium,
+               undefined,
+               tableJson
+            );
+
+            expect(result).toBeDefined();
+            expect(typeof result).toBe('string');
+            // Widget C has the highest stock (200)
+            expect(result.toLowerCase()).toMatch(/p003|widget\s*c/);
+         }).timeout(TEST_TIMEOUT_MS);
+
+         it('processes table JSON without description', async () => {
+            const tableJson: IChatTableJson = {
+               name: 'Simple Data',
+               data: { temperature: 72, humidity: 45, pressure: 1013 }
+            };
+
+            const result = await driver.getModelResponse(
+               'You are a data analyst.',
+               'What is the temperature value? Answer with just the number.',
+               EVerbosity.kMedium,
+               undefined,
+               tableJson
+            );
+
+            expect(result).toBeDefined();
+            expect(result).toMatch(/72/);
+         }).timeout(TEST_TIMEOUT_MS);
+
+         it('processes complex nested table JSON structure', async () => {
+            const tableJson: IChatTableJson = {
+               name: 'Multi-Level Tables',
+               description: 'Complex nested table structure',
+               data: {
+                  report: {
+                     metadata: { year: 2024, quarter: 'Q1' },
+                     tables: [
+                        {
+                           name: 'Sales by Region',
+                           data: [
+                              { region: 'North', sales: 500000 },
+                              { region: 'South', sales: 300000 },
+                              { region: 'East', sales: 400000 },
+                              { region: 'West', sales: 350000 }
+                           ]
+                        },
+                        {
+                           name: 'Top Products',
+                           data: [
+                              { product: 'Product A', units: 1000, revenue: 50000 },
+                              { product: 'Product B', units: 800, revenue: 40000 }
+                           ]
+                        }
+                     ]
+                  }
+               }
+            };
+
+            const result = await driver.getModelResponse(
+               'You are a business analyst.',
+               'What is the total sales across all regions? Answer with just the number.',
+               EVerbosity.kMedium,
+               undefined,
+               tableJson
+            );
+
+            expect(result).toBeDefined();
+            // Total: 500000 + 300000 + 400000 + 350000 = 1550000
+            expect(result).toMatch(/1550000|1[.,]55\s*[Mm]|1550/);
+         }).timeout(TEST_TIMEOUT_MS);
+
+         it('processes table JSON with array of simple objects', async () => {
+            const tableJson: IChatTableJson = {
+               name: 'Employee List',
+               data: [
+                  { name: 'Alice', department: 'Engineering', salary: 120000 },
+                  { name: 'Bob', department: 'Sales', salary: 95000 },
+                  { name: 'Charlie', department: 'Engineering', salary: 130000 }
+               ]
+            };
+
+            const result = await driver.getModelResponse(
+               'You are an HR analyst.',
+               'How many employees are in Engineering? Answer with just the number.',
+               EVerbosity.kMedium,
+               undefined,
+               tableJson
+            );
+
+            expect(result).toBeDefined();
+            expect(result).toMatch(/2/);
+         }).timeout(TEST_TIMEOUT_MS);
+
+         it('handles empty table JSON gracefully', async () => {
+            const tableJson: IChatTableJson = {
+               name: 'Empty Table',
+               data: []
+            };
+
+            const result = await driver.getModelResponse(
+               'You are a data analyst.',
+               'What data is in the table? Answer in one sentence.',
+               EVerbosity.kMedium,
+               undefined,
+               tableJson
+            );
+
+            expect(result).toBeDefined();
+            expect(typeof result).toBe('string');
+            expect(result.length).toBeGreaterThan(0);
+         }).timeout(TEST_TIMEOUT_MS);
       });
    });
 });

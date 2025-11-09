@@ -78,19 +78,19 @@ variant values for both required and optional parameters.
 
 This approach (bundling a framework with prompts to generate code to use the framework) is still work in progress. I am using the prompts to generate test cases for another LLM-based application I am building, and will continue to evolve the prompts. 
 
-## Multiple Tool Calling Support
+## Tool Calling Support
 
-PromptRepository now supports advanced multiple tool calling functionality following the OpenAI Responses API pattern. This allows the model to call multiple functions in a single interaction, enabling complex workflows and comprehensive responses.
+PromptRepository now supports tool calling functionality following the OpenAI Responses API pattern. This allows the model to call functions in a single interaction, enabling complex workflows and comprehensive responses.
 
 ### Key Features
 
-- **Multiple Tool Calls**: The model can call several functions in one response
+- **Tool Calls**: The model can call one or more functions in one response
 - **Automatic Tool Execution**: Functions are executed automatically and results fed back to the model
 - **Streaming Support**: Tool calls work with both regular and streaming responses
 - **Error Handling**: Robust error handling for function validation and execution
 - **Loop Prevention**: Intelligent detection and prevention of infinite tool call loops
 
-### Example: Multiple Tool Calling
+### Example: Tool Calling
 
 ```typescript
 import { ChatDriverFactory, EModelProvider, EModel, EVerbosity } from '@jonverrier/prompt-repository';
@@ -151,7 +151,7 @@ const horoscopeFunction: IFunction = {
   }
 };
 
-// Use multiple tools in one interaction
+// Use tools in one interaction
 const chatDriver = new ChatDriverFactory().create(EModel.kLarge, EModelProvider.kOpenAI);
 
 const response = await chatDriver.getModelResponse(
@@ -169,10 +169,10 @@ const response = await chatDriver.getModelResponse(
 console.log(response);
 ```
 
-### Streaming with Multiple Tools
+### Streaming with Tools
 
 ```typescript
-// Streaming also supports multiple tool calls
+// Streaming also supports tool calls
 const iterator = chatDriver.getStreamedModelResponse(
   'You are a travel assistant.',
   'What\'s the weather in London, Paris, and Tokyo?',
@@ -204,7 +204,7 @@ const response = await chatDriver.getModelResponseWithForcedTools(
 
 ### Implementation Details
 
-The multiple tool calling implementation follows the official OpenAI Responses API pattern:
+The  tool calling implementation follows the official OpenAI Responses API pattern:
 
 1. **Input List Pattern**: Messages are converted to `input_list` format
 2. **Function Call Detection**: Response output is scanned for `function_call` items
@@ -213,6 +213,205 @@ The multiple tool calling implementation follows the official OpenAI Responses A
 5. **Continuation**: Process repeats until no more function calls are needed
 
 This ensures compatibility with OpenAI's latest API patterns while providing a clean, TypeScript-native interface.
+
+## File Attachments and Table JSON Support
+
+PromptRepository supports file attachments and structured table JSON data for enhanced document processing. This is particularly useful when working with PDFs and other documents that contain tabular data.
+
+### Key Features
+
+- **File Attachments**: Upload PDF files directly to OpenAI/Azure OpenAI for document analysis
+- **Table JSON**: Provide structured table data extracted from documents (e.g., via LlamaParse) for better fidelity than PDF extraction
+- **Automatic Cleanup**: Files are automatically deleted after use (configurable)
+- **Provider Support**: Works with both OpenAI and Azure OpenAI
+
+### File Attachments
+
+The attachment API allows you to upload PDF files that the model can analyze. Note that the Responses API only accepts PDF files for attachments.
+
+```typescript
+import { ChatWithAttachmentDriverFactory, EModelProvider, EModel, EVerbosity, IChatAttachmentContent } from '@jonverrier/prompt-repository';
+import * as fs from 'fs';
+
+// Create a driver with attachment support
+const factory = new ChatWithAttachmentDriverFactory();
+const driver = factory.create(EModel.kLarge, EModelProvider.kOpenAI);
+
+// Read a PDF file
+const pdfBuffer = fs.readFileSync('report.pdf');
+
+// Create an attachment
+const attachment: IChatAttachmentContent = {
+  filename: 'report.pdf',
+  mimeType: 'application/pdf',
+  data: pdfBuffer,
+  deleteAfterUse: true // Automatically delete after the request (default: true)
+};
+
+// Use the attachment in a request
+const response = await driver.getModelResponse(
+  'You are a financial analyst.',
+  'Summarize the key findings from this report.',
+  EVerbosity.kMedium,
+  attachment
+);
+
+console.log(response);
+```
+
+### Reusing Uploaded Files
+
+If you've already uploaded a file, you can reference it by ID to avoid re-uploading:
+
+```typescript
+import { IChatAttachmentReference } from '@jonverrier/prompt-repository';
+
+// Reference an already uploaded file
+const attachmentRef: IChatAttachmentReference = {
+  id: 'file-abc123',
+  deleteAfterUse: false // Keep the file for future use
+};
+
+const response = await driver.getModelResponse(
+  'You are a document analyst.',
+  'What are the main topics in this document?',
+  EVerbosity.kMedium,
+  attachmentRef
+);
+```
+
+### Table JSON Support
+
+For better fidelity with tabular data, you can extract tables from documents using tools like LlamaParse and provide them as structured JSON. This approach provides better accuracy than PDF extraction for tables.
+
+```typescript
+import { IChatTableJson } from '@jonverrier/prompt-repository';
+
+// Table JSON extracted from a document (e.g., via LlamaParse)
+const tableJson: IChatTableJson = {
+  name: 'Financial Report Tables',
+  description: 'Tables extracted from Q1 2024 financial report',
+  data: [
+    {
+      table: 'Revenue Summary',
+      page: 1,
+      rows: [
+        { quarter: 'Q1 2024', revenue: 1250000, growth: '12%' },
+        { quarter: 'Q4 2023', revenue: 1115000, growth: '8%' }
+      ]
+    },
+    {
+      table: 'Expense Breakdown',
+      page: 2,
+      rows: [
+        { category: 'Salaries', amount: 450000, percentage: '36%' },
+        { category: 'Marketing', amount: 200000, percentage: '16%' }
+      ]
+    }
+  ]
+};
+
+// Use table JSON in a request
+const response = await driver.getModelResponse(
+  'You are a financial analyst. Analyze the provided table data.',
+  'What was the revenue for Q1 2024? Calculate the total expenses.',
+  EVerbosity.kMedium,
+  undefined, // no file attachment
+  tableJson  // table JSON as separate input
+);
+
+console.log(response);
+```
+
+### Combining Attachments and Table JSON
+
+You can use both file attachments and table JSON together for comprehensive document analysis:
+
+```typescript
+// Upload the full PDF
+const attachment: IChatAttachmentContent = {
+  filename: 'financial-report.pdf',
+  mimeType: 'application/pdf',
+  data: fs.readFileSync('financial-report.pdf')
+};
+
+// Provide extracted tables as JSON for better accuracy
+const tableJson: IChatTableJson = {
+  name: 'Report Tables',
+  description: 'Tables extracted via LlamaParse',
+  data: [
+    // ... table data from LlamaParse
+  ]
+};
+
+// Use both together
+const response = await driver.getModelResponse(
+  'You are a financial analyst.',
+  'Analyze the document and the extracted tables. Provide a comprehensive summary.',
+  EVerbosity.kMedium,
+  attachment,  // Full document
+  tableJson    // Structured table data
+);
+```
+
+### When to Use Table JSON vs Attachments
+
+- **Use File Attachments** when:
+  - You need the model to analyze the full document context
+  - The document contains mostly text with some tables
+  - You want the model to understand document structure and formatting
+
+- **Use Table JSON** when:
+  - You need high-fidelity table data extraction
+  - Tables are the primary focus of your analysis
+  - You've already extracted tables using tools like LlamaParse
+  - You need precise numerical calculations from tabular data
+
+- **Use Both Together** when:
+  - You want comprehensive document analysis with accurate table data
+  - The document contains important context beyond just tables
+  - You need both document understanding and precise table analysis
+
+### Manual File Management
+
+You can also manage file uploads and deletions manually:
+
+```typescript
+// Upload a file and get a reference
+const attachment: IChatAttachmentContent = {
+  filename: 'document.pdf',
+  mimeType: 'application/pdf',
+  data: pdfBuffer
+};
+
+const reference = await driver.uploadAttachment(attachment);
+console.log(`File uploaded with ID: ${reference.id}`);
+
+// Use the reference in multiple requests
+const response1 = await driver.getModelResponse(
+  'Analyze this document.',
+  'What is the main topic?',
+  EVerbosity.kMedium,
+  reference
+);
+
+const response2 = await driver.getModelResponse(
+  'Analyze this document.',
+  'What are the key conclusions?',
+  EVerbosity.kMedium,
+  reference
+);
+
+// Delete when done
+await driver.deleteAttachment(reference.id);
+```
+
+### Implementation Details
+
+- **File Format**: Only PDF files are supported for attachments (Responses API limitation)
+- **Automatic Cleanup**: Files uploaded inline are deleted by default after use
+- **Table JSON Format**: Any valid JSON structure is supported (arrays, objects, nested structures)
+- **Provider Support**: Both OpenAI and Azure OpenAI implementations support attachments and table JSON
 
 ## Usage - Prompt Respository
 
@@ -346,7 +545,7 @@ npm run test:ci            # Run unit tests only (no API key required)
 - **Integration Tests** (`test:integration`): Full LLM interactions
   - Text responses with OpenAI/Azure OpenAI
   - Embedding generation
-  - Single and multiple function calling
+  - Function calling
   - Streaming responses with tool support
   - Complex multi-tool scenarios
 

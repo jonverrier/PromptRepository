@@ -1,6 +1,6 @@
 {
   "name": "@jonverrier/prompt-repository",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Managing Prompts and standardised Unit Evals ",
   "main": "dist/src/entry.js",
   "types": "dist/src/entry.d.ts",
