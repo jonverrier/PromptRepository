@@ -8,6 +8,41 @@
 
 import { IFunction } from './Function';
 
+/**
+ * Enum representing model sizes
+ */
+export enum EModel {
+   kLarge = "kLarge",
+   kMini = "kMini"  
+}
+
+/**
+ * Enum representing model providers
+ */
+export enum EModelProvider {
+   kOpenAI = "kOpenAI",
+   kAzureOpenAI = "kAzureOpenAI"
+}
+
+/**
+ * An enumeration of possible chat roles.
+ * Used to identify the sender of a message in chat interactions.
+ * Follows OpenAI's Responses API guidelines.
+ */
+export enum EChatRole {
+   kUser = 'user',
+   kAssistant = 'assistant',
+   kFunction = 'function',
+   kTool = 'tool'
+}
+
+/** Hint on how much text to generate  */
+export enum EVerbosity {
+   kLow = "kLow",
+   kMedium = "kMedium",
+   kHigh = "kHigh"
+}
+
 export { PromptFileRepository, PromptInMemoryRepository } from "./PromptRepository";
 export { ChatDriverFactory } from "./ChatFactory";
 export { EmbeddingDriverFactory } from "./EmbedFactory";
@@ -105,42 +140,6 @@ export interface IPromptRepository {
     * @returns The expanded prompt
     */
    expandUserPrompt(prompt: IPrompt, params: { [key: string]: string | undefined }): string;   
-}
-
-
-/**
- * Enum representing model sizes
- */
-export enum EModel {
-   kLarge = "kLarge",
-   kMini = "kMini"  
-}
-
-/**
- * Enum representing model providers
- */
-export enum EModelProvider {
-   kOpenAI = "kOpenAI",
-   kAzureOpenAI = "kAzureOpenAI"
-}
-
-/**
- * An enumeration of possible chat roles.
- * Used to identify the sender of a message in chat interactions.
- * Follows OpenAI's Responses API guidelines.
- */
-export enum EChatRole {
-   kUser = 'user',
-   kAssistant = 'assistant',
-   kFunction = 'function',
-   kTool = 'tool'
-}
-
-/** Hint on how much text to generate  */
-export enum EVerbosity {
-   kLow = "kLow",
-   kMedium = "kMedium",
-   kHigh = "kHigh"
 }
 
 export interface IQueryReturnable {
