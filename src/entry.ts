@@ -7,6 +7,7 @@
  */
 
 import { IFunction } from './Function';
+import { IChatWithAttachmentDriver } from './ChatWithAttachment';
 
 /**
  * Enum representing model sizes
@@ -50,8 +51,10 @@ export { cosineSimilarity as CosineSimilarity } from "./Embed";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError, ConnectionError, InvalidStateError, sanitizeInputString, sanitizeOutputString } from "@jonverrier/assistant-common";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
 export { IFunction, IFunctionArgs, EDataType, ILLMFunctionCall, IFunctionCallOutput, IFunctionExecutionContext, FunctionExecutionResult } from "./Function";
-export { IChatWithAttachment, IChatAttachmentContent, IChatAttachmentReference, ChatAttachmentInput } from "./ChatWithAttachment";
+export { IChatWithAttachmentDriver, IChatAttachmentContent, IChatAttachmentReference, ChatAttachmentInput } from "./ChatWithAttachment";
 export { OpenAIChatWithAttachment } from "./ChatWithAttachment.OpenAI";
+export { AzureOpenAIChatWithAttachment } from "./ChatWithAttachment.AzureOpenAI";
+export { ChatWithAttachmentDriverFactory } from "./ChatWithAttachmentFactory";
 
 /**
  * Global test configuration flag to control verbosity parameter usage.
@@ -441,6 +444,14 @@ export interface IChatDriver {
 export interface IChatDriverFactory {
 
    create(model: EModel, provider: EModelProvider): IChatDriver;
+}
+
+/**
+ * Interface for a simple factory class for creating chat drivers with attachment support
+ */
+export interface IChatWithAttachmentDriverFactory {
+
+   create(model: EModel, provider: EModelProvider): IChatWithAttachmentDriver;
 }
 
 /**
