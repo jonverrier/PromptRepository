@@ -1,16 +1,19 @@
 /**
- * @module ChatWithAttachment.OpenAI
+ * @module ChatWithAttachment.AzureOpenAI
  *
- * Provides an OpenAI implementation of the IChatWithAttachmentDriver
+ * Provides an Azure OpenAI implementation of the IChatWithAttachmentDriver
  * abstraction. The driver uploads attachments when required and
  * executes prompts using the Responses API.
  */
 
-import OpenAI from 'openai';
-import { EVerbosity } from './entry';
+import { AzureOpenAI } from 'openai';
+import { EVerbosity, EModel } from './entry';
 import { ChatAttachmentInput, IChatAttachmentContent, IChatAttachmentReference, IChatWithAttachmentDriver } from './ChatWithAttachment';
 
-const DEFAULT_MODEL = 'gpt-4.1-mini';
+const AZURE_DEPLOYMENTS = {
+   LARGE: "gpt-4.1",
+   MINI: "gpt-4.1-mini"
+} as const;
 
 /**
  * Maps library verbosity settings to OpenAI verbosity strings.
@@ -22,24 +25,33 @@ const VERBOSITY_MAP: Record<EVerbosity, 'low' | 'medium' | 'high'> = {
 };
 
 /**
- * OpenAI-backed chat driver with attachment support.
+ * Azure OpenAI-backed chat driver with attachment support.
  */
-export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
-   private readonly openai: OpenAI;
+export class AzureOpenAIChatWithAttachment extends IChatWithAttachmentDriver {
+   private readonly openai: AzureOpenAI;
    private readonly model: string;
 
-   constructor(options?: { client?: OpenAI; model?: string }) {
+   constructor(modelType: EModel, options?: { client?: AzureOpenAI }) {
       super();
-      this.model = options?.model ?? DEFAULT_MODEL;
+      this.model = modelType === EModel.kLarge ? AZURE_DEPLOYMENTS.LARGE : AZURE_DEPLOYMENTS.MINI;
 
       if (options?.client) {
          this.openai = options.client;
       } else {
-         const apiKey = process.env.OPENAI_API_KEY;
+         const apiKey = process.env.AZURE_OPENAI_API_KEY;
          if (!apiKey) {
-            throw new Error('OPENAI_API_KEY environment variable is not set');
+            throw new Error('AZURE_OPENAI_API_KEY environment variable is not set');
          }
-         this.openai = new OpenAI({ apiKey });
+         const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+         if (!endpoint) {
+            throw new Error('AZURE_OPENAI_ENDPOINT environment variable is not set');
+         }
+         this.openai = new AzureOpenAI({
+            apiKey,
+            endpoint,
+            deployment: this.model,
+            apiVersion: "2025-03-01-preview"
+         });
       }
    }
 
@@ -73,7 +85,7 @@ export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
 
          const outputText = this.extractTextFromOutput((response as any).output ?? []);
          if (!outputText) {
-            throw new Error('OpenAI response did not include any text output');
+            throw new Error('Azure OpenAI response did not include any text output');
          }
          return outputText;
       } finally {
@@ -186,3 +198,4 @@ export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
       return null;
    }
 }
+

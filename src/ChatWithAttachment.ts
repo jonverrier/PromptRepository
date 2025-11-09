@@ -52,7 +52,7 @@ export interface IChatAttachmentReference {
  * {@link IChatAttachmentContent} or reference existing uploads via
  * {@link IChatAttachmentReference}.
  */
-export abstract class IChatWithAttachment {
+export abstract class IChatWithAttachmentDriver {
    protected constructor() {}
 
    /**
