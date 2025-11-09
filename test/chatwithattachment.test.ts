@@ -9,11 +9,7 @@ import { EVerbosity, IChatAttachmentContent, IChatAttachmentReference, EModel } 
 
 describe('OpenAIChatWithAttachment', () => {
    // Known test file names for cleanup
-   const testFileNames = [
-      'motor-racing-test.txt',
-      'gardening-test.txt', 
-      'almost-motor-racing-test.txt'
-   ];
+   const testFileNames: string[] = [];
 
    /**
     * Creates or reuses a temporary test file with the specified content in system temp directory
@@ -25,6 +21,7 @@ describe('OpenAIChatWithAttachment', () => {
       }
       return filePath;
    };
+
 
    /**
     * Clean up temporary test files after all tests complete
@@ -149,91 +146,8 @@ describe('OpenAIChatWithAttachment', () => {
       await expect(driver.getModelResponse(undefined, 'prompt', EVerbosity.kHigh)).rejects.toThrow(/did not include any text/);
    });
 
-   it('understands motor racing file content', async () => {
-      // Create or reuse test file
-      const filePath = createTestFile('motor-racing-test.txt', 'This file is about motor racing.');
-      const fileContent = fs.readFileSync(filePath);
-
-      const driver = buildDriver({
-         responsesCreate: async (config) => {
-            // Mock response that includes motor and racing
-            return {
-               output: [{ type: 'output_text', text: 'This file is about motor racing and automotive sports.' }]
-            };
-         },
-         filesCreate: async (input) => {
-            return { id: 'motor-racing-file' };
-         }
-      });
-
-      const attachment: IChatAttachmentContent = {
-         filename: 'motor-racing-test.txt',
-         mimeType: 'text/plain',
-         data: fileContent
-      };
-
-      const result = await driver.getModelResponse(undefined, 'What is this file about?', EVerbosity.kMedium, attachment);
-
-      expect(result.toLowerCase()).toMatch(/motor/);
-      expect(result.toLowerCase()).toMatch(/racing/);
-   });
-
-   it('understands gardening file content and does not mention motor racing', async () => {
-      // Create or reuse test file
-      const filePath = createTestFile('gardening-test.txt', 'This file is about gardening.');
-      const fileContent = fs.readFileSync(filePath);
-
-      const driver = buildDriver({
-         responsesCreate: async (config) => {
-            // Mock response about gardening without motor racing
-            return {
-               output: [{ type: 'output_text', text: 'This file is about gardening, plants, and horticulture.' }]
-            };
-         },
-         filesCreate: async (input) => {
-            return { id: 'gardening-file' };
-         }
-      });
-
-      const attachment: IChatAttachmentContent = {
-         filename: 'gardening-test.txt',
-         mimeType: 'text/plain',
-         data: fileContent
-      };
-
-      const result = await driver.getModelResponse(undefined, 'What is this file about?', EVerbosity.kMedium, attachment);
-
-      expect(result.toLowerCase()).not.toMatch(/motor.*racing|racing.*motor/);
-   });
-
-   it('understands file that is almost completely about motor racing', async () => {
-      // Create or reuse test file
-      const filePath = createTestFile('almost-motor-racing-test.txt', 'This file is almost completely about motor racing.');
-      const fileContent = fs.readFileSync(filePath);
-
-      const driver = buildDriver({
-         responsesCreate: async (config) => {
-            // Mock response that includes motor and racing
-            return {
-               output: [{ type: 'output_text', text: 'This file is almost completely about motor racing and automotive competitions.' }]
-            };
-         },
-         filesCreate: async (input) => {
-            return { id: 'almost-motor-racing-file' };
-         }
-      });
-
-      const attachment: IChatAttachmentContent = {
-         filename: 'almost-motor-racing-test.txt',
-         mimeType: 'text/plain',
-         data: fileContent
-      };
-
-      const result = await driver.getModelResponse(undefined, 'What is this file about?', EVerbosity.kMedium, attachment);
-
-      expect(result.toLowerCase()).toMatch(/motor/);
-      expect(result.toLowerCase()).toMatch(/racing/);
-   });
+   // Note: Motor racing/gardening content understanding tests and markdown upload tests
+   // have been moved to test/chatwithattachment.integration.test.ts to test with real API
 });
 
 describe('AzureOpenAIChatWithAttachment', () => {

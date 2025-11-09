@@ -100,13 +100,69 @@ export class AzureOpenAIChatWithAttachment extends IChatWithAttachmentDriver {
       }
    }
 
+   /**
+    * Uploads an attachment to Azure OpenAI's Files API.
+    * 
+    * Note: When using files with the Responses API (input_file), only PDF files are accepted.
+    * This is a limitation of the Responses API's file attachment feature, which uses a
+    * different extraction technique than vector stores. For text/markdown files, consider
+    * converting them to PDF first, or using a different API approach.
+    * 
+    * @param attachment - The file attachment to upload
+    * @returns A reference to the uploaded file
+    * @throws Error if the file type is not supported or upload fails
+    */
    async uploadAttachment(attachment: IChatAttachmentContent): Promise<IChatAttachmentReference> {
+      // Validate file extension for Responses API compatibility
+      // The Responses API input_file only accepts PDF files
+      const fileExtension = attachment.filename.toLowerCase().split('.').pop();
+      if (fileExtension !== 'pdf') {
+         console.warn(
+            `Warning: File "${attachment.filename}" has extension .${fileExtension}. ` +
+            `The Responses API only accepts PDF files for message attachments. ` +
+            `Consider converting to PDF before uploading.`
+         );
+      }
+
+      // Convert data to a format the OpenAI SDK expects (File object)
+      let fileData: File | Blob;
+      
+      if (attachment.data instanceof File) {
+         fileData = attachment.data;
+      } else if (attachment.data instanceof Blob) {
+         fileData = attachment.data;
+      } else {
+         // Convert Buffer, ArrayBuffer, Uint8Array, or string to Blob/File
+         let buffer: Buffer;
+         if (Buffer.isBuffer(attachment.data)) {
+            buffer = attachment.data;
+         } else if (attachment.data instanceof ArrayBuffer) {
+            buffer = Buffer.from(attachment.data);
+         } else if (attachment.data instanceof Uint8Array) {
+            buffer = Buffer.from(attachment.data);
+         } else if (typeof attachment.data === 'string') {
+            buffer = Buffer.from(attachment.data, 'utf8');
+         } else {
+            throw new Error(`Unsupported attachment data type: ${typeof attachment.data}`);
+         }
+
+         // Create a File object (available in Node.js 18+)
+         // If File is not available, fall back to Blob
+         if (typeof File !== 'undefined') {
+            fileData = new File([buffer], attachment.filename, { type: attachment.mimeType });
+         } else {
+            // Fallback to Blob if File is not available
+            fileData = new Blob([buffer], { type: attachment.mimeType });
+         }
+      }
+
+      // Use 'assistants' purpose for files that will be used with Responses API
+      // Note: The actual file type restrictions are enforced by the Responses API,
+      // not by the Files API purpose parameter
       const response = await this.openai.files.create({
-         file: attachment.data as any,
-         purpose: 'assistants',
-         filename: attachment.filename,
-         mimeType: attachment.mimeType
-      } as any);
+         file: fileData,
+         purpose: 'assistants'
+      });
 
       return {
          id: (response as any).id,
