@@ -15,6 +15,8 @@ export { cosineSimilarity as CosineSimilarity } from "./Embed";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError, ConnectionError, InvalidStateError, sanitizeInputString, sanitizeOutputString } from "@jonverrier/assistant-common";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
 export { IFunction, IFunctionArgs, EDataType, ILLMFunctionCall, IFunctionCallOutput, IFunctionExecutionContext, FunctionExecutionResult } from "./Function";
+export { IChatWithAttachment, IChatAttachmentContent, IChatAttachmentReference, ChatAttachmentInput } from "./ChatWithAttachment";
+export { OpenAIChatWithAttachment } from "./ChatWithAttachment.OpenAI";
 
 /**
  * Global test configuration flag to control verbosity parameter usage.

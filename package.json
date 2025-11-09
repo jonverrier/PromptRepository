@@ -33,7 +33,7 @@
     "test": "mocha --require ts-node/register --extensions ts,js test/**/*.test.ts --exit",
     "test:ci": "mocha --require ts-node/register --extensions ts,js test/promptrepository.test.ts test/prompts.test.ts test/makepromptids.test.ts --exit",
     "test:integration": "mocha --require ts-node/register --extensions ts,js test/chat.test.ts test/embed.test.ts test/function.test.ts test/prompts.eval.test.ts --exit",
-    "test-mini": "mocha --require ts-node/register --extensions ts,js test/**/*.test.ts -g \"slack\" --exit",
+    "test:mini": "mocha --require ts-node/register --extensions ts,js test/chatwithattachment.test.ts --exit",
     "link-local": "bash scripts/link-local.sh",
     "unlink-local": "bash scripts/unlink-local.sh",
     "link-status": "bash scripts/link-status.sh",
