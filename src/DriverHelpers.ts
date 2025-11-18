@@ -3,12 +3,13 @@
  * 
  * Shared utilities and helpers for OpenAI model drivers.
  * Provides common functionality for retry logic, error handling, and backoff strategies.
+ * Includes rate limit detection with Retry-After header support and exponential backoff.
  */
 // Copyright (c) 2025 Jon Verrier
 
 export const MAX_RETRIES = 5;
 export const INITIAL_RETRY_DELAY = 1000; // 1 second
-export const MAX_RETRY_DELAY = 60000; // 60 seconds maximum
+export const MAX_RETRY_DELAY = 60000; // 60 seconds maximum (prevents excessive wait times)
 
 /**
  * Implements exponential backoff delay calculation
@@ -87,7 +88,8 @@ function parseRetryAfter(error: any): number | null {
    const seconds = parseInt(String(retryAfter), 10);
    if (!isNaN(seconds) && seconds > 0) {
       // Add small jitter (10%) to avoid thundering herd
-      const jitter = seconds * 0.1 * Math.random();
+      // Jitter is calculated in milliseconds to match the retry delay unit
+      const jitter = seconds * 0.1 * Math.random() * 1000;
       return Math.min((seconds * 1000) + jitter, MAX_RETRY_DELAY);
    }
    
