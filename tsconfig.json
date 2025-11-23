@@ -26,6 +26,7 @@
    "include": [
       "**/*.json",
       "src/**/*.ts",
-      "scripts/**/*.ts"
+      "scripts/**/*.ts",
+      "test/**/*.ts"
    ]
 }
