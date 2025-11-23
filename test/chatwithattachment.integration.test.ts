@@ -377,7 +377,8 @@ describe('File Content Injection Integration Tests', () => {
             expect(result).toBeDefined();
             expect(typeof result).toBe('string');
             // Total expenses: 450000 + 200000 + 150000 + 450000 = 1250000
-            expect(result).toMatch(/1250000|1[.,]25\s*[Mm]|1250/);
+            // Accept formats: 1250000, 1,250,000, 1.25M, 1,25M, 1250k, etc.
+            expect(result.replace(/,/g, '')).toMatch(/1250000|1[.,]25\s*[Mm]|1250/);
          }).timeout(TEST_TIMEOUT_MS);
 
          it('processes table JSON and identifies highest value', async () => {
@@ -454,7 +455,8 @@ describe('File Content Injection Integration Tests', () => {
 
             expect(result).toBeDefined();
             // Total: 500000 + 300000 + 400000 + 350000 = 1550000
-            expect(result).toMatch(/1550000|1[.,]55\s*[Mm]|1550/);
+            // Accept formats: 1550000, 1,550,000, 1.55M, 1,55M, 1550k, etc.
+            expect(result.replace(/,/g, '')).toMatch(/1550000|1[.,]55\s*[Mm]|1550/);
          }).timeout(TEST_TIMEOUT_MS);
 
          it('processes table JSON with array of simple objects', async () => {
