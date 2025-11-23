@@ -125,7 +125,8 @@ export class PromptFileRepository implements IPromptRepository {
    expandSystemPrompt(prompt: IPrompt, systemParams: { [key: string]: string | undefined }): string {
       
       throwIfUndefined(prompt.systemPrompt);
-      return replacePromptPlaceholders(prompt.systemPrompt, prompt.systemPromptParameters, systemParams);
+      // TypeScript doesn't recognize throwIfUndefined as a type guard, so use non-null assertion
+      return replacePromptPlaceholders(prompt.systemPrompt!, prompt.systemPromptParameters, systemParams);
    }
 
    expandUserPrompt(prompt: IPrompt, userParams: { [key: string]: string | undefined }): string {
@@ -148,8 +149,9 @@ export class PromptInMemoryRepository implements IPromptRepository {
    }
 
    expandSystemPrompt(prompt: IPrompt, params: { [key: string]: string | undefined }): string {
-      throwIfUndefined(prompt.systemPrompt);      
-      return replacePromptPlaceholders(prompt.systemPrompt, prompt.systemPromptParameters, params);
+      throwIfUndefined(prompt.systemPrompt);
+      // TypeScript doesn't recognize throwIfUndefined as a type guard, so use non-null assertion
+      return replacePromptPlaceholders(prompt.systemPrompt!, prompt.systemPromptParameters, params);
    }
 
    expandUserPrompt(prompt: IPrompt, params: { [key: string]: string | undefined }): string {
