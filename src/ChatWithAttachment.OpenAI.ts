@@ -7,7 +7,7 @@
  */
 
 import OpenAI from 'openai';
-import { EVerbosity } from './entry';
+import { EVerbosity, InvalidStateError, InvalidParameterError, InvalidOperationError } from './entry';
 import { ChatAttachmentInput, IChatAttachmentContent, IChatAttachmentReference, IChatWithAttachmentDriver, IChatTableJson } from './ChatWithAttachment';
 
 const DEFAULT_MODEL = 'gpt-4.1-mini';
@@ -37,7 +37,7 @@ export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
       } else {
          const apiKey = process.env.OPENAI_API_KEY;
          if (!apiKey) {
-            throw new Error('OPENAI_API_KEY environment variable is not set');
+            throw new InvalidStateError('OPENAI_API_KEY environment variable is not set');
          }
          this.openai = new OpenAI({ apiKey });
       }
@@ -74,7 +74,7 @@ export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
 
          const outputText = this.extractTextFromOutput((response as any).output ?? []);
          if (!outputText) {
-            throw new Error('OpenAI response did not include any text output');
+            throw new InvalidOperationError('OpenAI response did not include any text output');
          }
          return outputText;
       } finally {
@@ -132,7 +132,7 @@ export class OpenAIChatWithAttachment extends IChatWithAttachmentDriver {
          } else if (typeof attachment.data === 'string') {
             buffer = Buffer.from(attachment.data, 'utf8');
          } else {
-            throw new Error(`Unsupported attachment data type: ${typeof attachment.data}`);
+            throw new InvalidParameterError(`Unsupported attachment data type: ${typeof attachment.data}`);
          }
 
          // Create a File object (available in Node.js 18+)

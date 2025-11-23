@@ -7,7 +7,7 @@
 // Copyright (c) 2025 Jon Verrier
 
 import OpenAI from 'openai';
-import { EChatRole } from './entry';
+import { EChatRole, InvalidStateError } from './entry';
 import { EModel, IChatMessage, IFunction } from './entry';
 import { GenericOpenAIChatDriver } from './Chat.GenericOpenAI';
 
@@ -29,7 +29,7 @@ export class OpenAIChatDriver extends GenericOpenAIChatDriver {
       this.model = modelType === EModel.kLarge ? 'gpt-5' : 'gpt-5-mini';
 
       if (!process.env.OPENAI_API_KEY) {
-         throw new Error('OPENAI_API_KEY environment variable is not set');
+         throw new InvalidStateError('OPENAI_API_KEY environment variable is not set');
       }
       this.openai = new OpenAI({
          apiKey: process.env.OPENAI_API_KEY,

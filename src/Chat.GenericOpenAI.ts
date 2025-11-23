@@ -7,7 +7,7 @@
 // Copyright (c) 2025 Jon Verrier
 
 import OpenAI from 'openai';
-import { EChatRole, EVerbosity } from './entry';
+import { EChatRole, EVerbosity, ConnectionError } from './entry';
 import { IChatDriver, EModel, IChatMessage, IFunction, ILLMFunctionCall, IFunctionCallOutput, IFunctionCall } from './entry';
 import { retryWithExponentialBackoff } from './DriverHelpers';
 import { ChatDriver } from './Chat';
@@ -479,9 +479,9 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
          );
       } catch (error) {
          if (error instanceof Error) {
-            throw new Error(`OpenAI API error: ${error.message}`);
+            throw new ConnectionError(`OpenAI API error: ${error.message}`);
          }
-         throw new Error('Unknown error occurred while calling OpenAI API');
+         throw new ConnectionError('Unknown error occurred while calling OpenAI API');
       }
    }
 
@@ -503,9 +503,9 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
          );
       } catch (error) {
          if (error instanceof Error) {
-            throw new Error(`OpenAI API error: ${error.message}`);
+            throw new ConnectionError(`OpenAI API error: ${error.message}`);
          }
-         throw new Error('Unknown error occurred while calling OpenAI API');
+         throw new ConnectionError('Unknown error occurred while calling OpenAI API');
       }
    }
 

@@ -17,7 +17,7 @@
 
 import type * as fs from 'node:fs';
 
-import { IPromptParameterSpec, IPrompt, IPromptRepository, throwIfUndefined, InvalidOperationError } from "./entry";
+import { IPromptParameterSpec, IPrompt, IPromptRepository, throwIfUndefined, InvalidOperationError, InvalidParameterError } from "./entry";
 
 // Use this to enable future upgrades on the fly. 
 // If the prompt author was using an old version, we may be able to patch. 
@@ -49,16 +49,16 @@ function validateParameterType(paramName: string,
    if (foundParam) {
       if (foundParam.type === "kString") {
          if (typeof paramValue !== "string") {
-            throw new TypeError(`Parameter ${paramName} must be a string`);
+            throw new InvalidParameterError(`Parameter ${paramName} must be a string`);
          }
       } else if (foundParam.type === "kNumber") {
          if (isNaN(Number(paramValue))) {
-            throw new TypeError(`Parameter ${paramName} must be a number`);
+            throw new InvalidParameterError(`Parameter ${paramName} must be a number`);
          }
       } else if (foundParam.type === "kEnum") {
          if (foundParam.allowedValues && paramValue) {
             if (!foundParam.allowedValues.includes(paramValue)) {
-               throw new TypeError(`Parameter ${paramName} must be one of: ${foundParam.allowedValues.join(", ")}`);
+               throw new InvalidParameterError(`Parameter ${paramName} must be one of: ${foundParam.allowedValues.join(", ")}`);
             }
          }
       }
@@ -84,7 +84,7 @@ export function replacePromptPlaceholders(template: string,
       // Check that all required parameters are provided      
       if (param.required) {
          if (!params.hasOwnProperty(param.name) || params[param.name] === undefined) {
-            throw new TypeError(`Missing required parameter: ${param.name}`);
+            throw new InvalidParameterError(`Missing required parameter: ${param.name}`);
          }
          else {
             validateParameterType(param.name, params[param.name], paramSpec);

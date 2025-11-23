@@ -7,6 +7,8 @@
  */
 // Copyright (c) 2025 Jon Verrier
 
+import { InvalidOperationError } from '@jonverrier/assistant-common';
+
 export const MAX_RETRIES = 5;
 export const INITIAL_RETRY_DELAY = 1000; // 1 second
 export const MAX_RETRY_DELAY = 60000; // 60 seconds maximum (prevents excessive wait times)
@@ -153,20 +155,20 @@ export async function retryWithExponentialBackoff<T>(
             if (error?.error?.type === 'content_filter' || 
                 error?.error?.code === 'content_filter' ||
                 error?.message?.toLowerCase().includes('content filter')) {
-               throw new Error(`OpenAI content filter triggered: ${error?.error?.message || error?.message || 'Content violates OpenAI safety policies'}`);
+               throw new InvalidOperationError(`OpenAI content filter triggered: ${error?.error?.message || error?.message || 'Content violates OpenAI safety policies'}`);
             }
             
             if (error?.error?.type === 'safety' || 
                 error?.error?.code === 'safety' ||
                 error?.message?.toLowerCase().includes('safety')) {
-               throw new Error(`OpenAI safety system triggered: ${error?.error?.message || error?.message || 'Content violates OpenAI safety guidelines'}`);
+               throw new InvalidOperationError(`OpenAI safety system triggered: ${error?.error?.message || error?.message || 'Content violates OpenAI safety guidelines'}`);
             }
             
             if (error?.error?.type === 'invalid_request' && 
                 (error?.error?.message?.toLowerCase().includes('refuse') ||
                  error?.error?.message?.toLowerCase().includes('cannot') ||
                  error?.error?.message?.toLowerCase().includes('unable'))) {
-               throw new Error(`OpenAI refused request: ${error?.error?.message || error?.message || 'Request was refused by OpenAI'}`);
+               throw new InvalidOperationError(`OpenAI refused request: ${error?.error?.message || error?.message || 'Request was refused by OpenAI'}`);
             }
          }
          
@@ -176,7 +178,7 @@ export async function retryWithExponentialBackoff<T>(
                 error?.message?.toLowerCase().includes('cannot') ||
                 error?.message?.toLowerCase().includes('unable') ||
                 error?.message?.toLowerCase().includes('forbidden')) {
-               throw new Error(`OpenAI refused request (${status}): ${error?.message || 'Request was refused'}`);
+               throw new InvalidOperationError(`OpenAI refused request (${status}): ${error?.message || 'Request was refused'}`);
             }
          }
          

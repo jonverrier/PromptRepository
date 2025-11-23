@@ -7,7 +7,7 @@
 // Copyright (c) 2025 Jon Verrier
 
 import { AzureOpenAI } from 'openai';
-import { EModel, EModelProvider } from './entry';
+import { EModel, EModelProvider, InvalidStateError } from './entry';
 import { OpenAIModelEmbeddingDriver } from './Embed';
 
 const AZURE_DEPLOYMENTS = {
@@ -35,10 +35,10 @@ export class AzureOpenAIEmbeddingDriver extends OpenAIModelEmbeddingDriver {
          AZURE_DEPLOYMENTS.MINI;
 
       if (!process.env.AZURE_OPENAI_API_KEY) {
-         throw new Error('AZURE_OPENAI_API_KEY environment variable is not set');
+         throw new InvalidStateError('AZURE_OPENAI_API_KEY environment variable is not set');
       }
       if (!process.env.AZURE_OPENAI_ENDPOINT) {
-         throw new Error('AZURE_OPENAI_ENDPOINT environment variable is not set');
+         throw new InvalidStateError('AZURE_OPENAI_ENDPOINT environment variable is not set');
       }
 
       this.openai = new AzureOpenAI({

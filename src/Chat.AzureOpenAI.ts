@@ -7,7 +7,7 @@
 // Copyright (c) 2025 Jon Verrier
 
 import { AzureOpenAI } from 'openai';
-import { EChatRole } from './entry';
+import { EChatRole, InvalidStateError } from './entry';
 import { EModel, IChatMessage, IFunction } from './entry';
 import { GenericOpenAIChatDriver } from './Chat.GenericOpenAI';
 
@@ -34,10 +34,10 @@ export class AzureOpenAIChatDriver extends GenericOpenAIChatDriver {
       this.deployment = modelType === EModel.kLarge ? AZURE_DEPLOYMENTS.LARGE : AZURE_DEPLOYMENTS.MINI;
 
       if (!process.env.AZURE_OPENAI_API_KEY) {
-         throw new Error('AZURE_OPENAI_API_KEY environment variable is not set');
+         throw new InvalidStateError('AZURE_OPENAI_API_KEY environment variable is not set');
       }
       if (!process.env.AZURE_OPENAI_ENDPOINT) {
-         throw new Error('AZURE_OPENAI_ENDPOINT environment variable is not set');
+         throw new InvalidStateError('AZURE_OPENAI_ENDPOINT environment variable is not set');
       }
 
       this.openai = new AzureOpenAI({

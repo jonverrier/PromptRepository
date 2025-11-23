@@ -7,7 +7,7 @@
  */
 
 import { AzureOpenAI } from 'openai';
-import { EVerbosity, EModel } from './entry';
+import { EVerbosity, EModel, InvalidStateError, InvalidParameterError, InvalidOperationError } from './entry';
 import { ChatAttachmentInput, IChatAttachmentContent, IChatAttachmentReference, IChatWithAttachmentDriver, IChatTableJson } from './ChatWithAttachment';
 
 const AZURE_DEPLOYMENTS = {
@@ -40,11 +40,11 @@ export class AzureOpenAIChatWithAttachment extends IChatWithAttachmentDriver {
       } else {
          const apiKey = process.env.AZURE_OPENAI_API_KEY;
          if (!apiKey) {
-            throw new Error('AZURE_OPENAI_API_KEY environment variable is not set');
+            throw new InvalidStateError('AZURE_OPENAI_API_KEY environment variable is not set');
          }
          const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
          if (!endpoint) {
-            throw new Error('AZURE_OPENAI_ENDPOINT environment variable is not set');
+            throw new InvalidStateError('AZURE_OPENAI_ENDPOINT environment variable is not set');
          }
          this.openai = new AzureOpenAI({
             apiKey,
@@ -86,7 +86,7 @@ export class AzureOpenAIChatWithAttachment extends IChatWithAttachmentDriver {
 
          const outputText = this.extractTextFromOutput((response as any).output ?? []);
          if (!outputText) {
-            throw new Error('Azure OpenAI response did not include any text output');
+            throw new InvalidOperationError('Azure OpenAI response did not include any text output');
          }
          return outputText;
       } finally {
@@ -144,7 +144,7 @@ export class AzureOpenAIChatWithAttachment extends IChatWithAttachmentDriver {
          } else if (typeof attachment.data === 'string') {
             buffer = Buffer.from(attachment.data, 'utf8');
          } else {
-            throw new Error(`Unsupported attachment data type: ${typeof attachment.data}`);
+            throw new InvalidParameterError(`Unsupported attachment data type: ${typeof attachment.data}`);
          }
 
          // Create a File object (available in Node.js 18+)

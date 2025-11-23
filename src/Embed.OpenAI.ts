@@ -7,7 +7,7 @@
 // Copyright (c) 2025 Jon Verrier
 
 import OpenAI from 'openai';
-import { EModel, EModelProvider } from './entry';
+import { EModel, EModelProvider, InvalidStateError } from './entry';
 import { OpenAIModelEmbeddingDriver as OpenAIEmbeddingDriver } from './Embed';
 
 /**
@@ -35,7 +35,7 @@ export class NativeOpenAIEmbeddingDriver extends OpenAIEmbeddingDriver {
          NativeOpenAIEmbeddingDriver.OPENAI_MODELS.MINI;
 
       if (!process.env.OPENAI_API_KEY) {
-         throw new Error('OPENAI_API_KEY environment variable is not set');
+         throw new InvalidStateError('OPENAI_API_KEY environment variable is not set');
       }
 
       this.openai = new OpenAI({

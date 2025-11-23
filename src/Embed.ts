@@ -7,7 +7,7 @@
 // Copyright (c) 2025 Jon Verrier
 
 import OpenAI, { AzureOpenAI } from 'openai';
-import { EModel, EModelProvider, IEmbeddingModelDriver, InvalidParameterError } from './entry';
+import { EModel, EModelProvider, IEmbeddingModelDriver, InvalidParameterError, InvalidOperationError, ConnectionError } from './entry';
 import { retryWithExponentialBackoff } from './DriverHelpers';
 
 /**
@@ -22,7 +22,7 @@ import { retryWithExponentialBackoff } from './DriverHelpers';
  */
 export function cosineSimilarity(embedding1: number[], embedding2: number[]): number {
    if (embedding1.length !== embedding2.length) {
-      throw new Error('Embedding vectors must have the same length');
+      throw new InvalidParameterError('Embedding vectors must have the same length');
    }
 
    if (embedding1.length === 0) {
@@ -88,15 +88,15 @@ export abstract class OpenAIModelEmbeddingDriver implements IEmbeddingModelDrive
          );
 
          if (!response.data || response.data.length === 0) {
-            throw new Error('No embedding data received from OpenAI');
+            throw new InvalidOperationError('No embedding data received from OpenAI');
          }
 
          return response.data[0].embedding;
       } catch (error) {
          if (error instanceof Error) {
-            throw new Error(`OpenAI embedding API error: ${error.message}`);
+            throw new ConnectionError(`OpenAI embedding API error: ${error.message}`);
          }
-         throw new Error('Unknown error occurred while calling OpenAI embedding API');
+         throw new ConnectionError('Unknown error occurred while calling OpenAI embedding API');
       }
    }
 }
