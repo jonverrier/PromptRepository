@@ -46,6 +46,9 @@
   "peerDependencies": {
     "openai": "^6.8.1"
   },
+  "dependencies": {
+    "@jonverrier/assistant-common": "^0.2.1"
+  },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.13.8",
