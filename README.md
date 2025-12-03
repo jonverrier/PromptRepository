@@ -1,6 +1,6 @@
 # PromptRepository
 
-A framework for managing, testing, and evaluating Large Language Model (LLM) prompts. Built to help you create more reliable and robust AI applications through systematic prompt engineering, validation, and testing.
+A framework for managing, testing, and evaluating Large Language Model (LLM) prompts. Part of the [StrongAI Gym Assistant](../README.md) suite. Built to help you create more reliable and robust AI applications through systematic prompt engineering, validation, and testing.
 
 The repo also demonstrates a technique I think will become much more common - bundling a framework with prompts to generate code to use the framework.
 
