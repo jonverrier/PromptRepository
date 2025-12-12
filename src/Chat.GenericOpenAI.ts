@@ -637,6 +637,13 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
          }
       };
 
+      // Note: Content filtering for Azure OpenAI Responses API is controlled at the
+      // deployment/resource level, not per-request. To minimize false-positive content
+      // filter triggers on workout descriptions (e.g., "devils press", "burpees") when
+      // using constrained JSON schema outputs, configure content filtering settings at
+      // the Azure OpenAI deployment level. Structured outputs with JSON schema constraints
+      // already help reduce false positives by constraining the model's output format.
+
       try {
          const response = await retryWithExponentialBackoff(() =>
             this.openai.responses.create(config)
