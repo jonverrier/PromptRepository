@@ -421,6 +421,76 @@ providers.forEach((provider, index) => {
         value: '555-0123'
       });
     }).timeout(TEST_TIMEOUT_MS);
+
+    it('should log full prompts when content filter error occurs', async () => {
+      const schema = {
+        type: 'object',
+        properties: {
+          result: { type: 'string' }
+        },
+        required: ['result'],
+        additionalProperties: false
+      };
+
+      const systemPrompt = 'You are a helpful assistant';
+      const userPrompt = 'This is a test prompt that should trigger content filter';
+      const defaultValue = { result: 'default' };
+
+      // Mock console.error to capture logs
+      const consoleErrorSpy = console.error;
+      const loggedMessages: any[] = [];
+      console.error = (...args: any[]) => {
+        loggedMessages.push(args);
+        consoleErrorSpy.apply(console, args);
+      };
+
+      // Mock the driver to throw a content filter error
+      const originalCreate = (chatDriver as any).openai?.responses?.create;
+      if (originalCreate) {
+        (chatDriver as any).openai.responses.create = async () => {
+          const error: any = new Error('Content filter triggered');
+          error.status = 400;
+          error.error = {
+            type: 'content_filter',
+            message: 'Content violates OpenAI safety policies'
+          };
+          throw error;
+        };
+      }
+
+      try {
+        const result = await chatDriver.getConstrainedModelResponse(
+          systemPrompt,
+          userPrompt,
+          EVerbosity.kMedium,
+          schema,
+          defaultValue
+        );
+
+        // Should return default value
+        expect(result).toEqual(defaultValue);
+
+        // Should have logged content filter error with full prompts
+        expect(loggedMessages.length).toBeGreaterThan(0);
+        const contentFilterLog = loggedMessages.find(msg => 
+          msg[0] && typeof msg[0] === 'string' && msg[0].includes('[ContentFilter]')
+        );
+        expect(contentFilterLog).toBeDefined();
+        
+        if (contentFilterLog && contentFilterLog[1]) {
+          const logData = contentFilterLog[1];
+          expect(logData.systemPrompt).toBe(systemPrompt);
+          expect(logData.userPrompt).toBe(userPrompt);
+          expect(logData.error).toContain('content filter');
+        }
+      } finally {
+        // Restore original methods
+        console.error = consoleErrorSpy;
+        if (originalCreate) {
+          (chatDriver as any).openai.responses.create = originalCreate;
+        }
+      }
+    }).timeout(TEST_TIMEOUT_MS);
   });
 
   describe(`Verbosity Level Tests (${provider})`, () => {

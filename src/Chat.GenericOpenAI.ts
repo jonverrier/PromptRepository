@@ -7,7 +7,7 @@
 // Copyright (c) 2025 Jon Verrier
 
 import OpenAI from 'openai';
-import { EChatRole, EVerbosity, ConnectionError } from './entry';
+import { EChatRole, EVerbosity, ConnectionError, InvalidOperationError } from './entry';
 import { IChatDriver, EModel, IChatMessage, IFunction, ILLMFunctionCall, IFunctionCallOutput, IFunctionCall } from './entry';
 import { retryWithExponentialBackoff } from './DriverHelpers';
 import { ChatDriver } from './Chat';
@@ -52,6 +52,16 @@ function convertFromOpenAIToolCalls(openAIToolCalls: IOpenAIToolCall[]): IFuncti
       name: call.function.name,
       arguments: call.function.arguments
    }));
+}
+
+/**
+ * Determines if an error is a content filter/moderation error.
+ * @param error - The error to check
+ * @returns True if the error is a content filter error, false otherwise
+ */
+function isContentFilterError(error: any): boolean {
+   return error instanceof InvalidOperationError &&
+          error.message?.toLowerCase().includes('content filter');
 }
 
 /**
@@ -660,7 +670,16 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
          }
          return defaultValue;
       } catch (error) {
-         console.warn('Error in constrained response, returning default value:', error);
+         // Detect and log content filter errors with full prompts for debugging
+         if (isContentFilterError(error)) {
+            console.error('[ContentFilter] Content moderation triggered:', {
+               error: error instanceof Error ? error.message : String(error),
+               systemPrompt: systemPrompt || '(none)',
+               userPrompt: userPrompt
+            });
+         } else {
+            console.warn('Error in constrained response, returning default value:', error);
+         }
          return defaultValue;
       }
    }
