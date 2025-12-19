@@ -1,11 +1,14 @@
 /**
  * @module chatwithattachment.integration.test
  * 
- * Integration tests for file content injection that call the actual OpenAI/Azure OpenAI APIs.
+ * Integration tests for file content injection that call the actual LLM APIs.
  * These tests verify file content understanding by injecting file content directly into prompts
  * using the <file></file> marker pattern and the regular ChatDriver API.
  * 
- * These tests require OPENAI_API_KEY or AZURE_OPENAI_API_KEY to be set.
+ * These tests require API keys to be set for the providers being tested:
+ * - OPENAI_API_KEY for OpenAI
+ * - AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT for Azure OpenAI
+ * - GOOGLE_GEMINI_API_KEY for Google Gemini
  */
 
 // Copyright (c) 2025 Jon Verrier
@@ -16,15 +19,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { ChatDriverFactory, EModelProvider, EModel, EVerbosity, ChatWithAttachmentDriverFactory, IChatTableJson } from '../src/entry';
+import { CHAT_WITH_ATTACHMENT_TEST_PROVIDERS, createChatWithAttachmentDrivers, TEST_TIMEOUT_MS } from './ChatWithAttachmentTestConfig';
 
-const TEST_TIMEOUT_MS = 60000; // 1 minute timeout for chat requests
-
-// Create drivers for both providers
+// Create drivers for all test providers
 const factory = new ChatDriverFactory();
-const attachmentFactory = new ChatWithAttachmentDriverFactory();
-const providers = [EModelProvider.kOpenAI, EModelProvider.kAzureOpenAI];
-const drivers = providers.map(provider => factory.create(EModel.kLarge, provider));
-const attachmentDrivers = providers.map(provider => attachmentFactory.create(EModel.kLarge, provider));
+const providers = CHAT_WITH_ATTACHMENT_TEST_PROVIDERS;
+const drivers = providers.map(provider => {
+   try {
+      return factory.create(EModel.kLarge, provider);
+   } catch (error) {
+      // If provider initialization fails (e.g., missing API key), return null
+      // Tests will skip providers that fail to initialize
+      return null;
+   }
+});
+const attachmentDrivers = createChatWithAttachmentDrivers(EModel.kLarge);
 
 /**
  * Extracts text content from file data in various formats.
@@ -153,7 +162,18 @@ describe('File Content Injection Integration Tests', () => {
    // Run tests for each provider
    providers.forEach((provider, index) => {
       const driver = drivers[index];
-      const providerName = provider === EModelProvider.kOpenAI ? 'OpenAI' : 'Azure OpenAI';
+      
+      // Skip tests if driver failed to initialize (e.g., missing API key)
+      if (!driver) {
+         console.warn(`Skipping tests for ${provider} - driver initialization failed (likely missing API key)`);
+         return;
+      }
+
+      const providerName = provider === EModelProvider.kOpenAI ? 'OpenAI' 
+         : provider === EModelProvider.kAzureOpenAI ? 'Azure OpenAI'
+         : provider === EModelProvider.kGoogleGemini ? 'Google Gemini'
+         : provider === EModelProvider.kDefault ? 'Default'
+         : String(provider);
 
       describe(`${providerName} - File Content Understanding Tests`, () => {
          it('understands motor racing file content', async () => {
@@ -286,7 +306,18 @@ describe('File Content Injection Integration Tests', () => {
    // Table JSON Integration Tests
    providers.forEach((provider, index) => {
       const driver = attachmentDrivers[index];
-      const providerName = provider === EModelProvider.kOpenAI ? 'OpenAI' : 'Azure OpenAI';
+      
+      // Skip tests if driver failed to initialize (e.g., missing API key)
+      if (!driver) {
+         console.warn(`Skipping tests for ${provider} - driver initialization failed (likely missing API key)`);
+         return;
+      }
+
+      const providerName = provider === EModelProvider.kOpenAI ? 'OpenAI' 
+         : provider === EModelProvider.kAzureOpenAI ? 'Azure OpenAI'
+         : provider === EModelProvider.kGoogleGemini ? 'Google Gemini'
+         : provider === EModelProvider.kDefault ? 'Default'
+         : String(provider);
 
       describe(`${providerName} - Table JSON Integration Tests`, () => {
          /**

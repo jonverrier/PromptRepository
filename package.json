@@ -1,6 +1,6 @@
 {
   "name": "@jonverrier/prompt-repository",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "description": "Managing Prompts and standardised Unit Evals ",
   "main": "dist/src/entry.js",
   "types": "dist/src/entry.d.ts",
@@ -33,7 +33,7 @@
     "test": "mocha --require ts-node/register --extensions ts,js test/**/*.test.ts --exit",
     "test:ci": "mocha --require ts-node/register --extensions ts,js test/promptrepository.test.ts test/prompts.test.ts test/makepromptids.test.ts --exit",
     "test:integration": "mocha --require ts-node/register --extensions ts,js test/chat.test.ts test/embed.test.ts test/function.test.ts test/prompts.eval.test.ts test/chatwithattachment.integration.test.ts --exit",
-    "test:mini": "mocha --require ts-node/register --extensions ts,js test/chatwithattachment.test.ts --exit",
+    "test:mini": "mocha --require ts-node/register --extensions ts,js test/function.test.ts test/multiple-tool-calling.test.ts --exit",
     "link-local": "bash scripts/link-local.sh",
     "unlink-local": "bash scripts/unlink-local.sh",
     "link-status": "bash scripts/link-status.sh",
@@ -44,12 +44,14 @@
     "cover:json": "nyc --reporter=json --report-dir=.nyc_output --extension .ts --exclude \"**/*.test.ts\" --exclude \"test/**\" npm run test"
   },
   "peerDependencies": {
-    "openai": "^6.8.1"
+    "openai": "^6.8.1",
+    "@google/generative-ai": "^0.21.0"
   },
   "dependencies": {
     "@jonverrier/assistant-common": "^0.2.1"
   },
   "devDependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.13.8",
     "expect": "^29.7.0",

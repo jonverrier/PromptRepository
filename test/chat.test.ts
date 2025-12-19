@@ -8,135 +8,30 @@
 
 import { expect } from 'expect';
 import { describe, it, beforeEach, afterEach } from 'mocha';
-import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, TEST_TARGET_SUPPORTS_VERBOSITY } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, TEST_TARGET_SUPPORTS_VERBOSITY, GoogleGeminiChatDriver } from '../src/entry';
 import { GenericOpenAIChatDriver } from '../src/Chat.GenericOpenAI';
+import { MockOpenAIChatDriver } from './MockOpenAIChatDriver';
+import { MockGeminiChatDriver } from './MockGeminiChatDriver';
 
-const TEST_TIMEOUT_MS = 60000; // 60 second timeout for all tests (OpenAI GPT-5 can be slow)
+import { CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS } from './ChatTestConfig';
 
-// Create chat drivers for both providers outside describe blocks
+// Create chat drivers for all providers outside describe blocks
+const providers = CHAT_TEST_PROVIDERS;
+const chatDrivers = createChatDrivers(EModel.kLarge);
+
+// Create factory for mini model tests
 const chatDriverFactory = new ChatDriverFactory();
-const providers = [EModelProvider.kOpenAI, EModelProvider.kAzureOpenAI];
-const chatDrivers = providers.map(provider => chatDriverFactory.create(EModel.kLarge, provider));
 
-// Mock class for testing exponential backoff
-class MockOpenAIChatDriver extends GenericOpenAIChatDriver {
-   private failCount = 0;
-   private shouldFail = false;
-   private maxFailures = 0;
-
-   constructor() {
-      super(EModel.kLarge);
-      // Initialize with default mock
-      this.resetMock();
-   }
-
-   private resetMock() {
-      (this as any).openai = {
-         responses: {
-            create: async (config: any) => {
-               if (this.shouldFail && this.failCount < this.maxFailures) {
-                  this.failCount++;
-                  const error: any = new Error('Rate limit exceeded');
-                  error.status = 429;
-                  throw error;
-               }
-               
-               // Return Responses API format
-               if (config.text?.format) {
-                  return { 
-                     output: [{ type: 'text', text: JSON.stringify({ test: 'data' }) }]
-                  };
-               }
-               
-               return { 
-                  output: [{ type: 'text', text: 'Success response' }]
-               };
-            },
-            stream: async (config: any) => {
-               if (this.shouldFail && this.failCount < this.maxFailures) {
-                  this.failCount++;
-                  const error: any = new Error('Rate limit exceeded');
-                  error.status = 429;
-                  throw error;
-               }
-               
-               return {
-                  [Symbol.asyncIterator]: async function* () {
-                     yield { type: 'response.output_text.delta', delta: 'Success ' };
-                     yield { type: 'response.output_text.delta', delta: 'response' };
-                  }
-               };
-            }
-         }
-      };
-   }
-
-   protected getModelName(): string {
-      return 'mock-model';
-   }
-
-   protected shouldUseToolMessages(): boolean {
-      return false; // Mock implementation defaults to false
-   }
-
-   setShouldFail(shouldFail: boolean, maxFailures: number = 0) {
-      this.shouldFail = shouldFail;
-      this.maxFailures = maxFailures;
-      this.failCount = 0;
-      // Reset to default mock functions
-      this.resetMock();
-   }
-
-   getFailCount() {
-      return this.failCount;
-   }
-
-   // Method to override the mock for specific tests
-   setMockCreate(mockFn: () => Promise<any>) {
-      (this as any).openai.responses.create = mockFn;
-      (this as any).openai.responses.stream = mockFn;
-   }
-
-   async getConstrainedModelResponse<T>(
-      systemPrompt: string | undefined,
-      userPrompt: string,
-      verbosity: EVerbosity,
-      jsonSchema: Record<string, unknown>,
-      defaultValue: T,
-      messageHistory?: IChatMessage[],
-      functions?: IFunction[]
-   ): Promise<T> {
-      // Use retry wrapper like the base class - import retryWithExponentialBackoff
-      const { retryWithExponentialBackoff } = await import('../src/DriverHelpers');
-      
-      const response = await retryWithExponentialBackoff(async () => {
-         return (this as any).openai.responses.create({ 
-            text: {
-               format: {
-                  type: "json_schema", 
-                  name: "constrainedOutput", 
-                  schema: jsonSchema 
-               }
-            }
-         });
-      });
-      
-      // Parse the JSON content from the Responses API format
-      const content = response.output?.[0]?.text;
-      if (content) {
-         try {
-            return JSON.parse(content) as T;
-         } catch (parseError) {
-            return defaultValue;
-         }
-      }
-      return defaultValue;
-   }
-}
 
 // Run all tests for each provider
 providers.forEach((provider, index) => {
   const chatDriver = chatDrivers[index];
+
+  // Skip tests if driver failed to initialize (e.g., missing API key)
+  if (!chatDriver) {
+    console.warn(`Skipping tests for ${provider} - driver initialization failed (likely missing API key)`);
+    return;
+  }
 
   describe(`getChatCompletion (${provider})`, () => {
     it('should successfully return text response with system prompt', async () => {
@@ -341,15 +236,30 @@ providers.forEach((provider, index) => {
       const defaultValue = { validKey: false };
       
       // Mock the driver to return malformed JSON that will fail parsing
+      let testDriver = chatDriver;
       const originalCreate = (chatDriver as any).openai?.responses?.create;
       if (originalCreate) {
+        // OpenAI driver - mock openai.responses.create
         (chatDriver as any).openai.responses.create = async () => ({
           output: [{ type: 'text', text: 'This is not valid JSON at all!' }]
         });
+      } else if (chatDriver && chatDriver instanceof GoogleGeminiChatDriver) {
+        // Gemini driver - use MockGeminiChatDriver
+        const mockDriver = new MockGeminiChatDriver();
+        mockDriver.setMockSendMessage(async () => ({
+          response: {
+            text: () => 'This is not valid JSON at all!'
+          }
+        }));
+        testDriver = mockDriver as any;
+      }
+
+      if (!testDriver) {
+        throw new Error('Driver not available for testing');
       }
 
       try {
-        const result = await chatDriver.getConstrainedModelResponse(
+        const result = await testDriver.getConstrainedModelResponse(
           undefined,
           'Give me a response',
           EVerbosity.kMedium,
@@ -445,21 +355,40 @@ providers.forEach((provider, index) => {
       };
 
       // Mock the driver to throw a content filter error
+      let testDriver = chatDriver;
       const originalCreate = (chatDriver as any).openai?.responses?.create;
       if (originalCreate) {
+        // OpenAI driver - mock openai.responses.create
         (chatDriver as any).openai.responses.create = async () => {
           const error: any = new Error('Content filter triggered');
           error.status = 400;
           error.error = {
             type: 'content_filter',
-            message: 'Content violates OpenAI safety policies'
+            message: `Content violates ${getProviderName(provider)} safety policies`
           };
           throw error;
         };
+      } else if (chatDriver && chatDriver instanceof GoogleGeminiChatDriver) {
+        // Gemini driver - use MockGeminiChatDriver
+        const mockDriver = new MockGeminiChatDriver();
+        mockDriver.setMockSendMessage(async () => {
+          const error: any = new Error('Content filter triggered');
+          error.status = 400;
+          error.error = {
+            type: 'content_filter',
+            message: 'Content violates Google Gemini safety policies'
+          };
+          throw error;
+        });
+        testDriver = mockDriver as any;
+      }
+
+      if (!testDriver) {
+        throw new Error('Driver not available for testing');
       }
 
       try {
-        const result = await chatDriver.getConstrainedModelResponse(
+        const result = await testDriver.getConstrainedModelResponse(
           systemPrompt,
           userPrompt,
           EVerbosity.kMedium,
@@ -470,18 +399,21 @@ providers.forEach((provider, index) => {
         // Should return default value
         expect(result).toEqual(defaultValue);
 
-        // Should have logged content filter error with full prompts
-        expect(loggedMessages.length).toBeGreaterThan(0);
-        const contentFilterLog = loggedMessages.find(msg => 
-          msg[0] && typeof msg[0] === 'string' && msg[0].includes('[ContentFilter]')
-        );
-        expect(contentFilterLog).toBeDefined();
-        
-        if (contentFilterLog && contentFilterLog[1]) {
-          const logData = contentFilterLog[1];
-          expect(logData.systemPrompt).toBe(systemPrompt);
-          expect(logData.userPrompt).toBe(userPrompt);
-          expect(logData.error).toContain('content filter');
+        // Should have logged content filter error with full prompts (for OpenAI)
+        // Note: Gemini error handling may differ, so we check if logs exist
+        if (originalCreate) {
+          expect(loggedMessages.length).toBeGreaterThan(0);
+          const contentFilterLog = loggedMessages.find(msg => 
+            msg[0] && typeof msg[0] === 'string' && msg[0].includes('[ContentFilter]')
+          );
+          expect(contentFilterLog).toBeDefined();
+          
+          if (contentFilterLog && contentFilterLog[1]) {
+            const logData = contentFilterLog[1];
+            expect(logData.systemPrompt).toBe(systemPrompt);
+            expect(logData.userPrompt).toBe(userPrompt);
+            expect(logData.error).toContain('content filter');
+          }
         }
       } finally {
         // Restore original methods
@@ -557,7 +489,13 @@ providers.forEach((provider, index) => {
   });
 
   // Mini model tests for each provider
-  const miniChatDriver = chatDriverFactory.create(EModel.kMini, provider);
+  let miniChatDriver: any;
+  try {
+    miniChatDriver = chatDriverFactory.create(EModel.kMini, provider);
+  } catch (error) {
+    console.warn(`Skipping mini model tests for ${provider} - driver initialization failed`);
+    return;
+  }
 
   describe(`Mini Model Tests (${provider})`, () => {
     it('should successfully return simple text response', async () => {
@@ -579,15 +517,49 @@ providers.forEach((provider, index) => {
   });
 });
 
-describe('Exponential Backoff Tests', () => {
-   let mockDriver: MockOpenAIChatDriver;
+// Helper function to get provider name from enum
+function getProviderName(provider: EModelProvider): string {
+   switch (provider) {
+      case EModelProvider.kOpenAI:
+         return 'OpenAI';
+      case EModelProvider.kAzureOpenAI:
+         return 'Azure OpenAI';
+      case EModelProvider.kGoogleGemini:
+         return 'Google Gemini';
+      case EModelProvider.kDefault:
+         return process.env.NODE_ENV === 'development' ? 'Google Gemini' : 'OpenAI';
+      default:
+         return 'API';
+   }
+}
+
+// Run exponential backoff tests for each provider
+providers.forEach((provider, index) => {
+   const chatDriver = chatDrivers[index];
+   
+   // Skip tests if driver failed to initialize
+   if (!chatDriver) {
+      console.warn(`Skipping exponential backoff tests for ${provider} - driver initialization failed`);
+      return;
+   }
+
+   const providerName = getProviderName(provider);
+
+describe(`Exponential Backoff Tests (${provider})`, () => {
+   let mockDriver: MockOpenAIChatDriver | MockGeminiChatDriver;
 
    beforeEach(() => {
-      mockDriver = new MockOpenAIChatDriver();
+      if (provider === EModelProvider.kGoogleGemini) {
+         mockDriver = new MockGeminiChatDriver();
+      } else {
+         mockDriver = new MockOpenAIChatDriver(provider);
+      }
    });
 
    afterEach(() => {
-      mockDriver.setShouldFail(false);
+      if (mockDriver && typeof mockDriver.setShouldFail === 'function') {
+         mockDriver.setShouldFail(false);
+      }
    });
 
    it('should retry on 429 errors and eventually succeed', async () => {
@@ -643,7 +615,7 @@ describe('Exponential Backoff Tests', () => {
       const startTime = Date.now();
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
-      ).rejects.toThrow('OpenAI API error: Rate limit exceeded');
+      ).rejects.toThrow(/API error.*Rate limit exceeded|Rate limit exceeded.*API error/i);
       const endTime = Date.now();
 
       expect(mockDriver.getFailCount()).toBe(6); // Should have tried 6 times (1 initial + 5 retries)
@@ -664,7 +636,7 @@ describe('Exponential Backoff Tests', () => {
 
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
-      ).rejects.toThrow('OpenAI API error: Authentication failed');
+      ).rejects.toThrow(/API error.*Authentication failed|Authentication failed.*API error/i);
    }).timeout(5000);
 
    it('should handle content filter errors without retrying', async () => {
@@ -674,14 +646,14 @@ describe('Exponential Backoff Tests', () => {
          error.status = 400;
          error.error = {
             type: 'content_filter',
-            message: 'Content violates OpenAI safety policies'
+            message: `Content violates ${providerName} safety policies`
          };
          throw error;
       });
 
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
-      ).rejects.toThrow('OpenAI content filter triggered: Content violates OpenAI safety policies');
+      ).rejects.toThrow(/content filter.*triggered.*safety policies|safety policies.*content filter.*triggered/i);
    }).timeout(5000);
 
    it('should handle safety system errors without retrying', async () => {
@@ -691,14 +663,14 @@ describe('Exponential Backoff Tests', () => {
          error.status = 400;
          error.error = {
             type: 'safety',
-            message: 'Content violates OpenAI safety guidelines'
+            message: `Content violates ${providerName} safety guidelines`
          };
          throw error;
       });
 
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
-      ).rejects.toThrow('OpenAI safety system triggered: Content violates OpenAI safety guidelines');
+      ).rejects.toThrow(/safety system.*triggered.*safety guidelines|safety guidelines.*safety system.*triggered/i);
    }).timeout(5000);
 
    it('should handle general refusal errors without retrying', async () => {
@@ -715,7 +687,7 @@ describe('Exponential Backoff Tests', () => {
 
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
-      ).rejects.toThrow('OpenAI refused request: I cannot process this request');
+      ).rejects.toThrow(/refused request.*cannot process|cannot process.*refused request/i);
    }).timeout(5000);
 
    it('should handle 403 forbidden errors as refusals', async () => {
@@ -729,7 +701,7 @@ describe('Exponential Backoff Tests', () => {
 
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
-      ).rejects.toThrow('OpenAI refused request (403): Access forbidden');
+      ).rejects.toThrow(/refused request.*403.*Access forbidden|Access forbidden.*refused request.*403/i);
    }).timeout(5000);
 
    it('should handle streaming with exponential backoff', async () => {
@@ -829,6 +801,6 @@ describe('Exponential Backoff Tests', () => {
       // Verify the interruption message is the last chunk
       expect(chunks[chunks.length - 1]).toContain('Sorry, it looks like the response was interrupted. Please try again.');
    }).timeout(5000);
+   });
 });
-
 

@@ -11,12 +11,11 @@ import { describe, it } from 'mocha';
 import { ChatDriverFactory, EModelProvider, EModel, EVerbosity } from '../src/entry';
 import { IFunction, EDataType, IFunctionArgs } from '../src/Function';
 
-const TEST_TIMEOUT_MS = 60000; // 60 second timeout for all tests (OpenAI GPT-5 can be slow)
+import { CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS } from './ChatTestConfig';
 
-// Create chat drivers 
-const chatDriverFactory = new ChatDriverFactory();
-const providers = [EModelProvider.kAzureOpenAI, EModelProvider.kOpenAI];
-const chatDrivers = providers.map(provider => chatDriverFactory.create(EModel.kLarge, provider));
+// Create chat drivers for all providers outside describe blocks
+const providers = CHAT_TEST_PROVIDERS;
+const chatDrivers = createChatDrivers(EModel.kLarge);
 
 // Mock data for different race series
 const mockRaceData: { [key: string]: { driver: string; points: number } } = {
@@ -166,6 +165,12 @@ const testFunctionIntegration = async (
 // Run all tests for each provider
 providers.forEach((provider, index) => {
   const chatDriver = chatDrivers[index];
+
+  // Skip tests if driver failed to initialize (e.g., missing API key)
+  if (!chatDriver) {
+    console.warn(`Skipping tests for ${provider} - driver initialization failed (likely missing API key)`);
+    return;
+  }
 
   describe(`Function Integration Tests (${provider})`, () => {
     testFunctionIntegration(
@@ -371,6 +376,12 @@ describe('Function Call Counting and Content Verification Tests', () => {
    // Run function call counting tests for each provider
    providers.forEach((provider, index) => {
       const chatDriver = chatDrivers[index];
+
+      // Skip tests if driver failed to initialize (e.g., missing API key)
+      if (!chatDriver) {
+         console.warn(`Skipping tests for ${provider} - driver initialization failed (likely missing API key)`);
+         return;
+      }
 
       describe(`Function Call Counting Tests (${provider})`, () => {
          testFunctionCallCounting(
@@ -711,6 +722,12 @@ describe('Multi-Step Function Calling Tests', () => {
    // Run multi-step tests for each provider
    providers.forEach((provider, index) => {
       const chatDriver = chatDrivers[index];
+
+      // Skip tests if driver failed to initialize (e.g., missing API key)
+      if (!chatDriver) {
+         console.warn(`Skipping tests for ${provider} - driver initialization failed (likely missing API key)`);
+         return;
+      }
 
       describe(`Multi-Step Function Calling Tests (${provider})`, () => {
          testMultiStepFunctionCalling(

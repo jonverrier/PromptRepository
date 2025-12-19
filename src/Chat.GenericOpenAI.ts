@@ -9,7 +9,7 @@
 import OpenAI from 'openai';
 import { EChatRole, EVerbosity, ConnectionError, InvalidOperationError } from './entry';
 import { IChatDriver, EModel, IChatMessage, IFunction, ILLMFunctionCall, IFunctionCallOutput, IFunctionCall } from './entry';
-import { retryWithExponentialBackoff } from './DriverHelpers';
+import { retryWithExponentialBackoff, MAX_RETRIES } from './DriverHelpers';
 import { ChatDriver } from './Chat';
 
 /**
@@ -86,7 +86,13 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       return false;
    }
 
-   protected abstract getModelName(): string;
+   /**
+    * Returns the provider name for error messages
+    * Subclasses should override to return their specific provider name
+    */
+   protected getProviderName(): string {
+      return "OpenAI";
+   }
 
    protected createResponseConfig(
       systemPrompt: string | undefined,
@@ -467,8 +473,14 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       functions: IFunction[] | undefined,
       createResponse: (config: any) => Promise<any>
    ): Promise<string> {
+      // Enhance system prompt to emphasize parallel function calling for forced tools
+      // This helps ensure the model makes all necessary function calls in a single response
+      const enhancedSystemPrompt = systemPrompt 
+         ? `${systemPrompt}\n\nCRITICAL: When multiple function calls are needed, you MUST make ALL necessary function calls in a SINGLE response. Do not wait for function results before making additional calls. Use parallel function calling to complete the entire task in one response.`
+         : 'CRITICAL: When multiple function calls are needed, you MUST make ALL necessary function calls in a SINGLE response. Do not wait for function results before making additional calls. Use parallel function calling to complete the entire task in one response.';
+      
       // Use the Responses API pattern for modern tool calling support
-      return this.handleToolUseWithResponsesAPI(systemPrompt, messages, verbosity, functions, true, createResponse);
+      return this.handleToolUseWithResponsesAPI(enhancedSystemPrompt, messages, verbosity, functions, true, createResponse);
    }
 
    async getModelResponse(systemPrompt: string | undefined,
@@ -485,13 +497,18 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
             messages,
             verbosity,
             functions,
-            (config) => retryWithExponentialBackoff(() => this.openai.responses.create(config))
+            (config) => retryWithExponentialBackoff(() => this.openai.responses.create(config), MAX_RETRIES, this.getProviderName())
          );
       } catch (error) {
-         if (error instanceof Error) {
-            throw new ConnectionError(`OpenAI API error: ${error.message}`);
+         // If error is already a ConnectionError or InvalidOperationError from retryWithExponentialBackoff, just rethrow it
+         if (error instanceof ConnectionError || error instanceof InvalidOperationError) {
+            throw error;
          }
-         throw new ConnectionError('Unknown error occurred while calling OpenAI API');
+         // Otherwise, wrap it with provider name
+         if (error instanceof Error) {
+            throw new ConnectionError(`${this.getProviderName()} API error: ${error.message}`);
+         }
+         throw new ConnectionError(`Unknown error occurred while calling ${this.getProviderName()} API`);
       }
    }
 
@@ -509,13 +526,18 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
             messages,
             verbosity,
             functions,
-            (config) => retryWithExponentialBackoff(() => this.openai.responses.create(config))
+            (config) => retryWithExponentialBackoff(() => this.openai.responses.create(config), MAX_RETRIES, this.getProviderName())
          );
       } catch (error) {
-         if (error instanceof Error) {
-            throw new ConnectionError(`OpenAI API error: ${error.message}`);
+         // If error is already a ConnectionError or InvalidOperationError from retryWithExponentialBackoff, just rethrow it
+         if (error instanceof ConnectionError || error instanceof InvalidOperationError) {
+            throw error;
          }
-         throw new ConnectionError('Unknown error occurred while calling OpenAI API');
+         // Otherwise, wrap it with provider name
+         if (error instanceof Error) {
+            throw new ConnectionError(`${this.getProviderName()} API error: ${error.message}`);
+         }
+         throw new ConnectionError(`Unknown error occurred while calling ${this.getProviderName()} API`);
       }
    }
 
@@ -532,7 +554,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
          try {
             // Try to call the API - this might return a streaming iterator for testing
             const config = self.createResponseConfig(systemPrompt, messages, verbosity, functions, false, false);
-            const response = await retryWithExponentialBackoff(() => self.openai.responses.create(config));
+            const response = await retryWithExponentialBackoff(() => self.openai.responses.create(config), MAX_RETRIES, self.getProviderName());
 
             // Check if the response has an async iterator (for testing)
             if (response && typeof (response as any)[Symbol.asyncIterator] === 'function') {
@@ -558,7 +580,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                messages,
                verbosity,
                functions,
-               (config) => retryWithExponentialBackoff(() => self.openai.responses.create(config))
+               (config) => retryWithExponentialBackoff(() => self.openai.responses.create(config), MAX_RETRIES, self.getProviderName())
             );
 
             // Simulate streaming by yielding the result in chunks
@@ -605,7 +627,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                messages,
                verbosity,
                functions,
-               (config) => retryWithExponentialBackoff(() => self.openai.responses.create(config))
+               (config) => retryWithExponentialBackoff(() => self.openai.responses.create(config), MAX_RETRIES, self.getProviderName())
             );
 
             // Simulate streaming by yielding the result in chunks (1 word at a time for better granularity)
@@ -656,7 +678,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
 
       try {
          const response = await retryWithExponentialBackoff(() =>
-            this.openai.responses.create(config)
+            this.openai.responses.create(config), MAX_RETRIES, this.getProviderName()
          );
 
          const content = this.extractTextFromOutput(response.output || []);
@@ -710,7 +732,7 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       verbosity: EVerbosity,
       functions?: IFunction[],
       forceToolUse?: boolean,
-      createResponse: (config: any) => Promise<any> = (config) => this.openai.responses.create(config)
+      createResponse: (config: any) => Promise<any> = (config) => retryWithExponentialBackoff(() => this.openai.responses.create(config), MAX_RETRIES, this.getProviderName())
    ): Promise<string> {
       // Step 1: Build initial input_list from message history (following official example)
       let inputList = this.convertMessagesToInputList(messages);

@@ -8,7 +8,7 @@
 
 import OpenAI, { AzureOpenAI } from 'openai';
 import { EModel, EModelProvider, IEmbeddingModelDriver, InvalidParameterError, InvalidOperationError, ConnectionError } from './entry';
-import { retryWithExponentialBackoff } from './DriverHelpers';
+import { retryWithExponentialBackoff, MAX_RETRIES } from './DriverHelpers';
 
 /**
  * Calculates the cosine similarity between two embedding vectors.
@@ -72,6 +72,13 @@ export abstract class OpenAIModelEmbeddingDriver implements IEmbeddingModelDrive
    protected abstract getModelName(): string;
 
    /**
+    * Returns the provider name for error messages
+    */
+   protected getProviderName(): string {
+      return this.drivenModelProvider === EModelProvider.kAzureOpenAI ? "Azure OpenAI" : "OpenAI";
+   }
+
+   /**
     * Converts text into a vector embedding representation.
     * 
     * @param {string} text - The input text to be embedded
@@ -84,19 +91,26 @@ export abstract class OpenAIModelEmbeddingDriver implements IEmbeddingModelDrive
             this.openai.embeddings.create({
                input: text,
                model: this.getModelName()
-            })
+            }),
+            MAX_RETRIES,
+            this.getProviderName()
          );
 
          if (!response.data || response.data.length === 0) {
-            throw new InvalidOperationError('No embedding data received from OpenAI');
+            throw new InvalidOperationError(`${this.getProviderName()} embedding API error: No embedding data received from ${this.getProviderName()}`);
          }
 
          return response.data[0].embedding;
       } catch (error) {
-         if (error instanceof Error) {
-            throw new ConnectionError(`OpenAI embedding API error: ${error.message}`);
+         // If error is already a ConnectionError or InvalidOperationError from retryWithExponentialBackoff, just rethrow it
+         if (error instanceof ConnectionError || error instanceof InvalidOperationError) {
+            throw error;
          }
-         throw new ConnectionError('Unknown error occurred while calling OpenAI embedding API');
+         // Otherwise, wrap it with provider-specific message
+         if (error instanceof Error) {
+            throw new ConnectionError(`${this.getProviderName()} embedding API error: ${error.message}`);
+         }
+         throw new ConnectionError(`Unknown error occurred while calling ${this.getProviderName()} embedding API`);
       }
    }
 }

@@ -7,7 +7,7 @@
  */
 // Copyright (c) 2025 Jon Verrier
 
-import { InvalidOperationError } from '@jonverrier/assistant-common';
+import { InvalidOperationError, ConnectionError } from '@jonverrier/assistant-common';
 
 export const MAX_RETRIES = 5;
 export const INITIAL_RETRY_DELAY = 1000; // 1 second
@@ -100,17 +100,19 @@ function parseRetryAfter(error: any): number | null {
 
 /**
  * Executes an operation with exponential backoff retry logic
- * Handles rate limiting and other retryable errors from OpenAI API
+ * Handles rate limiting and other retryable errors from LLM APIs
  * Automatically detects rate limit errors and respects Retry-After headers
  * 
  * @param operation The async operation to execute
  * @param maxRetries Maximum number of retry attempts (default: MAX_RETRIES)
+ * @param providerName Optional provider name for error messages (default: "API")
  * @returns Promise resolving to the operation result
  * @throws Error for non-retryable errors or after max retries exceeded
  */
 export async function retryWithExponentialBackoff<T>(
    operation: () => Promise<T>,
-   maxRetries: number = MAX_RETRIES
+   maxRetries: number = MAX_RETRIES,
+   providerName: string = "API"
 ): Promise<T> {
    let retryCount = 0;
    
@@ -149,26 +151,26 @@ export async function retryWithExponentialBackoff<T>(
             continue;
          }
          
-         // Handle OpenAI refusal errors - these should not be retried
+         // Handle provider refusal errors - these should not be retried
          if (status === 400) {
             // Check for specific refusal error types
             if (error?.error?.type === 'content_filter' || 
                 error?.error?.code === 'content_filter' ||
                 error?.message?.toLowerCase().includes('content filter')) {
-               throw new InvalidOperationError(`OpenAI content filter triggered: ${error?.error?.message || error?.message || 'Content violates OpenAI safety policies'}`);
+               throw new InvalidOperationError(`${providerName} content filter triggered: ${error?.error?.message || error?.message || `Content violates ${providerName} safety policies`}`);
             }
             
             if (error?.error?.type === 'safety' || 
                 error?.error?.code === 'safety' ||
                 error?.message?.toLowerCase().includes('safety')) {
-               throw new InvalidOperationError(`OpenAI safety system triggered: ${error?.error?.message || error?.message || 'Content violates OpenAI safety guidelines'}`);
+               throw new InvalidOperationError(`${providerName} safety system triggered: ${error?.error?.message || error?.message || `Content violates ${providerName} safety guidelines`}`);
             }
             
             if (error?.error?.type === 'invalid_request' && 
                 (error?.error?.message?.toLowerCase().includes('refuse') ||
                  error?.error?.message?.toLowerCase().includes('cannot') ||
                  error?.error?.message?.toLowerCase().includes('unable'))) {
-               throw new InvalidOperationError(`OpenAI refused request: ${error?.error?.message || error?.message || 'Request was refused by OpenAI'}`);
+               throw new InvalidOperationError(`${providerName} refused request: ${error?.error?.message || error?.message || `Request was refused by ${providerName}`}`);
             }
          }
          
@@ -178,11 +180,15 @@ export async function retryWithExponentialBackoff<T>(
                 error?.message?.toLowerCase().includes('cannot') ||
                 error?.message?.toLowerCase().includes('unable') ||
                 error?.message?.toLowerCase().includes('forbidden')) {
-               throw new InvalidOperationError(`OpenAI refused request (${status}): ${error?.message || 'Request was refused'}`);
+               throw new InvalidOperationError(`${providerName} refused request (${status}): ${error?.message || 'Request was refused'}`);
             }
          }
          
-         throw error;
+         // Wrap remaining errors with provider name for consistent error messages
+         if (error instanceof Error) {
+            throw new ConnectionError(`${providerName} API error: ${error.message}`);
+         }
+         throw new ConnectionError(`${providerName} API error: Unknown error occurred`);
       }
    }
 } 

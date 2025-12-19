@@ -8,56 +8,62 @@
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
 import { ChatWithAttachmentDriverFactory, EModelProvider, EModel, IChatWithAttachmentDriver } from '../src/entry';
+import { CHAT_WITH_ATTACHMENT_TEST_PROVIDERS, createChatWithAttachmentDrivers } from './ChatWithAttachmentTestConfig';
 
-describe('ChatWithAttachmentDriverFactory', () => {
-   const factory = new ChatWithAttachmentDriverFactory();
+// Create factory for tests that need to create drivers directly
+const factory = new ChatWithAttachmentDriverFactory();
 
-   it('creates OpenAI driver for kOpenAI provider', () => {
-      const driver = factory.create(EModel.kLarge, EModelProvider.kOpenAI);
-      expect(driver).toBeDefined();
-      expect(driver).toBeInstanceOf(Object);
-      expect(driver.getModelResponse).toBeDefined();
-      expect(driver.uploadAttachment).toBeDefined();
-      expect(driver.deleteAttachment).toBeDefined();
+// Enumerate all providers to test
+const providers = CHAT_WITH_ATTACHMENT_TEST_PROVIDERS;
+
+// Create drivers for all providers
+const drivers = createChatWithAttachmentDrivers(EModel.kLarge);
+
+// Run tests for each provider
+providers.forEach((provider, index) => {
+   const driver = drivers[index];
+
+   // Skip tests if driver failed to initialize (e.g., missing API key)
+   if (!driver) {
+      console.warn(`Skipping tests for ${provider} - driver initialization failed (likely missing API key)`);
+      return;
+   }
+
+   describe(`ChatWithAttachmentDriverFactory (${provider})`, () => {
+      it('creates driver with required methods', () => {
+         expect(driver).toBeDefined();
+         expect(driver).toBeInstanceOf(Object);
+         expect(driver.getModelResponse).toBeDefined();
+         expect(driver.uploadAttachment).toBeDefined();
+         expect(driver.deleteAttachment).toBeDefined();
+      });
+
+      it('creates driver for kMini model', () => {
+         const miniDriver = factory.create(EModel.kMini, provider);
+         expect(miniDriver).toBeDefined();
+         expect(miniDriver.getModelResponse).toBeDefined();
+      });
+
+      it('creates driver for kLarge model', () => {
+         const largeDriver = factory.create(EModel.kLarge, provider);
+         expect(largeDriver).toBeDefined();
+         expect(largeDriver.getModelResponse).toBeDefined();
+      });
+
+      it('implements IChatWithAttachmentDriverFactory interface', () => {
+         // Type check: driver should be assignable to IChatWithAttachmentDriver
+         const typedDriver: IChatWithAttachmentDriver = driver;
+         expect(typedDriver).toBeDefined();
+      });
    });
+});
 
-   it('creates Azure OpenAI driver for kAzureOpenAI provider', () => {
-      const driver = factory.create(EModel.kLarge, EModelProvider.kAzureOpenAI);
-      expect(driver).toBeDefined();
-      expect(driver).toBeInstanceOf(Object);
-      expect(driver.getModelResponse).toBeDefined();
-      expect(driver.uploadAttachment).toBeDefined();
-      expect(driver.deleteAttachment).toBeDefined();
-   });
-
+describe('ChatWithAttachmentDriverFactory - Cross-provider tests', () => {
    it('creates different driver instances for different providers', () => {
       const openAIDriver = factory.create(EModel.kLarge, EModelProvider.kOpenAI);
       const azureDriver = factory.create(EModel.kLarge, EModelProvider.kAzureOpenAI);
       
       expect(openAIDriver).not.toBe(azureDriver);
-   });
-
-   it('creates drivers for kMini model', () => {
-      const openAIDriver = factory.create(EModel.kMini, EModelProvider.kOpenAI);
-      const azureDriver = factory.create(EModel.kMini, EModelProvider.kAzureOpenAI);
-      
-      expect(openAIDriver).toBeDefined();
-      expect(azureDriver).toBeDefined();
-   });
-
-   it('creates drivers for kLarge model', () => {
-      const openAIDriver = factory.create(EModel.kLarge, EModelProvider.kOpenAI);
-      const azureDriver = factory.create(EModel.kLarge, EModelProvider.kAzureOpenAI);
-      
-      expect(openAIDriver).toBeDefined();
-      expect(azureDriver).toBeDefined();
-   });
-
-   it('implements IChatWithAttachmentDriverFactory interface', () => {
-      const driver = factory.create(EModel.kLarge, EModelProvider.kOpenAI);
-      // Type check: driver should be assignable to IChatWithAttachmentDriver
-      const typedDriver: IChatWithAttachmentDriver = driver;
-      expect(typedDriver).toBeDefined();
    });
 });
 

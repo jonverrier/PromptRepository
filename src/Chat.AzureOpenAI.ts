@@ -55,4 +55,8 @@ export class AzureOpenAIChatDriver extends GenericOpenAIChatDriver {
    protected shouldUseToolMessages(): boolean {
       return true; // Azure OpenAI supports tool messages
    }
+
+   protected getProviderName(): string {
+      return "Azure OpenAI";
+   }
 } 

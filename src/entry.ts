@@ -22,7 +22,9 @@ export enum EModel {
  */
 export enum EModelProvider {
    kOpenAI = "kOpenAI",
-   kAzureOpenAI = "kAzureOpenAI"
+   kAzureOpenAI = "kAzureOpenAI",
+   kGoogleGemini = "kGoogleGemini",
+   kDefault = "kDefault"
 }
 
 /**
@@ -46,6 +48,7 @@ export enum EVerbosity {
 
 export { PromptFileRepository, PromptInMemoryRepository } from "./PromptRepository";
 export { ChatDriverFactory } from "./ChatFactory";
+export { GoogleGeminiChatDriver } from "./Chat.GoogleGemini";
 export { EmbeddingDriverFactory } from "./EmbedFactory";
 export { cosineSimilarity as CosineSimilarity } from "./Embed";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError, ConnectionError, InvalidStateError, sanitizeInputString, sanitizeOutputString } from "@jonverrier/assistant-common";
@@ -54,6 +57,7 @@ export { IFunction, IFunctionArgs, EDataType, ILLMFunctionCall, IFunctionCallOut
 export { IChatWithAttachmentDriver, IChatAttachmentContent, IChatAttachmentReference, ChatAttachmentInput, IChatTableJson } from "./ChatWithAttachment";
 export { OpenAIChatWithAttachment } from "./ChatWithAttachment.OpenAI";
 export { AzureOpenAIChatWithAttachment } from "./ChatWithAttachment.AzureOpenAI";
+export { GoogleGeminiChatWithAttachment } from "./ChatWithAttachment.GoogleGemini";
 export { ChatWithAttachmentDriverFactory } from "./ChatWithAttachmentFactory";
 
 /**

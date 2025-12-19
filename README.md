@@ -413,7 +413,26 @@ await driver.deleteAttachment(reference.id);
 - **Table JSON Format**: Any valid JSON structure is supported (arrays, objects, nested structures)
 - **Provider Support**: Both OpenAI and Azure OpenAI implementations support attachments and table JSON
 
-## Usage - Prompt Respository
+## Installation
+
+### Prerequisites
+
+Before installing, ensure you have the required dependencies:
+
+- **For OpenAI/Azure OpenAI**: The `openai` package (peer dependency)
+- **For Google Gemini**: The `@google/generative-ai` package (peer dependency)
+
+Install peer dependencies as needed:
+
+```bash
+# For OpenAI/Azure OpenAI support
+npm install openai
+
+# For Google Gemini support
+npm install @google/generative-ai
+```
+
+### Package Installation
 
 1. Install the package from GitHub Packages:
 
@@ -440,7 +459,12 @@ Or add it to your `.npmrc` file:
 //npm.pkg.github.com/:_authToken=your_github_token_here
 ```
 
-Ensure you have set your OpenAI API key as an environment variable: OPENAI_API_KEY
+Ensure you have set your API keys as environment variables:
+- `OPENAI_API_KEY` - Required for OpenAI provider
+- `AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT` - Required for Azure OpenAI provider
+- `GOOGLE_GEMINI_API_KEY` - Required for Google Gemini provider
+
+**Note**: You only need to set the API keys for the providers you plan to use. The package will work with any combination of providers.
 
 
 2. Create a JSON file containing your prompts

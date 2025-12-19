@@ -25,6 +25,18 @@ export abstract class ChatDriver implements IChatDriver {
    constructor(protected modelType: EModel) {}
 
    /**
+    * Returns the provider name for error messages
+    * Subclasses must override to return their specific provider name
+    */
+   protected abstract getProviderName(): string;
+
+   /**
+    * Returns the model name/identifier used by this driver
+    * Subclasses must override to return their specific model name
+    */
+   protected abstract getModelName(): string;
+
+   /**
     * Creates a user message with the given prompt
     */
    protected createUserMessage(userPrompt: string): IChatMessage {

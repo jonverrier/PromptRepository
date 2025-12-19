@@ -232,7 +232,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       const startTime = Date.now();
       await expect(
          mockDriver.embed('test text')
-      ).rejects.toThrow('OpenAI embedding API error: Rate limit exceeded');
+      ).rejects.toThrow(/API error.*Rate limit exceeded|Rate limit exceeded.*API error/i);
       const endTime = Date.now();
 
       expect(mockDriver.getFailCount()).toBe(6); // Should have tried 6 times (1 initial + 5 retries)
@@ -253,7 +253,7 @@ describe('Embedding Exponential Backoff Tests', () => {
 
       await expect(
          mockDriver.embed('test text')
-      ).rejects.toThrow('OpenAI embedding API error: Authentication failed');
+      ).rejects.toThrow(/API error.*Authentication failed|Authentication failed.*API error/i);
    }).timeout(5000);
 
    it('should handle content filter errors without retrying', async () => {
@@ -270,7 +270,7 @@ describe('Embedding Exponential Backoff Tests', () => {
 
       await expect(
          mockDriver.embed('test text')
-      ).rejects.toThrow('OpenAI content filter triggered: Content violates OpenAI safety policies');
+      ).rejects.toThrow(/content filter.*triggered.*safety policies|safety policies.*content filter.*triggered/i);
    }).timeout(5000);
 
    it('should handle safety system errors without retrying', async () => {
@@ -287,7 +287,7 @@ describe('Embedding Exponential Backoff Tests', () => {
 
       await expect(
          mockDriver.embed('test text')
-      ).rejects.toThrow('OpenAI safety system triggered: Content violates OpenAI safety guidelines');
+      ).rejects.toThrow(/safety system.*triggered.*safety guidelines|safety guidelines.*safety system.*triggered/i);
    }).timeout(5000);
 
    it('should handle general refusal errors without retrying', async () => {
@@ -304,7 +304,7 @@ describe('Embedding Exponential Backoff Tests', () => {
 
       await expect(
          mockDriver.embed('test text')
-      ).rejects.toThrow('OpenAI refused request: I cannot process this request');
+      ).rejects.toThrow(/refused request.*cannot process|cannot process.*refused request/i);
    }).timeout(5000);
 
    it('should handle 403 forbidden errors as refusals', async () => {
@@ -318,7 +318,7 @@ describe('Embedding Exponential Backoff Tests', () => {
 
       await expect(
          mockDriver.embed('test text')
-      ).rejects.toThrow('OpenAI refused request (403): Access forbidden');
+      ).rejects.toThrow(/refused request.*403.*Access forbidden|Access forbidden.*refused request.*403/i);
    }).timeout(5000);
 
    it('should handle empty embedding response', async () => {
@@ -331,7 +331,7 @@ describe('Embedding Exponential Backoff Tests', () => {
 
       await expect(
          mockDriver.embed('test text')
-      ).rejects.toThrow('OpenAI embedding API error: No embedding data received from OpenAI');
+      ).rejects.toThrow(/embedding.*API error.*No embedding data|No embedding data.*embedding.*API error/i);
    }).timeout(5000);
 
    it('should handle malformed embedding response', async () => {
@@ -344,7 +344,7 @@ describe('Embedding Exponential Backoff Tests', () => {
 
       await expect(
          mockDriver.embed('test text')
-      ).rejects.toThrow('OpenAI embedding API error: No embedding data received from OpenAI');
+      ).rejects.toThrow(/embedding.*API error.*No embedding data|No embedding data.*embedding.*API error/i);
    }).timeout(5000);
 
    it('should retry exactly once on 429 error', async () => {
