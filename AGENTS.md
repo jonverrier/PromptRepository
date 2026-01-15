@@ -1,10 +1,10 @@
 # PromptRepository Cursor Rules
 
-> **Policy inheritance:** Follow `../.cursorrules` for language, naming, testing, and security conventions. This document narrows the focus to the prompt/driver library.
+> **Policy inheritance:** Follow `../AGENTS.md` for language, naming, testing, and security conventions. This document narrows the focus to the prompt/driver library.
 
 ## Library Charter
 - Provide reusable prompt templates, driver factories, and embedding utilities for both Node.js and browser runtimes.
-- Keep the public API stable—`src/entry.ts` exports the full surface; any new module must be re-exported there.
+- Keep the public API stable - `src/entry.ts` exports the full surface; any new module must be re-exported there.
 - Ensure implementations remain environment-agnostic by guarding Node-only modules (`fs`, `path`) with dynamic imports or adapters.
 
 ## Prompts & Drivers
