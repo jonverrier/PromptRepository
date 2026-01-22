@@ -282,7 +282,8 @@ const testMultipleToolCalling = async (
    functions: IFunction[],
    expectedMinExecutions: number,
    expectedFunctionNames: string[],
-   contentValidation: (result: string) => boolean
+   contentValidation: (result: string) => boolean,
+   provider: EModelProvider
 ) => {
    // Test non-streaming response
    it(`${testName} (getModelResponseWithForcedTools)`, async () => {
@@ -382,7 +383,8 @@ providers.forEach((provider, index) => {
             return lowerResult.includes('readme.md') && lowerResult.includes('aquarius') &&
                    (lowerResult.includes('file') || lowerResult.includes('read') || lowerResult.includes('contents')) &&
                    (lowerResult.includes('horoscope') || lowerResult.includes('otter'));
-         }
+         },
+         provider
       );
 
       // Test 2: All three functions in one complex request
@@ -400,7 +402,8 @@ providers.forEach((provider, index) => {
                    (lowerResult.includes('file') || lowerResult.includes('read') || lowerResult.includes('contents')) &&
                    (lowerResult.includes('horoscope') || lowerResult.includes('otter')) &&
                    (lowerResult.includes('timezone') || lowerResult.includes('australia'));
-         }
+         },
+         provider
       );
 
       // Test 3: Official OpenAI example recreation
@@ -424,7 +427,8 @@ providers.forEach((provider, index) => {
             
             // Must have the sign AND at least one horoscope-related keyword
             return hasSign && (hasHoroscopeKeyword || hasOtter || hasTuesday);
-         }
+         },
+         provider
       );
    });
 });
