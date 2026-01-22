@@ -17,6 +17,14 @@ import { CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS } from './ChatT
 const providers = CHAT_TEST_PROVIDERS;
 const chatDrivers = createChatDrivers(EModel.kLarge);
 
+/**
+ * Returns the appropriate timeout for a test based on the provider.
+ * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
+ */
+const getTestTimeout = (provider: EModelProvider): number => {
+   return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
+};
+
 // Mock data for different race series
 const mockRaceData: { [key: string]: { driver: string; points: number } } = {
    'Formula 1': { driver: 'Max Verstappen', points: 575 },
@@ -121,7 +129,8 @@ const testFunctionIntegration = async (
    systemPrompt: string,
    userPrompt: string,
    functions: IFunction[],
-   expectedValidation: (result: string) => boolean
+   expectedValidation: (result: string) => boolean,
+   provider: EModelProvider
 ) => {
    // Test non-streaming response
    it(`${testName} (getModelResponse)`, async () => {
@@ -134,7 +143,7 @@ const testFunctionIntegration = async (
       );
       
       expect(expectedValidation(result)).toBe(true);
-   }).timeout(TEST_TIMEOUT_MS);
+   }).timeout(getTestTimeout(provider));
 
    // Test streaming response
    it(`${testName} (getStreamedModelResponse)`, async () => {
@@ -157,7 +166,7 @@ const testFunctionIntegration = async (
       
       const fullText = chunks.join('');
       expect(expectedValidation(fullText)).toBe(true);
-   }).timeout(TEST_TIMEOUT_MS);
+   }).timeout(getTestTimeout(provider));
 
    
 };
@@ -182,7 +191,8 @@ providers.forEach((provider, index) => {
       (result: string) => {
          // The model should respond acknowledging the function call capability
          return result.match(/driver|formula|racing|function|call/i) !== null && result.length > 10;
-      }
+      },
+      provider
     );
 
     testFunctionIntegration(
@@ -216,7 +226,8 @@ providers.forEach((provider, index) => {
                 lowerResult.includes('f35') || // F35 is not a valid race series
                 lowerResult.includes('invalid') ||
                 lowerResult.includes('incorrect');
-      }
+      },
+      provider
     );
   });
 });
@@ -289,7 +300,8 @@ describe('Function Call Counting and Content Verification Tests', () => {
       userPrompt: string,
       functions: IFunction[],
       expectedCallCount: number,
-      expectedFacts: string[]
+      expectedFacts: string[],
+      provider: EModelProvider
    ) => {
       // Test non-streaming response
       it(`${testName} (getModelResponse)`, async () => {
@@ -323,7 +335,7 @@ describe('Function Call Counting and Content Verification Tests', () => {
          
          // Additional verification: check that response is substantial
          expect(result.length).toBeGreaterThan(50);
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
 
       // Test streaming response
       it(`${testName} (getStreamedModelResponse)`, async () => {
@@ -370,7 +382,7 @@ describe('Function Call Counting and Content Verification Tests', () => {
          
          // Additional verification: check that response is substantial
          expect(fullText.length).toBeGreaterThan(50);
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
    };
 
    // Run function call counting tests for each provider
@@ -391,7 +403,8 @@ describe('Function Call Counting and Content Verification Tests', () => {
             'Who is the leading driver in Formula 1?',
             [createMotorsportFunction('basic')],
             1, // Expected call count
-            ['max verstappen', '575'] // Expected facts from function
+            ['max verstappen', '575'], // Expected facts from function
+            provider
          );
 
          testFunctionCallCounting(
@@ -401,7 +414,8 @@ describe('Function Call Counting and Content Verification Tests', () => {
             'Who is leading the NASCAR championship?',
             [createMotorsportFunction('basic')],
             1, // Expected call count
-            ['kyle larson', '4040'] // Expected facts from function
+            ['kyle larson', '4040'], // Expected facts from function
+            provider
          );
 
          testFunctionCallCounting(
@@ -411,7 +425,8 @@ describe('Function Call Counting and Content Verification Tests', () => {
             'Tell me about the IndyCar leader',
             [createMotorsportFunction('basic')],
             1, // Expected call count
-            ['alex palou', '656'] // Expected facts from function
+            ['alex palou', '656'], // Expected facts from function
+            provider
          );
 
          // Test non-motorsport queries (should NOT call functions)
@@ -433,7 +448,7 @@ describe('Function Call Counting and Content Verification Tests', () => {
             
             // Verify response is reasonable for weather query
             expect(result.length).toBeGreaterThan(10);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('should handle multiple questions without calling function for non-motorsport queries (getStreamedModelResponse)', async () => {
             const initialCallCount = getCallCount();
@@ -463,7 +478,7 @@ describe('Function Call Counting and Content Verification Tests', () => {
             // Verify response is reasonable for weather query
             const fullText = chunks.join('');
             expect(fullText.length).toBeGreaterThan(10);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
       });
    });
 });
@@ -610,7 +625,8 @@ describe('Multi-Step Function Calling Tests', () => {
       userPrompt: string,
       functions: IFunction[],
       expectedMinCallCount: number,
-      expectedContent: string[]
+      expectedContent: string[],
+      provider: EModelProvider
    ) => {
       // Test non-streaming response with forced tools
       it(`${testName} (getModelResponseWithForcedTools)`, async () => {
@@ -656,7 +672,7 @@ describe('Multi-Step Function Calling Tests', () => {
          
          // Verify response is substantial (not just a function result)
          expect(result.length).toBeGreaterThan(100);
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
 
       // Test streaming response with forced tools
       it(`${testName} (getStreamedModelResponseWithForcedTools)`, async () => {
@@ -716,7 +732,7 @@ describe('Multi-Step Function Calling Tests', () => {
          
          // Verify response is substantial
          expect(fullText.length).toBeGreaterThan(100);
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
    };
 
    // Run multi-step tests for each provider
@@ -737,7 +753,8 @@ describe('Multi-Step Function Calling Tests', () => {
             'I am 50 years old and want to improve my snatch technique in weightlifting.',
             [createListMemoriesFunction(), createSaveMemoryFunction()],
             2, // Expected minimum call count (listMemories + saveMemory)
-            ['50', 'snatch'] // Expected content in response
+            ['50', 'snatch'], // Expected content in response
+            provider
          );
 
          testMultiStepFunctionCalling(
@@ -747,7 +764,8 @@ describe('Multi-Step Function Calling Tests', () => {
             'My name is John Smith, I live in Seattle, and I work as a software engineer at Microsoft.',
             [createListMemoriesFunction(), createSaveMemoryFunction()],
             2, // Expected minimum call count (listMemories + at least one saveMemory call)
-            ['john', 'seattle', 'software', 'microsoft'] // Expected content in response
+            ['john', 'seattle', 'software', 'microsoft'], // Expected content in response
+            provider
          );
       });
    });

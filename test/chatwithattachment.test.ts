@@ -23,6 +23,14 @@ import { CHAT_WITH_ATTACHMENT_TEST_PROVIDERS, createChatWithAttachmentDrivers, T
 const providers = CHAT_WITH_ATTACHMENT_TEST_PROVIDERS;
 const drivers = createChatWithAttachmentDrivers(EModel.kLarge);
 
+/**
+ * Returns the appropriate timeout for a test based on the provider.
+ * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
+ */
+const getTestTimeout = (provider: EModelProvider): number => {
+   return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
+};
+
 // Known test file names for cleanup
 const testFileNames: string[] = [];
 
@@ -73,14 +81,14 @@ providers.forEach((provider, index) => {
          expect(result).toBeDefined();
          expect(typeof result).toBe('string');
          expect(result.length).toBeGreaterThan(0);
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
 
       it('should return text response with system prompt', async () => {
          const result = await driver.getModelResponse('You are helpful', 'Say hello', EVerbosity.kMedium);
          expect(result).toBeDefined();
          expect(typeof result).toBe('string');
          expect(result.length).toBeGreaterThan(0);
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
 
       it('should handle table JSON without attachment', async () => {
          const tableJson: IChatTableJson = {
@@ -101,7 +109,7 @@ providers.forEach((provider, index) => {
 
          expect(result).toBeDefined();
          expect(typeof result).toBe('string');
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
    });
 });
 

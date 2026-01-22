@@ -21,6 +21,14 @@ import * as os from 'os';
 import { ChatDriverFactory, EModelProvider, EModel, EVerbosity, ChatWithAttachmentDriverFactory, IChatTableJson } from '../src/entry';
 import { CHAT_WITH_ATTACHMENT_TEST_PROVIDERS, createChatWithAttachmentDrivers, TEST_TIMEOUT_MS } from './ChatWithAttachmentTestConfig';
 
+/**
+ * Returns the appropriate timeout for a test based on the provider.
+ * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
+ */
+const getTestTimeout = (provider: EModelProvider): number => {
+   return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
+};
+
 // Create drivers for all test providers
 const factory = new ChatDriverFactory();
 const providers = CHAT_WITH_ATTACHMENT_TEST_PROVIDERS;
@@ -191,7 +199,7 @@ describe('File Content Injection Integration Tests', () => {
 
             expect(result.toLowerCase()).toMatch(/motor/);
             expect(result.toLowerCase()).toMatch(/racing/);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('understands gardening file content and does not mention motor racing', async () => {
             const filePath = createTestFile('gardening-integration-test.txt', 'This file is about gardening.');
@@ -208,7 +216,7 @@ describe('File Content Injection Integration Tests', () => {
 
             expect(result.toLowerCase()).toMatch(/garden/);
             expect(result.toLowerCase()).not.toMatch(/motor.*racing|racing.*motor/);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
       });
 
       describe(`${providerName} - Markdown File Content Injection Tests (10 pages, ~20KB)`, () => {
@@ -232,7 +240,7 @@ describe('File Content Injection Integration Tests', () => {
             expect(result).toBeDefined();
             expect(typeof result).toBe('string');
             expect(result.length).toBeGreaterThan(0);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('injects markdown file content from string format', async () => {
             const userPrompt = 'What is the main topic of this document? Answer in one sentence. <file></file>';
@@ -247,7 +255,7 @@ describe('File Content Injection Integration Tests', () => {
             expect(result).toBeDefined();
             expect(typeof result).toBe('string');
             expect(result.length).toBeGreaterThan(0);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('injects markdown file content and processes large files', async () => {
             const userPrompt = 'Summarize the first page of this document in one sentence. <file></file>';
@@ -262,7 +270,7 @@ describe('File Content Injection Integration Tests', () => {
             expect(result).toBeDefined();
             expect(typeof result).toBe('string');
             expect(result.length).toBeGreaterThan(0);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('injects markdown file content with different prompts', async () => {
             const userPrompt = 'What type of document is this? Answer in one word. <file></file>';
@@ -277,7 +285,7 @@ describe('File Content Injection Integration Tests', () => {
             expect(result).toBeDefined();
             expect(typeof result).toBe('string');
             expect(result.length).toBeGreaterThan(0);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('verifies markdown file size is approximately 20KB', () => {
             const sizeBytes = Buffer.from(markdownContent, 'utf8').length;
@@ -392,7 +400,7 @@ describe('File Content Injection Integration Tests', () => {
             expect(typeof result).toBe('string');
             // Should mention the revenue amount (1250000 or 1.25M or similar)
             expect(result).toMatch(/1250000|1[.,]25\s*[Mm]|1250/);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('processes table JSON and calculates totals', async () => {
             const tableJson = generateFinancialTableJson();
@@ -410,7 +418,7 @@ describe('File Content Injection Integration Tests', () => {
             // Total expenses: 450000 + 200000 + 150000 + 450000 = 1250000
             // Accept formats: 1250000, 1,250,000, 1.25M, 1,25M, 1250k, etc.
             expect(result.replace(/,/g, '')).toMatch(/1250000|1[.,]25\s*[Mm]|1250/);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('processes table JSON and identifies highest value', async () => {
             const tableJson = generateSimpleTableJson();
@@ -427,7 +435,7 @@ describe('File Content Injection Integration Tests', () => {
             expect(typeof result).toBe('string');
             // Widget C has the highest stock (200)
             expect(result.toLowerCase()).toMatch(/p003|widget\s*c/);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('processes table JSON without description', async () => {
             const tableJson: IChatTableJson = {
@@ -445,7 +453,7 @@ describe('File Content Injection Integration Tests', () => {
 
             expect(result).toBeDefined();
             expect(result).toMatch(/72/);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('processes complex nested table JSON structure', async () => {
             const tableJson: IChatTableJson = {
@@ -488,7 +496,7 @@ describe('File Content Injection Integration Tests', () => {
             // Total: 500000 + 300000 + 400000 + 350000 = 1550000
             // Accept formats: 1550000, 1,550,000, 1.55M, 1,55M, 1550k, etc.
             expect(result.replace(/,/g, '')).toMatch(/1550000|1[.,]55\s*[Mm]|1550/);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('processes table JSON with array of simple objects', async () => {
             const tableJson: IChatTableJson = {
@@ -510,7 +518,7 @@ describe('File Content Injection Integration Tests', () => {
 
             expect(result).toBeDefined();
             expect(result).toMatch(/2/);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
 
          it('handles empty table JSON gracefully', async () => {
             const tableJson: IChatTableJson = {
@@ -529,7 +537,7 @@ describe('File Content Injection Integration Tests', () => {
             expect(result).toBeDefined();
             expect(typeof result).toBe('string');
             expect(result.length).toBeGreaterThan(0);
-         }).timeout(TEST_TIMEOUT_MS);
+         }).timeout(getTestTimeout(provider));
       });
    });
 });

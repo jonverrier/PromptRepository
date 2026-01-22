@@ -21,6 +21,14 @@ const TEST_TIMEOUT_MS = 90000; // 90 second timeout for complex multi-tool scena
 const providers = CHAT_TEST_PROVIDERS;
 const chatDrivers = createChatDrivers(EModel.kLarge);
 
+/**
+ * Returns the appropriate timeout for a test based on the provider.
+ * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
+ */
+const getTestTimeout = (provider: EModelProvider): number => {
+   return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
+};
+
 // Global execution tracking for testing
 let functionExecutions: Array<{functionName: string, args: any, result: any, timestamp: Date}> = [];
 
@@ -307,7 +315,7 @@ const testMultipleToolCalling = async (
       
       // Verify response is substantial
       expect(result.length).toBeGreaterThan(50);
-   }).timeout(TEST_TIMEOUT_MS);
+   }).timeout(getTestTimeout(provider));
 
    // Test streaming response
    it(`${testName} (getStreamedModelResponseWithForcedTools)`, async () => {
@@ -351,7 +359,7 @@ const testMultipleToolCalling = async (
       
       // Verify response is substantial
       expect(fullText.length).toBeGreaterThan(50);
-   }).timeout(TEST_TIMEOUT_MS);
+   }).timeout(getTestTimeout(provider));
 };
 
 // Run tests for each provider

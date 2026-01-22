@@ -12,7 +12,7 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { IPrompt, IPromptRepository, EModel, EVerbosity, TEST_TARGET_SUPPORTS_VERBOSITY } from '../src/entry';
+import { IPrompt, IPromptRepository, EModel, EVerbosity, TEST_TARGET_SUPPORTS_VERBOSITY, EModelProvider } from '../src/entry';
 import { PromptInMemoryRepository } from '../src/PromptRepository';
 import { CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS } from './ChatTestConfig';
 import prompts from './template-prompt.json';
@@ -22,6 +22,14 @@ const typedPrompts = prompts as IPrompt[];
 // Create chat drivers for all providers outside describe blocks
 const providers = CHAT_TEST_PROVIDERS;
 const chatDrivers = createChatDrivers(EModel.kLarge);
+
+/**
+ * Returns the appropriate timeout for a test based on the provider.
+ * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
+ */
+const getTestTimeout = (provider: EModelProvider): number => {
+   return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
+};
 
 // Run tests for each provider
 providers.forEach((provider, index) => {
@@ -51,7 +59,7 @@ providers.forEach((provider, index) => {
          expect(response.toLowerCase()).toMatch(/welcome|greetings/);
          expect(response.split('Monaco').length).toBe(2); // Only one occurrence
          
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
 
       it('should generate same welcome pattern for Monaco Monaco', async () => {
          const prompt = promptRepo.getPrompt('template-prompt-002');
@@ -67,7 +75,7 @@ providers.forEach((provider, index) => {
          expect(response.toLowerCase()).toMatch(/welcome|greetings/);
          expect(response.split('Monaco').length).toBe(2); // Only one occurrence
          
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
 
       it('should generate same welcome pattern for Monaco Grand Prix', async () => {
          const prompt = promptRepo.getPrompt('template-prompt-002');
@@ -83,7 +91,7 @@ providers.forEach((provider, index) => {
          expect(response.toLowerCase()).toMatch(/welcome|greetings/);
          expect(response.split('Grand Prix').length).toBe(2); // Only one occurrence
          
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
 
       it('should generate different welcome message for Silverstone', async () => {
          const prompt = promptRepo.getPrompt('template-prompt-002');
@@ -102,6 +110,6 @@ providers.forEach((provider, index) => {
          expect(response).not.toContain('Monaco');
          expect(response).not.toContain('Monte Carlo');
 
-      }).timeout(TEST_TIMEOUT_MS);
+      }).timeout(getTestTimeout(provider));
    });
 });

@@ -19,6 +19,14 @@ import { CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS } from './ChatT
 const providers = CHAT_TEST_PROVIDERS;
 const chatDrivers = createChatDrivers(EModel.kLarge);
 
+/**
+ * Returns the appropriate timeout for a test based on the provider.
+ * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
+ */
+const getTestTimeout = (provider: EModelProvider): number => {
+   return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
+};
+
 // Create factory for mini model tests
 const chatDriverFactory = new ChatDriverFactory();
 
@@ -37,12 +45,12 @@ providers.forEach((provider, index) => {
     it('should successfully return text response with system prompt', async () => {
       const result = await chatDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
 
     it('should successfully return text response without system prompt', async () => {
       const result = await chatDriver.getModelResponse(undefined, 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
 
     it('should successfully return text response with message history', async () => {
       const messageHistory: IChatMessage[] = [
@@ -63,7 +71,7 @@ providers.forEach((provider, index) => {
       ];
       const result = await chatDriver.getModelResponse('You are helpful', 'What is my name?', EVerbosity.kMedium, messageHistory);
       expect(result.toLowerCase()).toContain('alice');
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
   });
 
   describe(`getStreamedModelResponse (${provider})`, () => {
@@ -77,7 +85,7 @@ providers.forEach((provider, index) => {
       }
       expect(result).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
       expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
 
     it('should successfully stream text response without system prompt', async () => {
       const iterator = chatDriver.getStreamedModelResponse(undefined, 'say Hi', EVerbosity.kMedium);
@@ -89,7 +97,7 @@ providers.forEach((provider, index) => {
       }
       expect(result).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
       expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
 
     it('should successfully stream text response with message history', async () => {
       const messageHistory: IChatMessage[] = [
@@ -116,7 +124,7 @@ providers.forEach((provider, index) => {
         if (result.value) fullText += result.value;
       }
       expect(fullText.toLowerCase()).toContain('bob');
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
 
     it('should stream long-form content in multiple chunks', async () => {
       const prompt = 'Write a haiku about artificial intelligence';
@@ -149,7 +157,7 @@ providers.forEach((provider, index) => {
 
       expect(fullText).toMatch(/[A-Za-z]/); // Contains letters
       expect(fullText.length).toBeGreaterThan(20); // Got enough content to verify streaming works
-    }).timeout(TEST_TIMEOUT_MS); // 60 second timeout for haiku (GPT-5 can be slow)
+    }).timeout(getTestTimeout(provider)); // 60 second timeout for haiku (GPT-5 can be slow)
   });
 
   describe(`Constrained Model Response Tests (${provider})`, () => {
@@ -177,7 +185,7 @@ providers.forEach((provider, index) => {
       expect(result).toHaveProperty('age');
       expect(result.name).toBe('Bob');
       expect(result.age).toBe(42);
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
 
     it('should return constrained JSON response with message history', async () => {
       const schema = {
@@ -221,7 +229,7 @@ providers.forEach((provider, index) => {
       expect(result).toHaveProperty('age');
       expect(result.name).toBe('Charlie');
       expect(result.age).toBe(25);
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
 
     it('should return default value when response parsing fails', async () => {
       const schema = {
@@ -274,7 +282,7 @@ providers.forEach((provider, index) => {
           (chatDriver as any).openai.responses.create = originalCreate;
         }
       }
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
 
     it('should handle complex nested schema constraints', async () => {
       const schema = {
@@ -330,7 +338,7 @@ providers.forEach((provider, index) => {
         type: 'phone',
         value: '555-0123'
       });
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
 
     it('should log full prompts when content filter error occurs', async () => {
       const schema = {
@@ -422,7 +430,7 @@ providers.forEach((provider, index) => {
           (chatDriver as any).openai.responses.create = originalCreate;
         }
       }
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
   });
 
   describe(`Verbosity Level Tests (${provider})`, () => {
@@ -485,7 +493,7 @@ providers.forEach((provider, index) => {
       if (lowWordCount === highWordCount) {
         console.warn('WARNING: Both responses have same word count - current model may not differentiate verbosity levels');
       }
-    }).timeout(TEST_TIMEOUT_MS * 2); // Double timeout for two API calls
+    }).timeout(getTestTimeout(provider) * 2); // Double timeout for two API calls
   });
 
   // Mini model tests for each provider
@@ -501,7 +509,7 @@ providers.forEach((provider, index) => {
     it('should successfully return simple text response', async () => {
       const result = await miniChatDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
 
     it('should successfully stream text response', async () => {
       const iterator = miniChatDriver.getStreamedModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
@@ -513,7 +521,7 @@ providers.forEach((provider, index) => {
       }
       expect(result).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
       expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
-    }).timeout(TEST_TIMEOUT_MS);
+    }).timeout(getTestTimeout(provider));
   });
 });
 
