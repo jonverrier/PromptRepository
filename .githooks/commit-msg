@@ -4,14 +4,14 @@
 msgfile="$1"
 [ -f "$msgfile" ] || exit 0
 
-# Body = everything except trailing trailer block (lines at end matching "Key: value" or blank)
+# Body = everything except trailing block of blank lines and known trailers (Co-authored-by, Signed-off-by)
 body=$(awk '
   { lines[NR]=$0 }
   END {
     last = 0
     for (i = NR; i >= 1; i--) {
       if (lines[i] ~ /^[ \t]*$/) continue
-      if (lines[i] ~ /^[A-Za-z][A-Za-z-]*: /) { last = i - 1; continue }
+      if (lines[i] ~ /^Co-authored-by: / || lines[i] ~ /^Signed-off-by: /) { last = i - 1; continue }
       last = i
       break
     }
