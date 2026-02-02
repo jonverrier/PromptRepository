@@ -57,6 +57,30 @@ function isRateLimitError(error: any): boolean {
 }
 
 /**
+ * Checks if a 429 error indicates quota/billing exhaustion (do not retry).
+ * OpenAI returns 429 for both transient rate limits (retry) and quota exceeded (fail fast).
+ * @param error The error to check
+ * @returns true if the error indicates quota or billing limit exceeded
+ */
+function isQuotaExceededError(error: any): boolean {
+   const message = [
+      error?.message,
+      error?.error?.message,
+      error?.body?.error?.message,
+      typeof error?.body === 'string' ? error.body : undefined,
+   ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+   return (
+      message.includes('quota') ||
+      message.includes('billing') ||
+      message.includes('insufficient_quota') ||
+      message.includes('exceeded your current quota')
+   );
+}
+
+/**
  * Checks if an error is a transient server error (5xx status codes)
  * These errors are typically retryable
  * @param error The error to check
@@ -122,24 +146,27 @@ export async function retryWithExponentialBackoff<T>(
       } catch (error: any) {
          const status = getErrorStatus(error);
          
-         // Handle rate limiting with exponential backoff
-         if (isRateLimitError(error) && retryCount < maxRetries) {
-            // Check for Retry-After header first
-            const retryAfterMs = parseRetryAfter(error);
-            
-            if (retryAfterMs !== null) {
-               // Use Retry-After header value if available
-               console.warn(`Rate limit detected (429). Retrying after ${Math.round(retryAfterMs)}ms (attempt ${retryCount + 1}/${maxRetries})`);
-               await new Promise(resolve => setTimeout(resolve, retryAfterMs));
-            } else {
-               // Fall back to exponential backoff
-               const delay = Math.min(INITIAL_RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
-               console.warn(`Rate limit detected (429). Retrying after ${delay}ms (exponential backoff, attempt ${retryCount + 1}/${maxRetries})`);
-               await exponentialBackoff(retryCount);
+         // Handle rate limiting: retry only for transient rate limit; fail fast for quota exceeded
+         if (isRateLimitError(error)) {
+            if (isQuotaExceededError(error)) {
+               // Quota/billing exhausted – retrying won't help
+               const msg = error?.message ?? error?.error?.message ?? 'Quota or billing limit exceeded';
+               throw new ConnectionError(`${providerName} API error: ${msg}`);
             }
-            
-            retryCount++;
-            continue;
+            if (retryCount < maxRetries) {
+               // Transient rate limit – retry with backoff or Retry-After
+               const retryAfterMs = parseRetryAfter(error);
+               if (retryAfterMs !== null) {
+                  console.warn(`Rate limit detected (429). Retrying after ${Math.round(retryAfterMs)}ms (attempt ${retryCount + 1}/${maxRetries})`);
+                  await new Promise(resolve => setTimeout(resolve, retryAfterMs));
+               } else {
+                  const delay = Math.min(INITIAL_RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
+                  console.warn(`Rate limit detected (429). Retrying after ${delay}ms (exponential backoff, attempt ${retryCount + 1}/${maxRetries})`);
+                  await exponentialBackoff(retryCount);
+               }
+               retryCount++;
+               continue;
+            }
          }
          
          // Handle transient server errors (5xx) with exponential backoff
