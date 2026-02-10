@@ -1,6 +1,6 @@
 {
   "name": "@jonverrier/prompt-repository",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "description": "Managing Prompts and standardised Unit Evals ",
   "main": "dist/src/entry.js",
   "types": "dist/src/entry.d.ts",
@@ -48,7 +48,7 @@
     "@google/generative-ai": "^0.21.0"
   },
   "dependencies": {
-    "@jonverrier/assistant-common": "^0.2.1"
+    "@jonverrier/assistant-common": "^0.2.2"
   },
   "devDependencies": {
     "@google/generative-ai": "^0.21.0",
