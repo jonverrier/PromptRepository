@@ -647,7 +647,9 @@ export class GoogleGeminiChatDriver extends ChatDriver {
          try {
             return JSON.parse(responseText) as T;
          } catch (parseError) {
+            const snippet = responseText.length > 500 ? responseText.slice(0, 500) + '...[truncated]' : responseText;
             console.warn('Failed to parse JSON response, returning default value:', parseError);
+            console.warn('[ConstrainedResponse] Raw response that failed to parse:', JSON.stringify(snippet));
             return defaultValue;
          }
       } catch (error) {

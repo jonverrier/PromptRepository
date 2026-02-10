@@ -686,7 +686,9 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
             try {
                return JSON.parse(content) as T;
             } catch (parseError) {
+               const snippet = content.length > 500 ? content.slice(0, 500) + '...[truncated]' : content;
                console.warn('Failed to parse JSON response, returning default value:', parseError);
+               console.warn('[ConstrainedResponse] Raw response that failed to parse:', JSON.stringify(snippet));
                return defaultValue;
             }
          }
