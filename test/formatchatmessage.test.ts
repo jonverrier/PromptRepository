@@ -5,7 +5,7 @@
  * and timestamps into human-readable text representations.
  */
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 // ===Start StrongAI Generated Comment (20260219)===
 // This module contains unit tests for the chat formatting utilities. Its purpose is to verify that chat messages and their timestamps are rendered into clear, human-readable text across many scenarios, including edge cases.

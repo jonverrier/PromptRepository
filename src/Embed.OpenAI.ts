@@ -4,7 +4,7 @@
  * Concrete implementation of OpenAIModelEmbeddingDriver for direct OpenAI embedding model.
  * Provides specific configuration for direct OpenAI embedding services.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import OpenAI from 'openai';
 import { EModel, EModelProvider, InvalidStateError } from './entry';

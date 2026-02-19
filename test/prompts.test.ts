@@ -3,7 +3,7 @@
  * Contains utilities for validating prompt structures and their parameters.
  */
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 // ===Start StrongAI Generated Comment (20260219)===
 // This module provides utilities and tests for validating prompt definitions used by an application. Its purpose is to ensure prompt objects and their parameter specifications meet a strict structure before use.

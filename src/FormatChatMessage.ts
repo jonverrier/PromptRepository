@@ -5,7 +5,7 @@
  * Provides functions to render chat messages with timestamps and format dates
  * using friendly relative terms like 'Today' and 'Yesterday'.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 
 import { EChatRole, IChatMessage } from "./entry";

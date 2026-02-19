@@ -5,7 +5,7 @@
  * This class provides the common interface and utilities that all
  * chat drivers should implement, regardless of the underlying provider.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { EChatRole, EVerbosity } from './entry';
 import { IChatDriver, EModel, IChatMessage, IFunction } from './entry';

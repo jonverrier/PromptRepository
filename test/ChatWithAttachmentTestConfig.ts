@@ -4,7 +4,7 @@
  * Shared configuration for ChatWithAttachment driver tests.
  * Enforces consistent provider enumeration and driver initialization.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { ChatWithAttachmentDriverFactory, EModelProvider, EModel, IChatWithAttachmentDriver } from '../src/entry';
 

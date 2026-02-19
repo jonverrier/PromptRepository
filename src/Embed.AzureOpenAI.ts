@@ -4,7 +4,7 @@
  * Concrete implementation of OpenAIModelEmbeddingDriver for Azure OpenAI embedding model.
  * Provides specific configuration for Azure OpenAI embedding services.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { AzureOpenAI } from 'openai';
 import { EModel, EModelProvider, InvalidStateError } from './entry';

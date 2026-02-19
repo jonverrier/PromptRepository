@@ -11,7 +11,7 @@
  * - GOOGLE_GEMINI_API_KEY for Google Gemini
  */
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { describe, it, after } from 'mocha';
 import { expect } from 'expect';

@@ -13,7 +13,7 @@
  * - Helper function for prompt template placeholder replacement
  */
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 // ===Start StrongAI Generated Comment (20260219)===
 // This module provides a small prompt repository system for storing, retrieving, and expanding AI prompt templates with typed parameters. It supports parameterized system and user prompts and enforces parameter requirements and types during expansion.

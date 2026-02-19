@@ -10,7 +10,7 @@
  * node MakePromptIds.ts -f prompts/Default.Prompts.json
  */ 
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import fs from 'fs';
 import path from 'path';

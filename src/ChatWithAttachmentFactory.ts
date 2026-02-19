@@ -3,7 +3,7 @@
  * 
  * Factory for creating chat driver instances with attachment support.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { IChatWithAttachmentDriverFactory, IChatWithAttachmentDriver, EModelProvider, EModel } from './entry';
 import { OpenAIChatWithAttachment } from './ChatWithAttachment.OpenAI';

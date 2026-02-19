@@ -4,7 +4,7 @@
  * Shared configuration for chat driver tests across all test files.
  * Enforces consistent provider enumeration and driver initialization.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { ChatDriverFactory, EModelProvider, EModel, IChatDriver } from '../src/entry';
 

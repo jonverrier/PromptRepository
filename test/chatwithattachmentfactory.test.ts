@@ -3,7 +3,7 @@
  * 
  * Unit tests for the ChatWithAttachmentFactory module.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 // ===Start StrongAI Generated Comment (20260219)===
 // This module contains Mocha unit tests for ChatWithAttachmentDriverFactory and its drivers. It verifies that a factory can create chat-with-attachment drivers for multiple model providers and model sizes, and that created drivers expose the required methods. Tests are generated per provider from a shared provider list and skip gracefully when a driver cannot initialize, such as when an API key is missing.

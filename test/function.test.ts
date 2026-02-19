@@ -4,7 +4,7 @@
  * Unit tests for the Function module which handles function definitions for LLM interactions.
  */
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';

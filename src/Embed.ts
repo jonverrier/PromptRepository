@@ -4,7 +4,7 @@
  * Base functionality for interacting with OpenAI's embedding API.
  * Provides abstract base class and common utilities for embedding services.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import OpenAI, { AzureOpenAI } from 'openai';
 import { EModel, EModelProvider, IEmbeddingModelDriver, InvalidParameterError, InvalidOperationError, ConnectionError } from './entry';

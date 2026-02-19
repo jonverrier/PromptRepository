@@ -10,7 +10,7 @@
  * Uses temporary test files to validate repository functionality in isolation.
  */
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 // ===Start StrongAI Generated Comment (20260219)===
 // This module contains Mocha tests for the PromptRepository feature set. It validates loading prompts from JSON files, retrieving a prompt by id, reading metadata (version and schemaVersion), and performing placeholder substitution in prompt templates. The tests create a temporary prompts file at runtime to isolate behavior and prevent side effects.

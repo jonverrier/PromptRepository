@@ -3,7 +3,7 @@
  * 
  * Unit tests for ChatWithAttachment drivers across all providers.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { describe, it, after } from 'mocha';
 import { expect } from 'expect';

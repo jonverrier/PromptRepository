@@ -3,7 +3,7 @@
  * 
  * Mock implementation of OpenAIChatWithAttachment for testing.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { EVerbosity, IChatAttachmentContent, IChatAttachmentReference } from '../src/entry';
 import { OpenAIChatWithAttachment } from '../src/ChatWithAttachment.OpenAI';

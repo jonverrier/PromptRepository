@@ -592,7 +592,7 @@ This package is automatically published to GitHub Packages when you create a rel
 
 The package is **only** published on releases, not on every commit, to maintain clean version management.
 
-Copyright (c) 2025 Jon Verrier
+Copyright (c) 2025, 2026 Jon Verrier
 
 
 

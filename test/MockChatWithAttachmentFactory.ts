@@ -3,7 +3,7 @@
  * 
  * Factory for creating mock ChatWithAttachment drivers for testing.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { EModelProvider, EModel, IChatWithAttachmentDriver } from '../src/entry';
 import { MockOpenAIChatWithAttachment } from './MockOpenAIChatWithAttachment';

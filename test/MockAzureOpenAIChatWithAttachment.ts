@@ -3,7 +3,7 @@
  * 
  * Mock implementation of AzureOpenAIChatWithAttachment for testing.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { EModel, EVerbosity } from '../src/entry';
 import { AzureOpenAIChatWithAttachment } from '../src/ChatWithAttachment.AzureOpenAI';

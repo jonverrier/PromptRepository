@@ -4,7 +4,7 @@
  * Concrete implementation of GenericOpenAIChatDriver for Azure OpenAI model.
  * Provides specific configuration for Azure OpenAI model.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 // ===Start StrongAI Generated Comment (20260219)===
 // This module provides an Azure-specific chat driver that plugs into a generic OpenAI chat abstraction. It configures the Azure OpenAI client and maps a generic model choice to a concrete Azure deployment.

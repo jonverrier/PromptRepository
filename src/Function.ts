@@ -5,7 +5,7 @@
  * Supports OpenAI-style function calling with proper function execution patterns.
  * Handles both single and multiple function calls in accordance with OpenAI Responses API.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 /**
  * Enum for basic data types used in function schemas

@@ -4,7 +4,7 @@
  * Unit tests for the Embed module which handles interactions with OpenAI's embedding API.
  */
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 // ===Start StrongAI Generated Comment (20260219)===
 // This module is a Mocha test suite for the embedding subsystem. It verifies that embedding drivers work across providers (OpenAI and Azure OpenAI), that embeddings are returned for varied inputs, that identical texts yield high cosine similarity, and that different texts produce distinct vectors. It also checks driver metadata such as deploymentName, drivenModelType, and provider, and compares output sizes between “large” and “mini” models.

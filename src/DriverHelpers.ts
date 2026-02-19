@@ -5,7 +5,7 @@
  * Provides common functionality for retry logic, error handling, and backoff strategies.
  * Includes rate limit detection with Retry-After header support and exponential backoff.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { InvalidOperationError, ConnectionError } from '@jonverrier/assistant-common';
 

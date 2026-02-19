@@ -4,7 +4,7 @@
  * Generic base functionality for interacting with OpenAI-compatible APIs.
  * This includes both native OpenAI and Azure OpenAI implementations.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import OpenAI from 'openai';
 import { EChatRole, EVerbosity, ConnectionError, InvalidOperationError } from './entry';

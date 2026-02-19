@@ -3,7 +3,7 @@
  * 
  * Mock implementation of GoogleGeminiChatWithAttachment for testing.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { EModel, EVerbosity } from '../src/entry';
 import { GoogleGeminiChatWithAttachment } from '../src/ChatWithAttachment.GoogleGemini';

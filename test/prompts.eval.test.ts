@@ -8,7 +8,7 @@
  * 3) Variant input that should produce different output.
  */
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';

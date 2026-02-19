@@ -3,7 +3,7 @@
  * 
  * Factory for creating chat driver instances.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { IChatDriver, IChatDriverFactory, EModelProvider, EModel } from './entry';
 import { OpenAIChatDriver } from './Chat.OpenAI';

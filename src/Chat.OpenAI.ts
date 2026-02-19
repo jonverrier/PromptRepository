@@ -4,7 +4,7 @@
  * Concrete implementation of GenericOpenAIChatDriver for OpenAI model.
  * Provides specific configuration for OpenAI model.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import OpenAI from 'openai';
 import { EChatRole, InvalidStateError } from './entry';

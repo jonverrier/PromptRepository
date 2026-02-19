@@ -3,7 +3,7 @@
  * 
  * Factory for creating embedding driver instances.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { IEmbeddingModelDriver, IEmbeddingDriverFactory, EModelProvider, EModel } from './entry';
 import { NativeOpenAIEmbeddingDriver } from './Embed.OpenAI';

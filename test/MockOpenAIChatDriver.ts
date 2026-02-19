@@ -3,7 +3,7 @@
  * 
  * Mock implementation of GenericOpenAIChatDriver for testing exponential backoff and error handling.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { EModel, IChatMessage, IFunction, EVerbosity, EModelProvider } from '../src/entry';
 import { GenericOpenAIChatDriver } from '../src/Chat.GenericOpenAI';

@@ -6,7 +6,7 @@
  * and shows how to handle multiple function calls in a single interaction.
  */
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { ChatDriverFactory, EModelProvider, EModel, EVerbosity } from '../src/entry';
 import { IFunction, EDataType, IFunctionArgs } from '../src/Function';

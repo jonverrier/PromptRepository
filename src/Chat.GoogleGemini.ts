@@ -4,7 +4,7 @@
  * Concrete implementation of ChatDriver for Google Gemini API.
  * Provides chat, streaming, and constrained JSON response capabilities.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 // @ts-ignore - @google/generative-ai is a peer dependency
 import { GoogleGenerativeAI } from '@google/generative-ai';

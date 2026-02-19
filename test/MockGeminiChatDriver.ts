@@ -3,7 +3,7 @@
  * 
  * Mock implementation of GoogleGeminiChatDriver for testing exponential backoff and error handling.
  */
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 import { EModel, IChatMessage, IFunction, EVerbosity } from '../src/entry';
 import { GoogleGeminiChatDriver } from '../src/Chat.GoogleGemini';

@@ -10,7 +10,7 @@
  * Uses temporary test files to validate ID generation functionality.
  */
 
-// Copyright (c) 2025 Jon Verrier
+// Copyright (c) 2025, 2026 Jon Verrier
 
 // ===Start StrongAI Generated Comment (20260219)===
 // This module contains unit tests for the MakePromptIds script, focusing on the generateJsonIds function. Its purpose is to verify that human-readable prompt names are converted into consistent camelCase keys with a PromptId suffix, and that the function writes a valid JSON file mapping these keys to their source IDs.
