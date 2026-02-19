@@ -21,6 +21,19 @@ const GEMINI_MODELS = {
 /**
  * Type for Gemini message parts - can be text, function call, or function response
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module provides a concrete ChatDriver implementation for Google’s Gemini API. It wraps chat, streaming, tool-calling, and schema-constrained JSON responses behind a consistent interface.
+// 
+// Main export: GoogleGeminiChatDriver. It selects the gemini-3-flash-preview model for higher rate limits and requires GOOGLE_GEMINI_API_KEY. It reports provider and model names, formats message history into Gemini’s role/parts structure, and maps verbosity to temperature and max tokens. It supports:
+// - getModelResponse: single response with automatic function-calling loop, executing provided IFunction tools and feeding results back to the model until a final text answer.
+// - getStreamedModelResponse: streamed text as an AsyncIterator<string>, with detection and handling of function calls mid-stream.
+// - getModelResponseWithForcedTools / getStreamedModelResponseWithForcedTools: “force tools” by augmenting the system prompt, since Gemini cannot be hard-forced.
+// - getConstrainedModelResponse: JSON-only replies validated via responseSchema; removes additionalProperties to match Gemini limits and falls back to a default value on parse errors.
+// 
+// Key dependencies: @google/generative-ai (GoogleGenerativeAI client), ChatDriver base class, EModel/EChatRole/EVerbosity enums, message and tool interfaces (IChatMessage, IFunction, IFunctionCall), custom errors, and retryWithExponentialBackoff with MAX_RETRIES for resilience.
+// ===End StrongAI Generated Comment===
+
 type GeminiPart = 
    | { text: string }
    | { functionCall: { name: string; args: Record<string, unknown> } }

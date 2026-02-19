@@ -12,6 +12,23 @@
 
 // Copyright (c) 2025 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260219)===
+// This module contains unit tests for the MakePromptIds script, focusing on the generateJsonIds function. Its purpose is to verify that human-readable prompt names are converted into consistent camelCase keys with a PromptId suffix, and that the function writes a valid JSON file mapping these keys to their source IDs.
+// 
+// The test suite is organized with Mocha’s describe and it helpers. It asserts expectations using the expect assertion library. It uses fs and path to create, read, and clean up a temporary JSON output file on disk. afterEach removes the file to keep tests isolated.
+// 
+// Tests cover several behaviors:
+// - Basic camelCase conversion from space-separated names.
+// - Stripping or normalizing special characters and collapsing multiple spaces.
+// - Handling of an empty prompts array by producing an empty JSON object.
+// - Preservation and placement of numeric segments in names, including leading numbers.
+// 
+// The module relies on:
+// - generateJsonIds from ../scripts/MakePromptIds to perform name normalization and file generation.
+// - Node’s fs for file I/O and path for path construction.
+// - Mocha and expect for test structure and assertions.
+// ===End StrongAI Generated Comment===
+
 import { expect } from 'expect';
 import { describe, it, afterEach } from 'mocha';
 import fs from 'fs';

@@ -7,6 +7,18 @@
 
 // Copyright (c) 2025 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260219)===
+// This module contains unit tests for the chat formatting utilities. Its purpose is to verify that chat messages and their timestamps are rendered into clear, human-readable text across many scenarios, including edge cases.
+// 
+// The tests cover two main exports from the FormatChatMessage module:
+// - renderChatMessageAsText: Builds a single-line header with a role label, a timestamp in brackets, and a trailing newline, followed by the raw message content. It maps function role messages to Assistant, preserves empty, multiline, special, very long, and Unicode content, and always appends a newline.
+// - formatChatMessageTimestamp: Produces friendly timestamps with “Today” and “Yesterday” variants in short or full forms, and full weekday/month/day formatting for other days and future dates. It handles various times of day, leap years, extreme past/future dates, invalid Date inputs without throwing, and yields consistent, locale-stable English output.
+// 
+// Key imported symbols:
+// - EChatRole, IChatMessage, and ChatMessageClassName from entry define the chat message shape and roles used by the tests.
+// - expect from expect and describe/it from mocha provide the testing framework and assertions.
+// ===End StrongAI Generated Comment===
+
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
 import { renderChatMessageAsText, formatChatMessageTimestamp } from '../src/FormatChatMessage';

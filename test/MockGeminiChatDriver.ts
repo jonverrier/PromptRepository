@@ -11,6 +11,16 @@ import { GoogleGeminiChatDriver } from '../src/Chat.GoogleGemini';
 /**
  * Mock class for testing Gemini driver with exponential backoff support
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module provides a mock chat driver for testing exponential backoff, error handling, streaming, and constrained JSON responses without calling Google Gemini. It exports MockGeminiChatDriver, which extends the real GoogleGeminiChatDriver and defaults to the large model.
+// 
+// Use setShouldFail to simulate rate-limit errors a fixed number of times. getFailCount reports how many failures occurred. setMockCreate injects a custom async generator for full control over responses or errors. setMockSendMessage adapts a simpler mock to the same path.
+// 
+// getModelResponse wraps calls in retryWithExponentialBackoff and returns a simple success string unless failures are configured or a custom mock is provided. getStreamedModelResponse supports streaming by yielding word-sized chunks, handling async iterables, and recognizing OpenAI-style delta chunks. It emits a friendly interruption message on streaming errors. getConstrainedModelResponse returns parsed JSON when possible and falls back to a provided default on errors or invalid JSON; it can also derive JSON from the user prompt.
+// 
+// Key dependencies: GoogleGeminiChatDriver for base behavior, retryWithExponentialBackoff and MAX_RETRIES for resilience, and shared types EModel, EVerbosity, IChatMessage, and IFunction.
+// ===End StrongAI Generated Comment===
 export class MockGeminiChatDriver extends GoogleGeminiChatDriver {
    private failCount = 0;
    private shouldFail = false;

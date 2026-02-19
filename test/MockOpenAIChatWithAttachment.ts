@@ -12,6 +12,14 @@ import { ChatAttachmentInput, IChatTableJson } from '../src/ChatWithAttachment';
 /**
  * Mock class for testing OpenAI ChatWithAttachment driver
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module provides a test double for the OpenAI ChatWithAttachment driver. It lets you run unit tests without calling the real OpenAI API. The main export is MockOpenAIChatWithAttachment, which extends OpenAIChatWithAttachment and injects a mock client.
+// 
+// The constructor builds a minimal client with responses.create, files.create, and files.delete. Each method returns a deterministic default: a single output_text message for responses, a fixed file id for file creation, and a no-op for deletion. You can override each behavior at runtime using setMockResponsesCreate, setMockFilesCreate, and setMockFilesDelete. These setters store the mock functions and also swap the underlying openai client methods so all internal calls use your mocks. resetMocks restores the default behaviors.
+// 
+// The class relies on OpenAIChatWithAttachment from ../src/ChatWithAttachment.OpenAI for higher-level request assembly and attachment handling. Types imported from ../src/entry and ../src/ChatWithAttachment (EVerbosity, IChatAttachmentContent, IChatAttachmentReference, ChatAttachmentInput, IChatTableJson) are not used directly here but signal compatibility with the surrounding chat-with-attachments API.
+// ===End StrongAI Generated Comment===
 export class MockOpenAIChatWithAttachment extends OpenAIChatWithAttachment {
    private mockResponsesCreate?: (config: any) => Promise<any>;
    private mockFilesCreate?: (input: any) => Promise<any>;

@@ -15,6 +15,17 @@
 
 // Copyright (c) 2025 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260219)===
+// This module provides a small prompt repository system for storing, retrieving, and expanding AI prompt templates with typed parameters. It supports parameterized system and user prompts and enforces parameter requirements and types during expansion.
+// 
+// It exports two repository implementations. PromptFileRepository loads prompts from a JSON file at construction and is only available in Node.js. It reads the file synchronously, looks up prompts by id, and expands system and user prompts with parameter substitution. PromptInMemoryRepository keeps a provided array of prompts in memory and offers the same lookup and expansion methods.
+// 
+// It also exports replacePromptPlaceholders, which replaces {name} placeholders in a template using a parameter spec. It enforces required parameters, applies default values for optional ones, and validates types: string, number, and enum with allowed values. It throws InvalidParameterError for invalid input.
+// 
+// Key imports from ./entry include IPrompt, IPromptRepository, and IPromptParameterSpec for typing, throwIfUndefined to ensure a system prompt exists before expansion, and error types InvalidOperationError and InvalidParameterError. The Node fs module is conditionally required to avoid browser usage.
+// ===End StrongAI Generated Comment===
+
+
 import type * as fs from 'node:fs';
 
 import { IPromptParameterSpec, IPrompt, IPromptRepository, throwIfUndefined, InvalidOperationError, InvalidParameterError } from "./entry";
@@ -41,6 +52,7 @@ try {
  * @param paramSpec Array of parameter specifications to check against
  * @throws {TypeError} If the parameter value does not match its specified type
  */
+
 
 function validateParameterType(paramName: string,
    paramValue: string | undefined,

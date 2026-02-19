@@ -13,6 +13,22 @@ import { GoogleGeminiChatWithAttachment } from './ChatWithAttachment.GoogleGemin
 /**
  * Factory class for creating chat drivers with attachment support
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module provides a factory for creating chat drivers that support message attachments. It centralizes provider selection and model mapping so callers only specify a model size and a provider.
+// 
+// The module exports a single class, ChatWithAttachmentDriverFactory, which implements IChatWithAttachmentDriverFactory. Its create(model, provider) method returns an IChatWithAttachmentDriver for the requested provider:
+// - For Azure OpenAI, it instantiates AzureOpenAIChatWithAttachment with the provided EModel.
+// - For Google Gemini, it instantiates GoogleGeminiChatWithAttachment. This implementation always uses the Gemini “flash” model due to rate limits, ignoring the EModel size.
+// - For the Default provider, it chooses Gemini in development and OpenAI in production. In production it maps EModel.kLarge to gpt-4.1 and other sizes to gpt-4.1-mini.
+// - For OpenAI (or any other case), it defaults to OpenAI with the same model mapping.
+// 
+// Key imports:
+// - IChatWithAttachmentDriverFactory, IChatWithAttachmentDriver, EModelProvider, and EModel define the factory contract and provider/model enums.
+// - OpenAIChatWithAttachment, AzureOpenAIChatWithAttachment, and GoogleGeminiChatWithAttachment are the concrete driver implementations.
+// - process.env.NODE_ENV influences Default provider routing.
+// ===End StrongAI Generated Comment===
+
 export class ChatWithAttachmentDriverFactory implements IChatWithAttachmentDriverFactory {
    create(model: EModel, provider: EModelProvider): IChatWithAttachmentDriver {
       if (provider === EModelProvider.kAzureOpenAI) {

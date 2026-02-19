@@ -6,6 +6,12 @@
  * executes prompts using the Responses API.
  */
 
+// ===Start StrongAI Generated Comment (20260219)===
+// Implements an Azure OpenAI-backed chat driver that adds file-attachment support to a response-generation flow. It provides a concrete implementation of IChatWithAttachmentDriver named AzureOpenAIChatWithAttachment. The class selects an Azure deployment (gpt-4.1 or gpt-4.1-mini) based on EModel and uses the Azure OpenAI Responses API to produce text output with configurable verbosity mapped from EVerbosity. A client can be injected, or it constructs one from AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT, using apiVersion 2025-03-01-preview.
+// 
+// The driver accepts either attachment content or a pre-existing file reference. When given content, it uploads the file via the Files API (purpose: assistants), warns if not PDF (Responses input_file supports PDF), and supports multiple input data types by converting to File or Blob. It optionally deletes uploaded files after use. Prompts include optional system text, user text, an input_file reference, and a formatted table JSON block for structured data. It robustly extracts text from varied Responses output shapes and throws InvalidOperationError if none is found. Errors for invalid state or parameters use InvalidStateError and InvalidParameterError.
+// ===End StrongAI Generated Comment===
+
 import { AzureOpenAI } from 'openai';
 import { EVerbosity, EModel, InvalidStateError, InvalidParameterError, InvalidOperationError } from './entry';
 import { ChatAttachmentInput, IChatAttachmentContent, IChatAttachmentReference, IChatWithAttachmentDriver, IChatTableJson } from './ChatWithAttachment';

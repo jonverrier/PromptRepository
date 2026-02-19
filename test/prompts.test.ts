@@ -5,6 +5,14 @@
 
 // Copyright (c) 2025 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260219)===
+// This module provides utilities and tests for validating prompt definitions used by an application. Its purpose is to ensure prompt objects and their parameter specifications meet a strict structure before use.
+// 
+// It exports two classes. PromptValidationError is a custom error type thrown when validation fails. PromptValidator exposes a static validatePrompt function that checks a Partial<IPrompt>. It verifies required top-level fields (id, version, name, systemPrompt, userPrompt). It ensures userPromptParameters and systemPromptParameters, when present, are arrays and each set contains at least one required parameter. It validates each parameter using a private helper that enforces required fields (name, description, required, type), requires defaultValue for optional parameters, and restricts type to ParameterTypeString or ParameterTypeNumber. Any deviation throws PromptValidationError.
+// 
+// The module imports IPrompt, IPromptParameterSpec, and the ParameterType constants from ../src/entry to drive type and value checks. It loads a known-good prompt from Prompts.json as test data. It uses mocha’s describe and it plus expect from expect to define and assert test cases that cover structure, parameter rules, default values, and rejection of unsupported enum parameters.
+// ===End StrongAI Generated Comment===
+
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
 import { IPrompt, IPromptParameterSpec, ParameterTypeString, ParameterTypeNumber, ParameterTypeEnum } from '../src/entry';

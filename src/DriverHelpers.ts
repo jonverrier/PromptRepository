@@ -18,6 +18,17 @@ export const MAX_RETRY_DELAY = 60000; // 60 seconds maximum (prevents excessive 
  * @param retryCount The current retry attempt number (0-based)
  * @returns Promise that resolves after the calculated delay
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// Provides shared retry and error-handling utilities for OpenAI-style drivers. It centralizes exponential backoff, rate-limit handling, and consistent error wrapping so callers can run API operations robustly.
+// 
+// Exports three tuning constants: MAX_RETRIES, INITIAL_RETRY_DELAY, and MAX_RETRY_DELAY. Exported function exponentialBackoff(retryCount) waits with an exponential delay capped by MAX_RETRY_DELAY. Exported function retryWithExponentialBackoff(operation, maxRetries?, providerName?) executes an async operation with retries. It detects 429 rate limits, respects Retry-After headers (with small jitter), retries transiently, but fails fast on quota or billing exhaustion. It also retries 5xx server errors with backoff.
+// 
+// The retry wrapper classifies 4xx errors. It converts provider refusal and safety/content-filter responses into InvalidOperationError and does not retry. Other unexpected errors are wrapped as ConnectionError with a provider-scoped message. It normalizes status codes from varied SDK error shapes and reads Retry-After from multiple locations.
+// 
+// Key imports are InvalidOperationError and ConnectionError from @jonverrier/assistant-common, which standardize error semantics for callers. The module logs retry decisions via console.warn to aid observability.
+// ===End StrongAI Generated Comment===
+
 export async function exponentialBackoff(retryCount: number): Promise<void> {
    const delay = Math.min(INITIAL_RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
    await new Promise(resolve => setTimeout(resolve, delay));

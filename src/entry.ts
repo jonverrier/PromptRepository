@@ -6,6 +6,14 @@
  * used throughout the application for managing and retrieving LLM prompts.
  */
 
+// ===Start StrongAI Generated Comment (20260219)===
+// This module defines the core types and interfaces for a prompt and chat system that works across multiple LLM providers. It standardizes models, providers, roles, verbosity, prompt templates, function calls, chat messages, and embedding workflows.
+// 
+// Key exports include enums for EModel, EModelProvider, EChatRole, and EVerbosity. It defines parameter typing via EParameterType and constants, plus IPromptParameterSpec and IPrompt for templated system and user prompts. IPromptRepository provides prompt lookup and expansion APIs. IChatMessage models unified chat history with tool and function call metadata. IChatDriver specifies methods for simple, streamed, forced-tool, and schema-constrained responses. Factory interfaces create chat and attachment-enabled drivers. IEmbeddingModelDriver and IEmbeddingDriverFactory cover embeddings. Chunk types (IChunk, IChunkStore) support vectorized content storage. Utility exports include cosine similarity, formatting helpers, and common validation functions. TEST_TARGET_SUPPORTS_VERBOSITY toggles verbosity features in tests.
+// 
+// Important dependencies: IFunction and related types power tool calling. IChatWithAttachmentDriver enables multimodal inputs. Concrete factories and drivers are re-exported for OpenAI, Azure OpenAI, and Google Gemini.
+// ===End StrongAI Generated Comment===
+
 import { IFunction } from './Function';
 import { IChatWithAttachmentDriver } from './ChatWithAttachment';
 

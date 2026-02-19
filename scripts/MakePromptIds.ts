@@ -23,6 +23,16 @@ import path from 'path';
  * @param prompts - Array of prompt objects (each should have "name" and "id" properties).
  * @param outputPath - The file path where the JSON output will be written.
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// Generates a file of prompt ID constants from a JSON prompts source. The module’s goal is to take an array of prompt objects, convert each prompt name to camelCase, append “PromptId”, and map that key to the prompt’s original id. It writes a pretty-printed JSON object to the target file path.
+// 
+// The main export is generateJsonIds(prompts, outputPath). It expects each item in prompts to include name and id. It splits names on non-alphanumeric characters, lowercases the first segment, capitalizes subsequent segments, then appends “PromptId” to build the key. It serializes the result as JSON with two-space indentation and writes it to disk at outputPath.
+// 
+// When run directly as a script, it accepts a -f argument pointing to a JSON file containing the prompts array. It reads and parses that file, computes the ID map, and writes the output alongside the input as promptIds.ts, logging a summary. If -f is missing, it prints an error.
+// 
+// Relies on Node’s fs for file I/O and path for path resolution.
+// ===End StrongAI Generated Comment===
 export function generateJsonIds(prompts: any[], outputPath: string) {
     const ids: Record<string, string> = {};
 

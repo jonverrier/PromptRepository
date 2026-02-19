@@ -15,6 +15,20 @@ import { IFunction, EDataType, IFunctionArgs } from '../src/Function';
  * Example recreating the official OpenAI horoscope function
  * This follows the exact pattern from the OpenAI documentation
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module demonstrates multiple tool calling with the PromptRepository chat driver, modeled after the OpenAI Responses API. It defines two example tools and shows how to invoke them singly, in combination, and via streaming, plus a walkthrough of the input_list pattern.
+// 
+// Exports:
+// - createHoroscopeFunction creates an IFunction for get_horoscope with input/output schemas, argument validation, and a mock execute that returns a canned horoscope.
+// - createWeatherFunction creates an IFunction for get_weather with schemas, validation, and a mock execute that returns simple city-based weather data.
+// - runMultipleToolCallingExample runs three examples: a single tool call matching the official pattern, multiple tool calls with forced tools, and a streamed response using only the weather tool.
+// - demonstrateInputListPattern prints a step-by-step simulation of function_call, tool execution, and final response assembly.
+// 
+// Key dependencies:
+// - ChatDriverFactory, EModelProvider, EModel, EVerbosity from ../src/entry to construct a chat driver (OpenAI, large model) and control verbosity and invocation style.
+// - IFunction, EDataType, IFunctionArgs from ../src/Function to define tool contracts, JSON-like schemas, validation, and execution behavior.
+// ===End StrongAI Generated Comment===
 function createHoroscopeFunction(): IFunction {
    return {
       name: "get_horoscope",

@@ -6,6 +6,10 @@
  */
 // Copyright (c) 2025 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260219)===
+// This module contains comprehensive Mocha tests for the OpenAIChatWithAttachment and AzureOpenAIChatWithAttachment implementations. It validates construction behavior, environment variable requirements, client and model injection, and all response parsing paths. It exercises getModelResponse across multiple output shapes (output_text, text, message with string or array content, string outputs, and generic content) and ensures proper error handling when no text is returned. It verifies verbosity mapping and inclusion of a system prompt. It thoroughly tests attachment workflows: uploading various data types (Buffer, ArrayBuffer, Uint8Array, string, File, Blob), rejecting unsupported types, warning on non-PDF extensions, deleting by id, honoring deleteAfterUse, handling pre-existing attachment references, and gracefully warning on deletion failures. It also checks inclusion and formatting of tableJson alongside prompts and attachments. For Azure, it confirms model selection (gpt-4.1 and gpt-4.1-mini) and equivalent behaviors. Key imports include OpenAIChatWithAttachment, AzureOpenAIChatWithAttachment, enums EVerbosity and EModel, error types InvalidStateError, InvalidParameterError, InvalidOperationError, and interfaces IChatAttachmentContent, IChatAttachmentReference, IChatTableJson. The tests mock the OpenAI client responses and file APIs.
+// ===End StrongAI Generated Comment===
+
 import { describe, it } from 'mocha';
 import { expect } from 'expect';
 import { OpenAIChatWithAttachment } from '../src/ChatWithAttachment.OpenAI';

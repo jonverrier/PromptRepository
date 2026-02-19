@@ -23,6 +23,20 @@ const chatDrivers = createChatDrivers(EModel.kLarge);
  * Returns the appropriate timeout for a test based on the provider.
  * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module defines comprehensive unit tests for the Chat abstraction across multiple model providers. It validates basic completions, streaming responses, message history handling, constrained JSON output with schema validation and defaults, verbosity effects on response length, and behavior under errors and rate limits. It also tests mini/compact model variants.
+// 
+// There are no exports from this file. Tests are organized per provider created via createChatDrivers and ChatDriverFactory. Two local helpers exist: getTestTimeout selects longer timeouts for Google Gemini; getProviderName formats provider names for logs.
+// 
+// Key dependencies:
+// - Mocha’s describe, it, beforeEach, afterEach and Expect’s assertions.
+// - Core Chat APIs and types from ../src/entry: ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, EVerbosity, GoogleGeminiChatDriver.
+// - Provider-specific and mock drivers: GenericOpenAIChatDriver, MockOpenAIChatDriver, MockGeminiChatDriver.
+// - Test configuration from ChatTestConfig: CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS.
+// 
+// The exponential backoff suite verifies retry logic on 429 errors, timing of backoff, and no-retry paths for authentication, content filter, safety, invalid request, and forbidden errors, including graceful handling of mid-stream failures.
+// ===End StrongAI Generated Comment===
 const getTestTimeout = (provider: EModelProvider): number => {
    return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
 };

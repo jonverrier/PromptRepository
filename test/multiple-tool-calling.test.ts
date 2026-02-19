@@ -25,6 +25,14 @@ const chatDrivers = createChatDrivers(EModel.kLarge);
  * Returns the appropriate timeout for a test based on the provider.
  * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module is a Mocha test suite that verifies multiple tool calling behavior across chat model providers. It focuses on scenarios where the model must invoke several tools in a single response, both non-streaming and streaming. It asserts that required tools are called, results are incorporated, and responses are substantive.
+// 
+// The module defines helper factories for test tools: createReadFileFunction, createHoroscopeFunction, and createTimeZoneFunction. Each returns an IFunction with input/output schemas, validation, and a mocked execute that records calls. It also provides execution tracking utilities (resetExecutionTracking, getExecutionCount) and a test harness function testMultipleToolCalling that runs consistent assertions for each provider. Additional tests validate the tool interface shapes and tracking logic.
+// 
+// Key imports include Mocha’s describe and it, expect for assertions, and the chat driver API from ../src/entry (EModelProvider, EModel, EVerbosity). It relies on CHAT_TEST_PROVIDERS and createChatDrivers to instantiate drivers per provider. The tests use chatDriver.getModelResponseWithForcedTools and getStreamedModelResponseWithForcedTools, with provider-sensitive timeouts (longer for Google Gemini).
+// ===End StrongAI Generated Comment===
 const getTestTimeout = (provider: EModelProvider): number => {
    return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
 };

@@ -12,6 +12,14 @@
 
 // Copyright (c) 2025 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260219)===
+// This module contains Mocha tests for the PromptRepository feature set. It validates loading prompts from JSON files, retrieving a prompt by id, reading metadata (version and schemaVersion), and performing placeholder substitution in prompt templates. The tests create a temporary prompts file at runtime to isolate behavior and prevent side effects.
+// 
+// The primary targets under test are PromptFileRepository and replacePromptPlaceholders from ../src/PromptRepository. PromptFileRepository reads prompt definitions from a file and exposes getPrompt, plus helper methods expandSystemPrompt and expandUserPrompt for template expansion using key-value inputs. replacePromptPlaceholders fills placeholders based on parameter specifications, supporting required and optional parameters, default values, and type handling for strings and numbers, and throws when required inputs are missing.
+// 
+// Key imports include IPrompt, IPromptParameterSpec, ParameterTypeString, and ParameterTypeNumber from ../src/entry to define parameter schemas; throwIfUndefined from @jonverrier/assistant-common for runtime guards; expect from expect and describe/it/before from mocha for assertions and test structure; and fs, path, os to create and manage temporary test files.
+// ===End StrongAI Generated Comment===
+
 import { expect } from 'expect';
 import { describe, it, before } from 'mocha';
 import fs from 'fs';

@@ -21,6 +21,24 @@ const chatDrivers = createChatDrivers(EModel.kLarge);
  * Returns the appropriate timeout for a test based on the provider.
  * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module defines a comprehensive Mocha test suite for the Function integration layer that enables LLM tool calls. It verifies function schemas, argument validation, execution flow, call counting, and both non-streaming and streaming responses across multiple model providers.
+// 
+// The module does not export runtime APIs. Instead, it provides internal test helpers:
+// - createMotorsportFunction builds an IFunction with basic or strict validation and a mocked execute that returns leader data by race series.
+// - resetCallCounter and getCallCount track how many tool executions occur.
+// - testFunctionIntegration asserts that models handle function definitions and validation errors in streamed and non-streamed modes.
+// - testFunctionCallCounting forces tool usage, verifies exact call counts, and checks response content.
+// - createListMemoriesFunction and createSaveMemoryFunction simulate multi-step memory operations.
+// - testMultiStepFunctionCalling ensures parallel, multi-call tool execution and validates content and minimum call counts.
+// 
+// Key imports:
+// - expect (assertions) and mocha’s describe/it (test structure).
+// - Chat driver APIs and enums (EModelProvider, EModel, EVerbosity) from entry for provider selection and verbosity.
+// - IFunction, EDataType, IFunctionArgs from Function for tool schemas and execution.
+// - CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS for provider matrix setup and timeouts, with special handling for Google Gemini.
+// ===End StrongAI Generated Comment===
 const getTestTimeout = (provider: EModelProvider): number => {
    return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
 };

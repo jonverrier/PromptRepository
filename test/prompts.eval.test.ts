@@ -27,6 +27,14 @@ const chatDrivers = createChatDrivers(EModel.kLarge);
  * Returns the appropriate timeout for a test based on the provider.
  * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module defines integration tests that verify a template-based “Motor Racing Welcome” prompt produces consistent, provider-agnostic responses. It runs the same suite across all configured chat providers and compares outputs for similar and variant user inputs to ensure stability and correctness.
+// 
+// There are no exports. The module creates chat drivers once, then for each provider runs a Mocha describe block with four tests. It pulls a specific prompt (template-prompt-002) from a JSON file via PromptInMemoryRepository, expands system and user prompts, and requests a response at medium verbosity. Assertions check that the response includes the expected location, matches a welcome-style phrasing, and does not repeat the location token (validated by a single occurrence split). It also confirms Silverstone output differs from Monaco.
+// 
+// Key imports: expect for assertions; describe and it from mocha for test structure; IPrompt, IPromptRepository, EModel, EVerbosity, EModelProvider from the entry module; PromptInMemoryRepository for prompt retrieval and expansion; CHAT_TEST_PROVIDERS, createChatDrivers, and TEST_TIMEOUT_MS for provider orchestration; a custom timeout prefers 120s for Google Gemini.
+// ===End StrongAI Generated Comment===
 const getTestTimeout = (provider: EModelProvider): number => {
    return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
 };

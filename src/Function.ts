@@ -10,6 +10,25 @@
 /**
  * Enum for basic data types used in function schemas
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module defines types and interfaces for LLM function calling compatible with the OpenAI Responses API. It standardizes how functions are described, validated, executed, and how their results are reported back to the model.
+// 
+// Main exports:
+// - EDataType enum lists JSON schema data types used in function schemas.
+// - IFunctionArgs models JSON-serializable argument objects accepted by functions.
+// - FnValidateFunctionArgs is a validator signature that returns sanitized args or throws.
+// - FnExecuteFunction is an async executor signature that returns a result payload.
+// - IFunctionExecutionContext provides metadata for execution attempts, including callId, functionName, timestamp, and retry attempt.
+// - ISchemaProperty and ISchema describe input and output JSON schemas, including nested properties, arrays, required fields, and additionalProperties.
+// - ILLMFunctionCall represents an LLM-emitted function_call with a name and JSON-encoded arguments, plus an optional call_id.
+// - IFunctionCallOutput represents function_call_output with the matching call_id and JSON-encoded result.
+// - IFunction defines a callable function contract with name, description, input and output schemas, validateArgs, and execute.
+// - FunctionExecutionResult is a discriminated union for success or structured error reporting.
+// 
+// This module has no external imports or dependencies.
+// ===End StrongAI Generated Comment===
+
 export enum EDataType {
    kObject = "object",
    kString = "string",

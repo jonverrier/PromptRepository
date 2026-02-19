@@ -5,6 +5,23 @@
  */
 // Copyright (c) 2025 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260219)===
+// This module contains Mocha unit tests for ChatWithAttachmentDriverFactory and its drivers. It verifies that a factory can create chat-with-attachment drivers for multiple model providers and model sizes, and that created drivers expose the required methods. Tests are generated per provider from a shared provider list and skip gracefully when a driver cannot initialize, such as when an API key is missing.
+// 
+// The module does not export any symbols. It is intended to be executed by the test runner.
+// 
+// Key behaviors covered:
+// - Factory creates drivers for kMini and kLarge models.
+// - Drivers implement the expected API: getModelResponse, uploadAttachment, and deleteAttachment.
+// - Created drivers conform to the IChatWithAttachmentDriver interface at the type level.
+// - Factory returns distinct driver instances for different providers.
+// 
+// Important imports:
+// - expect from expect for assertions, and describe/it from mocha for test structure.
+// - ChatWithAttachmentDriverFactory, EModelProvider, EModel, and IChatWithAttachmentDriver from the main entry module under test.
+// - CHAT_WITH_ATTACHMENT_TEST_PROVIDERS and createChatWithAttachmentDrivers from the test config to enumerate providers and precreate drivers.
+// ===End StrongAI Generated Comment===
+
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
 import { ChatWithAttachmentDriverFactory, EModelProvider, EModel, IChatWithAttachmentDriver } from '../src/entry';

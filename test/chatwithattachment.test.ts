@@ -27,6 +27,19 @@ const drivers = createChatWithAttachmentDrivers(EModel.kLarge);
  * Returns the appropriate timeout for a test based on the provider.
  * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module defines provider-agnostic unit tests for ChatWithAttachment drivers. It verifies text responses with and without system prompts, attachment handling, table JSON inclusion, and error paths. It runs the same scenarios across configured providers, including OpenAI, Azure OpenAI, and Google Gemini, using provider-specific mocking where needed. It also includes Azure-specific constructor validation for missing environment variables.
+// 
+// There are no runtime exports. The module sets up drivers once per provider using createChatWithAttachmentDrivers and loops tests over CHAT_WITH_ATTACHMENT_TEST_PROVIDERS. It computes per-provider timeouts via getTestTimeout, granting longer time for Gemini. It includes helper scaffolding for temporary files and a global cleanup hook, though the test file set is not populated in these tests.
+// 
+// Key imports include:
+// - Mocha’s describe, it, after and expect for test structure and assertions.
+// - fs, path, os for temp file utilities.
+// - OpenAIChatWithAttachment and AzureOpenAIChatWithAttachment for direct instantiation checks.
+// - EVerbosity, EModel, EModelProvider, IChatAttachmentContent, IChatAttachmentReference, IChatTableJson for typing and configuration.
+// - MockChatWithAttachmentFactory and provider-specific mock drivers to simulate API behavior and validate request payloads and cleanup.
+// ===End StrongAI Generated Comment===
 const getTestTimeout = (provider: EModelProvider): number => {
    return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
 };

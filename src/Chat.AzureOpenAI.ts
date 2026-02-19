@@ -6,6 +6,20 @@
  */
 // Copyright (c) 2025 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260219)===
+// This module provides an Azure-specific chat driver that plugs into a generic OpenAI chat abstraction. It configures the Azure OpenAI client and maps a generic model choice to a concrete Azure deployment.
+// 
+// Main export:
+// - AzureOpenAIChatDriver: Extends GenericOpenAIChatDriver to use Azure OpenAI. The constructor accepts an EModel and selects an Azure deployment: gpt-4.1 for large and gpt-4.1-mini for mini. It validates required configuration via environment variables AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT. On success, it constructs an AzureOpenAI client with the selected deployment and a fixed API version 2025-03-01-preview. getModelName returns the deployment string. shouldUseToolMessages returns true to enable tool/function message handling. getProviderName returns Azure OpenAI.
+// 
+// Key dependencies:
+// - AzureOpenAI from the openai SDK, used to create the provider-bound client with endpoint, key, deployment, and API version.
+// - GenericOpenAIChatDriver, the base class that provides the generic chat flow and interfaces.
+// - EModel to drive deployment selection.
+// - InvalidStateError to signal missing environment configuration.
+// - EChatRole, IChatMessage, and IFunction are imported from ./entry but not used directly here.
+// ===End StrongAI Generated Comment===
+
 import { AzureOpenAI } from 'openai';
 import { EChatRole, InvalidStateError } from './entry';
 import { EModel, IChatMessage, IFunction } from './entry';

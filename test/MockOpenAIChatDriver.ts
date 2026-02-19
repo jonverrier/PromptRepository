@@ -11,6 +11,14 @@ import { GenericOpenAIChatDriver } from '../src/Chat.GenericOpenAI';
 /**
  * Mock class for testing exponential backoff
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module provides a mock chat driver for testing retry logic, exponential backoff, and error handling without calling a real API. It exports MockOpenAIChatDriver, which extends GenericOpenAIChatDriver but overrides network calls with in-memory stubs.
+// 
+// The class simulates the OpenAI Responses API via an internal openai.responses object. The create method can be configured to fail with 429 errors a set number of times, then return either a JSON-formatted text payload or a simple success string. The stream method yields two text delta events to mimic streaming output. setShouldFail controls failure behavior and counters; getFailCount exposes how many retries occurred. setMockCreate lets tests inject a custom implementation. getConstrainedModelResponse wraps a mocked create call with retryWithExponentialBackoff and parses JSON to a typed result, falling back to a provided default on parse or content issues.
+// 
+// Key imports include GenericOpenAIChatDriver for base behavior, enums and types from entry (EModel, IChatMessage, IFunction, EVerbosity, EModelProvider), and retryWithExponentialBackoff from DriverHelpers. The driver reports provider name (OpenAI or Azure OpenAI) and uses a fixed mock model.
+// ===End StrongAI Generated Comment===
 export class MockOpenAIChatDriver extends GenericOpenAIChatDriver {
    private failCount = 0;
    private shouldFail = false;

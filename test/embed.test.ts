@@ -6,6 +6,19 @@
 
 // Copyright (c) 2025 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260219)===
+// This module is a Mocha test suite for the embedding subsystem. It verifies that embedding drivers work across providers (OpenAI and Azure OpenAI), that embeddings are returned for varied inputs, that identical texts yield high cosine similarity, and that different texts produce distinct vectors. It also checks driver metadata such as deploymentName, drivenModelType, and provider, and compares output sizes between “large” and “mini” models.
+// 
+// It exercises exponential backoff behavior on 429 rate-limit errors using a mock driver, ensuring retries with increasing delays and a capped retry count. It asserts no retries for non-retryable cases, including 400 content filter, safety, and invalid_request errors, 403 forbidden, and malformed or empty embedding responses. Factory creation is validated for both providers and model sizes, including distinct deployment names. CosineSimilarity is tested for correctness, edge cases, input validation, performance, and numerical stability.
+// 
+// Key imports:
+// - EmbeddingDriverFactory to construct provider- and size-specific drivers.
+// - EModelProvider and EModel enums to select provider and model size.
+// - CosineSimilarity utility for vector similarity checks.
+// - OpenAIModelEmbeddingDriver as the base for the mock.
+// - Mocha (describe, it, beforeEach, afterEach) and expect for testing.
+// ===End StrongAI Generated Comment===
+
 import { expect } from 'expect';
 import { describe, it, beforeEach, afterEach } from 'mocha';
 import { EmbeddingDriverFactory, EModelProvider, EModel, CosineSimilarity } from '../src/entry';

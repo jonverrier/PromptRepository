@@ -25,6 +25,14 @@ import { CHAT_WITH_ATTACHMENT_TEST_PROVIDERS, createChatWithAttachmentDrivers, T
  * Returns the appropriate timeout for a test based on the provider.
  * kGoogleGemini tests use 120s timeout, others use the default TEST_TIMEOUT_MS.
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module contains end-to-end integration tests that verify large language models can understand injected file content and structured table data using the regular chat APIs. It targets multiple providers and requires real API keys (OpenAI, Azure OpenAI, Google Gemini). Tests inject file text directly into prompts using a <file></file> marker and also pass table JSON to attachment-aware drivers.
+// 
+// The module builds chat drivers per provider via ChatDriverFactory and createChatWithAttachmentDrivers from the test config. It selects providers using CHAT_WITH_ATTACHMENT_TEST_PROVIDERS and adjusts timeouts with getTestTimeout, giving Google Gemini a longer limit. It uses driver.getModelResponse to assert comprehension of small text files and a generated 10-page (~20KB) markdown document. Helpers include extractFileContent (Buffer or string), injectFileIntoPrompt, createTestFile, generate10PageMarkdown, and cleanup in an after hook.
+// 
+// Table JSON tests construct realistic and simple IChatTableJson payloads (e.g., financial report tables) and assert numeric reasoning and selection. Key imports: mocha’s describe/it/after, expect assertions, fs/path/os for files, and SDK symbols ChatDriverFactory, EModelProvider, EModel, EVerbosity, ChatWithAttachmentDriverFactory, IChatTableJson.
+// ===End StrongAI Generated Comment===
 const getTestTimeout = (provider: EModelProvider): number => {
    return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
 };

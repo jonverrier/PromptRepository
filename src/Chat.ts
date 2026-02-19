@@ -21,6 +21,31 @@ import { IChatDriver, EModel, IChatMessage, IFunction } from './entry';
  * This class is provider-agnostic and contains no OpenAI-specific code.
  * Provider-specific implementations should inherit from this class.
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module defines a provider-agnostic base class for LLM chat integrations. It supplies a common interface and utilities that concrete drivers extend to talk to specific providers.
+// 
+// Main export: ChatDriver, an abstract class implementing IChatDriver. It is constructed with a modelType (EModel). Subclasses must implement getProviderName and getModelName to identify the provider and concrete model.
+// 
+// Core APIs that subclasses implement:
+// - getModelResponse: returns a full response as a string.
+// - getStreamedModelResponse: returns tokens via AsyncIterator<string>.
+// - getModelResponseWithForcedTools and getStreamedModelResponseWithForcedTools: same as above but require tool/function usage.
+// - getConstrainedModelResponse: returns a typed result validated against a JSON schema, with a caller-supplied default.
+// 
+// Utilities:
+// - createUserMessage builds an IChatMessage with role, content, timestamp, id, and a CSS-friendly class name.
+// - buildMessageArray merges optional history with a new user message.
+// 
+// Key dependencies from ./entry:
+// - EChatRole labels message roles.
+// - EVerbosity influences response detail.
+// - IChatDriver defines the driver contract.
+// - EModel identifies model families.
+// - IChatMessage describes chat messages.
+// - IFunction represents callable tools available to the model.
+// ===End StrongAI Generated Comment===
+
 export abstract class ChatDriver implements IChatDriver {
    constructor(protected modelType: EModel) {}
 

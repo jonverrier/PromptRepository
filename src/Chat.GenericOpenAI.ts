@@ -16,6 +16,27 @@ import { ChatDriver } from './Chat';
  * OpenAI-specific tool call interface
  * Used internally for OpenAI API communication
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// Provides a shared base for OpenAI‑compatible chat drivers (OpenAI and Azure OpenAI) using the Responses API. It centralizes auth, request shaping, tool/function calling, streaming, constrained JSON output, and robust retry/error handling.
+// 
+// Main export: GenericOpenAIChatDriver, an abstract class extending ChatDriver. Key methods:
+// - createResponseConfig and createResponsesInputConfig build Responses API payloads, including verbosity mapping and GPT‑5 reasoning effort.
+// - convertMessagesToInputList adapts history to input_list format.
+// - handleFunctionCall, processToolCalls, and processOpenAIToolCalls execute registered functions, validate args, and return function_call_output items.
+// - extractTextFromOutput normalizes text extraction from varied output shapes.
+// - handleToolUseLoop and handleToolUseLoopWithForcedTools manage multi‑tool flows; the latter encourages parallel tool calls.
+// - getModelResponse and getModelResponseWithForcedTools perform non‑streaming calls with retries.
+// - getStreamedModelResponse and getStreamedModelResponseWithForcedTools provide streaming or simulated chunking.
+// - getConstrainedModelResponse enforces a JSON schema and handles parsing fallbacks.
+// - handleToolUseWithResponsesAPI follows the official loop for function_call and function_call_output.
+// 
+// Relies on:
+// - OpenAI SDK for responses.create.
+// - Enums/interfaces and errors from ./entry (EChatRole, EVerbosity, IChatMessage, IFunction, IFunctionCall, EModel, ConnectionError, InvalidOperationError).
+// - retryWithExponentialBackoff and MAX_RETRIES from DriverHelpers.
+// ===End StrongAI Generated Comment===
+
 interface IOpenAIToolCall {
    id: string;
    type: 'function';

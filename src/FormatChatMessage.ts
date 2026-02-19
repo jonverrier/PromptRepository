@@ -17,6 +17,17 @@ import { EChatRole, IChatMessage } from "./entry";
  * @param message The chat message to render
  * @returns Formatted string representation of the message
  */
+
+// ===Start StrongAI Generated Comment (20260219)===
+// This module formats chat messages and their timestamps into concise, human-readable text. It exposes two functions.
+// 
+// renderChatMessageAsText builds a single text block for a chat line. It labels the originator as “User” or “Assistant” based on the EChatRole and appends the message content. It prefixes the line with a formatted timestamp in brackets and adds trailing newlines for readability. It always requests full date context from the timestamp formatter.
+// 
+// formatChatMessageTimestamp converts a Date into a friendly string. It detects Today and Yesterday relative to the current system date, otherwise shows a long weekday, two-digit day, and full month (en-US). It always appends the local time in HH:MM using two-digit hour and minute. When fullDate is true, Today and Yesterday include the full date in parentheses; otherwise only the relative label is shown. It normalizes the input with new Date(...) to tolerate Date-like inputs.
+// 
+// The module relies on EChatRole and IChatMessage from ./entry to interpret roles and ensure message shape.
+// ===End StrongAI Generated Comment===
+
 export function renderChatMessageAsText(message: IChatMessage): string {
    const originator = message.role === EChatRole.kUser ? "User" : "Assistant";
    const timestamp = formatChatMessageTimestamp(new Date(message.timestamp), true);
