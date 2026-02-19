@@ -436,6 +436,8 @@ npm install @google/generative-ai
 
 1. Install the package from GitHub Packages:
 
+Both this package and its dependency `@jonverrier/assistant-common` are **public** packages. No GitHub token is required for installation.
+
 First, configure npm to use GitHub Packages for the `@jonverrier` scope by creating or updating your `.npmrc` file:
 
 ```bash
@@ -448,16 +450,7 @@ Then install the package:
 npm install @jonverrier/prompt-repository
 ```
 
-**Note**: You'll need a GitHub personal access token with `read:packages` permission to install packages from GitHub Packages. Set it as an environment variable:
-
-```bash
-export NODE_AUTH_TOKEN=your_github_token_here
-```
-
-Or add it to your `.npmrc` file:
-```
-//npm.pkg.github.com/:_authToken=your_github_token_here
-```
+**Optional**: If you also use private `@jonverrier` packages, you'll need a GitHub personal access token with `read:packages` permission. Set it as an environment variable (`NODE_AUTH_TOKEN`) or add it to your `.npmrc` file.
 
 Ensure you have set your API keys as environment variables:
 - `OPENAI_API_KEY` - Required for OpenAI provider
