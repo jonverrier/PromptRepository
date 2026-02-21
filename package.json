@@ -48,7 +48,7 @@
     "@google/generative-ai": "^0.21.0"
   },
   "dependencies": {
-    "@jonverrier/assistant-common": "^0.2.4"
+    "@jonverrier/assistant-common": "^0.2.5"
   },
   "devDependencies": {
     "@google/generative-ai": "^0.21.0",
