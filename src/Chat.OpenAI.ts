@@ -22,7 +22,7 @@ import { GenericOpenAIChatDriver } from './Chat.GenericOpenAI';
  */
 
 // ===Start StrongAI Generated Comment (20260219)===
-// This module provides the OpenAI-backed chat driver used by the project’s chat framework. It specializes the generic OpenAI driver with concrete configuration for OpenAI’s GPT-5 family and wires up the OpenAI API client. The main export is OpenAIChatDriver, a subclass of GenericOpenAIChatDriver. Construct it with an EModel to choose the model size: large maps to gpt-5, otherwise gpt-5-mini. The driver enforces that an OpenAI API key is present in the OPENAI_API_KEY environment variable and throws InvalidStateError if it is missing. On creation, it initializes an OpenAI client instance with that key. It supplies the selected model name to the base class and indicates that tool messages are supported, enabling tool-calling via the Responses API.
+// This module provides the OpenAI-backed chat driver used by the project’s chat framework. It specializes the generic OpenAI driver with concrete configuration for OpenAI’s GPT-5 family and wires up the OpenAI API client. The main export is OpenAIChatDriver, a subclass of GenericOpenAIChatDriver. Construct it with an EModel to choose the model size: large maps to gpt-5.2, otherwise gpt-5-mini (no gpt-5.2-mini exists). The driver enforces that an OpenAI API key is present in the OPENAI_API_KEY environment variable and throws InvalidStateError if it is missing. On creation, it initializes an OpenAI client instance with that key. It supplies the selected model name to the base class and indicates that tool messages are supported, enabling tool-calling via the Responses API.
 // 
 // Key dependencies include:
 // - OpenAI from the openai package for API calls.
@@ -38,7 +38,7 @@ export class OpenAIChatDriver extends GenericOpenAIChatDriver {
 
    constructor(modelType: EModel) {
       super(modelType);
-      this.model = modelType === EModel.kLarge ? 'gpt-5' : 'gpt-5-mini';
+      this.model = modelType === EModel.kLarge ? 'gpt-5.2' : 'gpt-5-mini';
 
       if (!process.env.OPENAI_API_KEY) {
          throw new InvalidStateError('OPENAI_API_KEY environment variable is not set');
