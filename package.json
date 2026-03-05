@@ -43,12 +43,12 @@
     "cover": "nyc --reporter=html --reporter=text --reporter=lcov --extension .ts --exclude \"**/*.test.ts\" --exclude \"test/**\" npm run test",
     "cover:json": "nyc --reporter=json --report-dir=.nyc_output --extension .ts --exclude \"**/*.test.ts\" --exclude \"test/**\" npm run test"
   },
-  "peerDependencies": {
-    "openai": "^6.8.1",
-    "@google/generative-ai": "^0.21.0"
-  },
   "dependencies": {
     "@jonverrier/assistant-common": "^0.2.5"
+  },
+  "peerDependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "openai": "^6.8.1"
   },
   "devDependencies": {
     "@google/generative-ai": "^0.21.0",
