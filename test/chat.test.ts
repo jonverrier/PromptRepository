@@ -8,7 +8,8 @@
 
 import { expect } from 'expect';
 import { describe, it, beforeEach, afterEach } from 'mocha';
-import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, TEST_TARGET_SUPPORTS_VERBOSITY, GoogleGeminiChatDriver } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, GoogleGeminiChatDriver } from '../src/entry';
+import { TEST_TARGET_SUPPORTS_VERBOSITY } from './ChatTestConfig';
 import { GenericOpenAIChatDriver } from '../src/Chat.GenericOpenAI';
 import { MockOpenAIChatDriver } from './MockOpenAIChatDriver';
 import { MockGeminiChatDriver } from './MockGeminiChatDriver';
