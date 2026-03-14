@@ -157,9 +157,17 @@ export interface IPromptRepository {
    expandUserPrompt(prompt: IPrompt, params: { [key: string]: string | undefined }): string;   
 }
 
+// --- Optional identity for storage/retrieval (used by IChatMessage and backend persistence) ---
+
+/**
+ * Base type for entities that carry optional storage identity.
+ * Used by IChatMessage and by backend persistence layers; not required for basic prompt/chat usage.
+ * @property id - Optional id; undefined before the entity has been persisted
+ * @property className - Discriminator for the entity type
+ */
 export interface IQueryReturnable {
-   id: string | undefined;  // The id of the object. Can be undefined if the object has not yet ben saved to DB
-   className: string;       // The class name of the object.   
+   id: string | undefined;
+   className: string;
 }
 
 /**
@@ -209,56 +217,6 @@ export interface IChatMessage extends IQueryReturnable {
 }
 
 export const ChatMessageClassName = "IChatMessage";
-
-/**
- * A data structure for a user session core details.
- * Used to specify the user's session core details for a chat session
- * This is the minimum data required to identify a user session, exchnaged betwen the client and server
- */
-export interface IUserSessionSummary {
-   sessionId: string;
-   email: string
-};
-
-/**
- * A request to the chat API.
- */
-export interface IChatMessageRequest {
-   sessionSummary: IUserSessionSummary;
-   limit: number;
-   createdAfter?: string;
-   continuation?: string | undefined;
-}
-
-/**
- * A response from the chat API.
- */
-export interface IChatMessageResponse {
-   records: IChatMessage[];
-   continuation?: string | undefined;
-}
-
-/**
- * Request parameters for archiving chat messages.
- * Used to specify which messages should be archived based on various criteria.
- */
-export interface IArchiveMessageRequest {
-
-   limit: number;            // Maximum number of records to archive
-   sessionSummary: IUserSessionSummary; // Session identifier to scope the archive operation
-   createdAfter: string;     // Only archive records created after this date
-   createdBefore: string;    // Only archive records created before this date
-   continuation: string | undefined;  // Token for paginating through results
-}
-
-/**
- * A response from the archive API.
- */
-export interface IArchiveMessageResponse {
-
-   updatedCount: number;              // Number of records updated
-   continuation: string | undefined;  // Continuation token for pagination
-}
 
 /**
  * Interface for chat driver - has a number of concrete sub-classes, each of which implements the methods below
