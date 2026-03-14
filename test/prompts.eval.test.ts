@@ -12,9 +12,9 @@
 
 import { expect } from 'expect';
 import { describe, it } from 'mocha';
-import { IPrompt, IPromptRepository, EModel, EVerbosity, TEST_TARGET_SUPPORTS_VERBOSITY, EModelProvider } from '../src/entry';
+import { IPrompt, IPromptRepository, EModel, EVerbosity, EModelProvider } from '../src/entry';
 import { PromptInMemoryRepository } from '../src/PromptRepository';
-import { CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS } from './ChatTestConfig';
+import { CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS, TEST_TARGET_SUPPORTS_VERBOSITY } from './ChatTestConfig';
 import prompts from './template-prompt.json';
 
 const typedPrompts = prompts as IPrompt[];

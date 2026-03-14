@@ -5,8 +5,50 @@ A framework for managing, testing, and evaluating Large Language Model (LLM) pro
 The repo also demonstrates a technique I think will become much more common - bundling a framework with prompts to generate code to use the framework.
 
 Inspired by two main things:
-- [Anthropic's guidance on writing applications](https://www.anthropic.com/engineering/building-effective-agents) - which is in essence, 'keep it simple'. Use the basic API for as long as it works, and don't leap straight to heavy frameworks like LangChain, Rivet etc. "We suggest that developers start by using LLM APIs directly: many patterns can be implemented in a few lines of code.". The frameworks are great, but can divert you into learning the framework rather than learning more directly about how to productively use the LLM. 
+- [Anthropic's guidance on writing applications](https://www.anthropic.com/engineering/building-effective-agents) - which is in essence, 'keep it simple'. Use the basic API for as long as it works, and don't leap straight to heavy frameworks like LangChain, Rivet etc. "We suggest that developers start by using LLM APIs directly: many patterns can be implemented in a few lines of code.". The frameworks are great, but can divert you into learning the framework rather than learning more directly about how to productively use the LLM.
 - [Chris Benson/Practical AI's work](https://practicalai.fm/295) on the equivalent of Unit Tests for Prompts. This gives you a solid base to build from as you build apps which contain many embeded prompts & target responses for which you need to assure quality.
+
+## Quick Start
+
+1. Configure npm to use GitHub Packages for `@jonverrier` packages:
+   ```bash
+   echo "@jonverrier:registry=https://npm.pkg.github.com" >> ~/.npmrc
+   ```
+
+2. Install the package and peer dependencies:
+   ```bash
+   npm install @jonverrier/prompt-repository openai
+   ```
+
+3. Define a prompt and call the model:
+   ```typescript
+   import { PromptInMemoryRepository, ChatDriverFactory, EModel, EModelProvider, EVerbosity, IPrompt } from '@jonverrier/prompt-repository';
+
+   // Define prompts directly in code (no file needed)
+   const prompts: IPrompt[] = [{
+     id: "hello-001",
+     version: "1.0.0",
+     name: "Hello",
+     userPrompt: "Say hello to {NAME} in one sentence."
+   }];
+
+   const repo = new PromptInMemoryRepository(prompts);
+   const prompt = repo.getPrompt("hello-001")!;
+   const userMessage = repo.expandUserPrompt(prompt, { NAME: "world" });
+
+   const chatDriver = new ChatDriverFactory().create(EModel.kLarge, EModelProvider.kOpenAI);
+   const response = await chatDriver.getModelResponse(undefined, userMessage, EVerbosity.kMedium);
+   console.log(response); // "Hello, world!"
+   ```
+
+See the [Installation](#installation) section for full setup details, including API key configuration and loading prompts from JSON files.
+
+## Architecture
+
+The library is designed as a thin, provider-agnostic layer over OpenAI, Azure OpenAI, and Google Gemini. Two C4 diagrams explain the structure:
+
+- [Context diagram](src/README.StrongAI.Context.md) — shows how your application fits into the overall system
+- [Component diagram](src/README.StrongAI.Component.md) — shows the internal modules and how they relate
 
 ## Externalized Prompts - stored in JSON
 
@@ -61,8 +103,8 @@ TEST opposite_sentiment:
 The Eval prompt:
 ```code
 Given the following prompt: <prompt>{prompt}</prompt>, generate a set of evaluations for the prompt in
-{language} using the {framework} framework. Use the PromptInMemoryRespository API to load the prompt and
-expand varables. Use the getModelResponse API to call the model. You should include three cases:
+{language} using the {framework} framework. Use the PromptInMemoryRepository API to load the prompt and
+expand variables. Use the getModelResponse API to call the model. You should include three cases:
 1) Very simple input and output containing known content.
 2) A small change to the input that should return the same output.
 3) A small change to the input that should produce different output.
@@ -436,7 +478,9 @@ npm install @google/generative-ai
 
 1. Install the package from GitHub Packages:
 
-Both this package and its dependency `@jonverrier/assistant-common` are **public** packages. No GitHub token is required for installation.
+Both this package and its dependency [`@jonverrier/assistant-common`](https://github.com/jonverrier/assistant-common) are **public** packages. No GitHub token is required for installation.
+
+> **Note on `@jonverrier/assistant-common`**: This peer package is installed automatically as a dependency. It provides shared error types (`InvalidParameterError`, `InvalidOperationError`, etc.) and utility functions (`throwIfUndefined`, `sanitizeInputString`, etc.) that are re-exported from `@jonverrier/prompt-repository`. You do not need to install it separately, but if you see type errors referencing these names, that is where they originate.
 
 First, configure npm to use GitHub Packages for the `@jonverrier` scope by creating or updating your `.npmrc` file:
 
@@ -459,8 +503,28 @@ Ensure you have set your API keys as environment variables:
 
 **Note**: You only need to set the API keys for the providers you plan to use. The package will work with any combination of providers.
 
+### EVerbosity
 
-2. Create a JSON file containing your prompts
+Every `getModelResponse` call accepts a `verbosity: EVerbosity` parameter. This is passed to the model as a hint for how long its response should be:
+
+| Value | When to use |
+|---|---|
+| `EVerbosity.kLow` | Short, concise answers (one line or a few words) |
+| `EVerbosity.kMedium` | Normal-length responses — good default for most use cases |
+| `EVerbosity.kHigh` | Detailed, comprehensive answers |
+
+If in doubt, use `EVerbosity.kMedium`.
+
+### Choosing a Prompt Repository
+
+There are two implementations of `IPromptRepository`:
+
+- **`PromptInMemoryRepository`** — prompts are defined as TypeScript objects and bundled into your application at build time. Best for prompts that are part of your codebase and versioned alongside it.
+- **`PromptFileRepository`** — prompts are loaded from a `.json` file at runtime. Best when you want to update or swap prompts without redeploying your application.
+
+Both expose the same `getPrompt`, `expandSystemPrompt`, and `expandUserPrompt` API, so you can switch between them without changing the rest of your code.
+
+2. Create a JSON file containing your prompts (skip this step if using `PromptInMemoryRepository`)
 
 ```json
 [{
@@ -528,15 +592,40 @@ expect(result2).toContain("The user is a beginner to French");
 
 ## Usage - Eval Prompts
 
-for Cursor users:
-- Select your prompt and add it to the context.
-- Add your codebase to the context.
-- Cut and Paste the prompt. When Cursor supports MCP prompts I envisage moving the prompt to a tool. 
+The eval prompts (`PromptEvalGenerator`) and test prompts (`PromptUnitTestGenerator`) are stored in [`src/Prompts.json`](src/Prompts.json). You pass them a target prompt plus `{language}` and `{framework}` parameters to generate eval or unit-test code.
 
-You should see something like this: 
+### Using programmatically
+
+```typescript
+import { PromptFileRepository, ChatDriverFactory, EModel, EModelProvider, EVerbosity } from '@jonverrier/prompt-repository';
+import * as path from 'path';
+
+const repo = new PromptFileRepository(path.join(__dirname, 'node_modules/@jonverrier/prompt-repository/src/Prompts.json'));
+const evalPrompt = repo.getPrompt("15a62a94-b13b-46b7-b88a-a7f041b1f499")!; // PromptEvalGenerator
+
+const myAppPrompt = "Given some text, classify it as POSITIVE or NEGATIVE.";
+
+const userMessage = repo.expandUserPrompt(evalPrompt, {
+  prompt: myAppPrompt,
+  language: "typescript",
+  framework: "mocha"
+});
+
+const chatDriver = new ChatDriverFactory().create(EModel.kLarge, EModelProvider.kOpenAI);
+const evalCode = await chatDriver.getModelResponse(evalPrompt.systemPrompt, userMessage, EVerbosity.kHigh);
+console.log(evalCode); // Generated TypeScript eval code
+```
+
+### Using with Cursor (or any AI-enabled editor)
+
+- Open `src/Prompts.json` and copy the `userPrompt` field for the prompt you want.
+- In your editor's AI chat, paste the prompt text and fill in the `{prompt}`, `{language}`, and `{framework}` placeholders with your actual values.
+- Add your application's source files to the context so the generated code uses correct imports.
+
+You should see something like this:
 - ![Cursor Example](Cursor-Prompt-Example.PNG)
 
-Run the prompt & Cursor should generate a decent set of Unit-test level Evals for you. 
+When Cursor adds MCP prompt support, the plan is to surface these as native MCP tools.
 
 ## Testing Strategy
 

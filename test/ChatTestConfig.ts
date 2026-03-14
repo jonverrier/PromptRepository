@@ -47,5 +47,12 @@ export function createChatDrivers(model: EModel = EModel.kLarge): (IChatDriver |
    });
 }
 
+/**
+ * Global test configuration flag to control verbosity parameter usage.
+ * Set to false when testing with models that don't support EVerbosity.kLow/kHigh (e.g., GPT-4).
+ * Set to true when testing with models that support all verbosity levels.
+ */
+export const TEST_TARGET_SUPPORTS_VERBOSITY = false;
+
 export { TEST_TIMEOUT_MS };
 
