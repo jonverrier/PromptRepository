@@ -1,6 +1,6 @@
 {
   "name": "@jonverrier/prompt-repository",
-  "version": "0.3.18",
+  "version": "0.3.19",
   "description": "Managing Prompts and standardised Unit Evals ",
   "main": "dist/src/entry.js",
   "types": "dist/src/entry.d.ts",
@@ -44,7 +44,7 @@
     "cover:json": "nyc --reporter=json --report-dir=.nyc_output --extension .ts --exclude \"**/*.test.ts\" --exclude \"test/**\" npm run test"
   },
   "dependencies": {
-    "@jonverrier/assistant-common": "^0.2.5"
+    "@jonverrier/assistant-common": "^0.3.1"
   },
   "peerDependencies": {
     "@google/generative-ai": "^0.21.0",
