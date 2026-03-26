@@ -1,4 +1,4 @@
-# PromptRepository Cursor Rules
+# PromptRepository Agent Notes
 
 > **Policy inheritance:** Follow `../AGENTS.md` for language, naming, testing, and security conventions. This document narrows the focus to the prompt/driver library.
 
