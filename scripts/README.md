@@ -1,12 +1,14 @@
-# Local Development Scripts
+# Exceptional Local Development Scripts
 
-These scripts help you work with local versions of dependencies during development while keeping GitHub Packages references in `package.json`.
+These scripts exist for temporary local-link sessions while keeping GitHub Packages references in `package.json`. They are not the default local development workflow.
+
+By default, build, test, publish `AssistantCommon` through GitHub Packages, then update `PromptRepository` to consume the published version. Use local links only when explicitly directed by the lead architect, or by the user when an AI tool is doing the work.
 
 ## npm link for AssistantCommon
 
-### Link Local Version (for development)
+### Link Local Version (exception only)
 
-When you want to develop both `PromptRepository` and `AssistantCommon` together:
+When explicitly directed to develop both `PromptRepository` and `AssistantCommon` with local links:
 
 ```bash
 npm run link-local
@@ -18,9 +20,9 @@ npm run link-local
 3. Changes in `../AssistantCommon` are immediately available without rebuilding
 
 **Use when:**
-- You're actively developing both packages
-- You want instant feedback on AssistantCommon changes
-- Testing changes before publishing
+- The lead architect explicitly requested linked local development
+- The user explicitly requested linked local development for AI-tooling work
+- You will unlink before merge, publish, release validation, or CI handoff
 
 ### Check Link Status
 
@@ -36,7 +38,7 @@ npm run link-status
 
 ### Unlink (restore GitHub package)
 
-When you're done with local development:
+When the exceptional local-link session is done:
 
 ```bash
 npm run unlink-local
@@ -48,9 +50,10 @@ npm run unlink-local
 3. Restores to the version specified in `package.json`
 
 **Use when:**
-- Finished development on both packages
+- Finished the approved local-link session
 - Ready to test with published versions
 - **Before merging to main branch**
+- **Before publishing or release validation**
 - **Before pushing to CI/CD**
 
 ## Branch Strategy
@@ -61,12 +64,13 @@ npm run unlink-local
 - ✅ **Reproducible** - Same dependencies everywhere
 
 ### Development Branches
-- 🔗 **Can use links** - For active development
-- ✅ **Unlink before merging** - Ensure main stays clean
+- **Default to GitHub Packages** - Publish dependencies after the normal checks and consume the published version
+- **Links by exception only** - Use links only under explicit direction
+- **Unlink before merging** - Ensure main stays clean
 
 ## Development Workflow
 
-### Typical workflow when changing both packages:
+### Default workflow when changing both packages:
 
 ```bash
 # 1. Create/checkout development branch
@@ -74,33 +78,25 @@ git checkout -b feature/my-feature
 # or
 git checkout develop
 
-# 2. Link local for development
-npm run link-local
-
-# 3. Make changes in ../AssistantCommon
+# 2. Make changes in ../AssistantCommon
 cd ../AssistantCommon
 # edit files...
-npm run build  # if needed
+npm run build
+npm run test:ci
+# publish the approved version through GitHub Packages
 cd ../PromptRepository
 
-# 4. Changes are immediately available
+# 3. Update PromptRepository to the published AssistantCommon version
+npm install
 npm run build
 npm test
 
-# 5. When ready to merge to main:
-#    - Unlink first
-npm run unlink-local
-
-#    - Verify it works with published version
-npm run build
-npm test
-
-#    - Commit and push
+# 4. Commit and push
 git commit -am "My changes"
 git push
-
-#    - Merge to main (which will use GitHub Packages)
 ```
+
+For an explicitly approved local-link session, run `npm run link-local`, do the short feedback loop, then run `npm run unlink-local` and verify `npm run link-status` before merge, publish, or release validation.
 
 ### Pre-commit Checklist
 
@@ -136,7 +132,7 @@ This installs:
 - **pre-commit hook**: Blocks commits to main if packages are linked
 - **pre-push hook**: Blocks pushes to main if packages are linked
 
-These hooks only run on `main`/`master` branches - development branches are unaffected.
+These hooks only run on `main`/`master` branches - development branches still require policy discipline.
 
 ### Manual Verification
 
@@ -162,17 +158,17 @@ npm run pre-push-check   # Check before pushing
 
 ## Important Notes
 
-⚠️ **The link is local only** - CI/CD always uses the GitHub package from `package.json`
+**The link is local only** - CI/CD always uses the GitHub package from `package.json`
 
-⚠️ **Remember to unlink** - If you forget, your local builds work but CI/CD might fail if you haven't published AssistantCommon changes
+**Remember to unlink** - If you forget, your local builds can pass while CI/CD fails because dependency changes were not published
 
-✅ **package.json never changes** - The GitHub package reference stays clean, no merge conflicts
+**package.json never changes** - The GitHub package reference stays clean, no merge conflicts
 
-✅ **node_modules is gitignored** - Symlinks never get committed, so each branch can have different link states
+**node_modules is gitignored** - Symlinks never get committed, so each branch can have different link states
 
-✅ **Main branch discipline** - Always keep main unlinked to ensure it's always buildable
+**Main branch discipline** - Always keep main unlinked to ensure it's always buildable
 
-✅ **Enforcement** - Git hooks prevent accidentally committing/pushing to main with links
+**Enforcement** - Git hooks prevent accidentally committing/pushing to main with links
 
 ## Troubleshooting
 

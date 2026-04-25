@@ -21,4 +21,5 @@
 ## Build & Distribution
 - `npm run build` must emit CJS + `.d.ts` artifacts in `dist/`; wipe the folder before rebuilding to avoid stale files.
 - Maintain semver discipline: prompt schema changes that break consumers require a minor/major bump as appropriate.
-- Document linking instructions (`npm run link-local`) so downstream packages can test against unpublished prompt updates.
+- Default downstream testing to published GitHub Packages: build, test, publish this package, then update consumers to the published version.
+- Document `npm run link-local` only as an exceptional workflow that requires explicit direction from the lead architect, or from the user when an AI tool is doing the work.
