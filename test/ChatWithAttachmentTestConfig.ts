@@ -32,7 +32,8 @@ const TEST_TIMEOUT_MS = 60000; // 60 second timeout for all tests
 export const CHAT_WITH_ATTACHMENT_TEST_PROVIDERS: EModelProvider[] = [
    // EModelProvider.kOpenAI,
    // EModelProvider.kAzureOpenAI,
-   EModelProvider.kGoogleGemini
+   EModelProvider.kGoogleGemini,
+   EModelProvider.kAnthropic
 ];
 
 /**

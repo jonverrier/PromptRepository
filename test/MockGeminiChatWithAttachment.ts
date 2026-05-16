@@ -5,7 +5,7 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
-import { EModel, EVerbosity } from '../src/entry';
+import { EModel, EVerbosity, InvalidOperationError } from '../src/entry';
 import { GoogleGeminiChatWithAttachment } from '../src/ChatWithAttachment.GoogleGemini';
 import { ChatAttachmentInput, IChatTableJson } from '../src/ChatWithAttachment';
 
@@ -48,7 +48,12 @@ export class MockGeminiChatWithAttachment extends GoogleGeminiChatWithAttachment
          const model = (this as any).genAI.getGenerativeModel({ model: (this as any).modelName });
          const parts = (this as any).buildParts(systemPrompt, userPrompt, attachment, tableJson);
          const result = await this.mockGenerateContent({ contents: [{ role: 'user', parts }] });
-         return result.response?.text() || 'mock response';
+         const textFn = result.response?.text;
+         const text = textFn !== undefined ? textFn() : 'mock response';
+         if (!text) {
+            throw new InvalidOperationError('Google Gemini response did not include any text output');
+         }
+         return text;
       }
 
       // Otherwise call parent implementation

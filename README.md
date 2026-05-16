@@ -265,7 +265,17 @@ PromptRepository supports file attachments and structured table JSON data for en
 - **File Attachments**: Upload PDF files directly to OpenAI/Azure OpenAI for document analysis
 - **Table JSON**: Provide structured table data extracted from documents (e.g., via LlamaParse) for better fidelity than PDF extraction
 - **Automatic Cleanup**: Files are automatically deleted after use (configurable)
-- **Provider Support**: Works with both OpenAI and Azure OpenAI
+- **Provider Support**: OpenAI, Azure OpenAI, Google Gemini (inline), and Anthropic (inline)
+
+### Provider matrix (attachments)
+
+| Provider | File attachments | Table JSON | Notes |
+|----------|------------------|------------|-------|
+| OpenAI / Azure OpenAI | PDF via Files API + `file_id` references | Yes | Responses API; inline uploads deleted by default |
+| Google Gemini | Inline base64 only | Yes | No attachment references |
+| Anthropic | Inline PDF, images (`jpeg`/`png`/`gif`/`webp`), `text/*` documents | Yes | No Files API or attachment references in v1 |
+
+Production ingest today typically passes **`tableJson` only** (no file attachment). See `AssistantBuild/issues/promptrepository-chat-with-attachment-interface-cleanup.md`.
 
 ### File Attachments
 
@@ -453,7 +463,8 @@ await driver.deleteAttachment(reference.id);
 - **File Format**: Only PDF files are supported for attachments (Responses API limitation)
 - **Automatic Cleanup**: Files uploaded inline are deleted by default after use
 - **Table JSON Format**: Any valid JSON structure is supported (arrays, objects, nested structures)
-- **Provider Support**: Both OpenAI and Azure OpenAI implementations support attachments and table JSON
+- **Provider Support**: OpenAI, Azure OpenAI, Google Gemini, and Anthropic (`EModelProvider.kAnthropic`) support table JSON; file attachment behavior follows the provider matrix above
+- **Anthropic inline limits**: Large base64 PDFs count toward request size limits; prefer `tableJson` for heavy tabular ingest
 
 ## Installation
 
@@ -463,6 +474,7 @@ Before installing, ensure you have the required dependencies:
 
 - **For OpenAI/Azure OpenAI**: The `openai` package (peer dependency)
 - **For Google Gemini**: The `@google/generative-ai` package (peer dependency)
+- **For Anthropic**: The `@anthropic-ai/sdk` package (peer dependency)
 
 Install peer dependencies as needed:
 
@@ -472,6 +484,9 @@ npm install openai
 
 # For Google Gemini support
 npm install @google/generative-ai
+
+# For Anthropic support
+npm install @anthropic-ai/sdk
 ```
 
 ### Package Installation
@@ -500,6 +515,7 @@ Ensure you have set your API keys as environment variables:
 - `OPENAI_API_KEY` - Required for OpenAI provider
 - `AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT` - Required for Azure OpenAI provider
 - `GOOGLE_GEMINI_API_KEY` - Required for Google Gemini provider
+- `ANTHROPIC_API_KEY` - Required for Anthropic provider
 
 **Note**: You only need to set the API keys for the providers you plan to use. The package will work with any combination of providers.
 

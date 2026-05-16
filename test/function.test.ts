@@ -40,7 +40,9 @@ const chatDrivers = createChatDrivers(EModel.kLarge);
 // - CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS for provider matrix setup and timeouts, with special handling for Google Gemini.
 // ===End StrongAI Generated Comment===
 const getTestTimeout = (provider: EModelProvider): number => {
-   return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
+   return provider === EModelProvider.kGoogleGemini || provider === EModelProvider.kAnthropic
+      ? 120000
+      : TEST_TIMEOUT_MS;
 };
 
 // Mock data for different race series
