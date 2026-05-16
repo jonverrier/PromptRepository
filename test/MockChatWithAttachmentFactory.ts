@@ -9,6 +9,7 @@ import { EModelProvider, EModel, IChatWithAttachmentDriver } from '../src/entry'
 import { MockOpenAIChatWithAttachment } from './MockOpenAIChatWithAttachment';
 import { MockAzureOpenAIChatWithAttachment } from './MockAzureOpenAIChatWithAttachment';
 import { MockGeminiChatWithAttachment } from './MockGeminiChatWithAttachment';
+import { MockAnthropicChatWithAttachment } from './MockAnthropicChatWithAttachment';
 
 /**
  * Factory class for creating mock chat drivers with attachment support
@@ -32,6 +33,10 @@ export class MockChatWithAttachmentFactory {
       
       if (provider === EModelProvider.kGoogleGemini) {
          return new MockGeminiChatWithAttachment(model);
+      }
+
+      if (provider === EModelProvider.kAnthropic) {
+         return new MockAnthropicChatWithAttachment(model);
       }
       
       if (provider === EModelProvider.kDefault) {

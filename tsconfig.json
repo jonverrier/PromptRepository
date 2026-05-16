@@ -14,6 +14,7 @@
       "declaration": true,
       "declarationMap": true,
       "composite": true,
+      "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
       "resolveJsonModule": true,
       "esModuleInterop": true,
       "types": [
@@ -28,5 +29,11 @@
       "src/**/*.ts",
       "scripts/**/*.ts",
       "test/**/*.ts"
+   ],
+   "exclude": [
+      "dist",
+      "node_modules",
+      "coverage",
+      ".nyc_output"
    ]
 }

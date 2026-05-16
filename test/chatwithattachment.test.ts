@@ -17,6 +17,7 @@ import { MockChatWithAttachmentFactory } from './MockChatWithAttachmentFactory';
 import { MockOpenAIChatWithAttachment } from './MockOpenAIChatWithAttachment';
 import { MockAzureOpenAIChatWithAttachment } from './MockAzureOpenAIChatWithAttachment';
 import { MockGeminiChatWithAttachment } from './MockGeminiChatWithAttachment';
+import { MockAnthropicChatWithAttachment } from './MockAnthropicChatWithAttachment';
 import { CHAT_WITH_ATTACHMENT_TEST_PROVIDERS, createChatWithAttachmentDrivers, TEST_TIMEOUT_MS } from './ChatWithAttachmentTestConfig';
 
 // Create drivers for all providers outside describe blocks
@@ -160,6 +161,11 @@ providers.forEach((provider, index) => {
                   }
                };
             });
+         } else if (driver instanceof MockAnthropicChatWithAttachment) {
+            driver.setMockMessagesCreate(async (params) => {
+               capturedConfig = params;
+               return { content: [{ type: 'text', text: 'inline response' }] };
+            });
          }
 
       const attachment: IChatAttachmentContent = {
@@ -185,14 +191,22 @@ providers.forEach((provider, index) => {
             const inlineDataPart = capturedConfig.contents[0].parts.find((p: any) => p.inlineData);
             expect(inlineDataPart).toBeDefined();
             expect(inlineDataPart.inlineData.mimeType).toBe('text/plain');
+         } else if (driver instanceof MockAnthropicChatWithAttachment) {
+            expect(capturedConfig.system).toBe('system');
+            const content = capturedConfig.messages[0].content as Array<{ type: string; source?: { type: string; media_type?: string } }>;
+            const docBlock = content.find(b => b.type === 'document');
+            expect(docBlock).toBeDefined();
+            expect(docBlock?.source?.type).toBe('text');
+            expect(docBlock?.source?.media_type).toBe('text/plain');
          }
       });
 
-      // Note: Attachment references are only supported by OpenAI/Azure, not Gemini
-      if (provider === EModelProvider.kGoogleGemini) {
-         return; // Skip this test for Gemini
-      }
+      // Note: Attachment references are only supported by OpenAI/Azure, not Gemini or Anthropic
+      const supportsAttachmentReferences =
+         provider !== EModelProvider.kGoogleGemini &&
+         provider !== EModelProvider.kAnthropic;
 
+      if (supportsAttachmentReferences) {
       it('reuses existing attachment ids without uploading', async () => {
          let uploaded = false;
          let deletedId: string | undefined;
@@ -226,6 +240,7 @@ providers.forEach((provider, index) => {
          expect(config.input[0].content[1]).toEqual({ type: 'input_file', file_id: 'existing-id' });
          expect(deletedId).toBe('existing-id');
       });
+      }
 
       it('throws when no text output is returned', async () => {
          const driver = mockFactory.create(EModel.kLarge, provider);
@@ -235,6 +250,8 @@ providers.forEach((provider, index) => {
             driver.setMockGenerateContent(async () => ({
                response: { text: () => '' }
             }));
+         } else if (driver instanceof MockAnthropicChatWithAttachment) {
+            driver.setMockMessagesCreate(async () => ({ content: [] }));
          }
 
          await expect(driver.getModelResponse(undefined, 'prompt', EVerbosity.kHigh)).rejects.toThrow(/did not include any text/);
@@ -265,6 +282,11 @@ providers.forEach((provider, index) => {
                   response: { text: () => 'table response' }
                };
             });
+         } else if (driver instanceof MockAnthropicChatWithAttachment) {
+            driver.setMockMessagesCreate(async (params) => {
+               capturedConfig = params;
+               return { content: [{ type: 'text', text: 'table response' }] };
+            });
          }
 
          const result = await driver.getModelResponse(
@@ -290,6 +312,10 @@ providers.forEach((provider, index) => {
          } else if (driver instanceof MockGeminiChatWithAttachment) {
             // Gemini includes table JSON in the text part
             expect(capturedConfig.contents[0].parts[0].text).toContain('[Table Data: Test Tables]');
+         } else if (driver instanceof MockAnthropicChatWithAttachment) {
+            const textBlock = (capturedConfig.messages[0].content as Array<{ type: string; text?: string }>)[0];
+            expect(textBlock.text).toContain('[Table Data: Test Tables]');
+            expect(textBlock.text).toContain('Description: Test table data');
          }
       });
 
@@ -316,6 +342,11 @@ providers.forEach((provider, index) => {
                return {
                   response: { text: () => 'combined response' }
                };
+            });
+         } else if (driver instanceof MockAnthropicChatWithAttachment) {
+            driver.setMockMessagesCreate(async (params) => {
+               capturedConfig = params;
+               return { content: [{ type: 'text', text: 'combined response' }] };
             });
          }
 
@@ -346,6 +377,12 @@ providers.forEach((provider, index) => {
          } else if (driver instanceof MockGeminiChatWithAttachment) {
             // Gemini combines everything in parts
             expect(capturedConfig.contents[0].parts).toBeDefined();
+         } else if (driver instanceof MockAnthropicChatWithAttachment) {
+            expect(capturedConfig.system).toBe('System prompt');
+            const content = capturedConfig.messages[0].content as Array<{ type: string; text?: string; source?: { media_type?: string } }>;
+            expect(content[0].text).toContain('[Table Data: Financial Tables]');
+            expect(content[1].type).toBe('document');
+            expect(content[1].source?.media_type).toBe('application/pdf');
          }
       });
 
@@ -371,6 +408,11 @@ providers.forEach((provider, index) => {
                   response: { text: () => 'response' }
                };
             });
+         } else if (driver instanceof MockAnthropicChatWithAttachment) {
+            driver.setMockMessagesCreate(async (params) => {
+               capturedConfig = params;
+               return { content: [{ type: 'text', text: 'response' }] };
+            });
          }
 
          await driver.getModelResponse(undefined, 'prompt', EVerbosity.kMedium, undefined, tableJson);
@@ -384,6 +426,11 @@ providers.forEach((provider, index) => {
          } else if (driver instanceof MockGeminiChatWithAttachment) {
             expect(capturedConfig.contents[0].parts[0].text).toContain('[Table Data: Simple Table]');
             expect(capturedConfig.contents[0].parts[0].text).not.toContain('Description:');
+         } else if (driver instanceof MockAnthropicChatWithAttachment) {
+            const textBlock = (capturedConfig.messages[0].content as Array<{ text?: string }>)[0];
+            expect(textBlock.text).toContain('[Table Data: Simple Table]');
+            expect(textBlock.text).not.toContain('Description:');
+            expect(textBlock.text).toContain('"value": 42');
          }
       });
    });

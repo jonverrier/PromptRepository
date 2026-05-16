@@ -9,6 +9,7 @@ import { IChatWithAttachmentDriverFactory, IChatWithAttachmentDriver, EModelProv
 import { OpenAIChatWithAttachment } from './ChatWithAttachment.OpenAI';
 import { AzureOpenAIChatWithAttachment } from './ChatWithAttachment.AzureOpenAI';
 import { GoogleGeminiChatWithAttachment } from './ChatWithAttachment.GoogleGemini';
+import { AnthropicChatWithAttachment } from './ChatWithAttachment.Anthropic';
 
 /**
  * Factory class for creating chat drivers with attachment support
@@ -39,6 +40,10 @@ export class ChatWithAttachmentDriverFactory implements IChatWithAttachmentDrive
          // NOTE: GoogleGeminiChatWithAttachment always uses flash model (gemini-3-flash-preview) regardless of model parameter
          // This is due to rate limit constraints - pro model only allows 250 requests/day
          return new GoogleGeminiChatWithAttachment(model);
+      }
+
+      if (provider === EModelProvider.kAnthropic) {
+         return new AnthropicChatWithAttachment(model);
       }
       
       if (provider === EModelProvider.kDefault) {

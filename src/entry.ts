@@ -68,6 +68,7 @@ export { IChatWithAttachmentDriver, IChatAttachmentContent, IChatAttachmentRefer
 export { OpenAIChatWithAttachment } from "./ChatWithAttachment.OpenAI";
 export { AzureOpenAIChatWithAttachment } from "./ChatWithAttachment.AzureOpenAI";
 export { GoogleGeminiChatWithAttachment } from "./ChatWithAttachment.GoogleGemini";
+export { AnthropicChatWithAttachment } from "./ChatWithAttachment.Anthropic";
 export { ChatWithAttachmentDriverFactory } from "./ChatWithAttachmentFactory";
 
 /**

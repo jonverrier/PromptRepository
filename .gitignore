@@ -3,5 +3,6 @@
 .env
 node_modules
 dist
+tsconfig.tsbuildinfo
 coverage
 .nyc_output
