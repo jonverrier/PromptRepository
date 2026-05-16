@@ -6,11 +6,11 @@
  * executes prompts using the Responses API.
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// Implements an Azure OpenAI-backed chat driver that adds file-attachment support to a response-generation flow. It provides a concrete implementation of IChatWithAttachmentDriver named AzureOpenAIChatWithAttachment. The class selects an Azure deployment (gpt-4.1 or gpt-4.1-mini) based on EModel and uses the Azure OpenAI Responses API to produce text output with configurable verbosity mapped from EVerbosity. A client can be injected, or it constructs one from AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT, using apiVersion 2025-03-01-preview.
-// 
-// The driver accepts either attachment content or a pre-existing file reference. When given content, it uploads the file via the Files API (purpose: assistants), warns if not PDF (Responses input_file supports PDF), and supports multiple input data types by converting to File or Blob. It optionally deletes uploaded files after use. Prompts include optional system text, user text, an input_file reference, and a formatted table JSON block for structured data. It robustly extracts text from varied Responses output shapes and throws InvalidOperationError if none is found. Errors for invalid state or parameters use InvalidStateError and InvalidParameterError.
+// ===Start StrongAI Generated Comment (20260516)===
+// Implements an Azure OpenAI-backed chat driver that supports optional file attachments and structured table data. The module exports AzureOpenAIChatWithAttachment, a concrete implementation of IChatWithAttachmentDriver. It selects an Azure deployment name based on EModel (large vs mini), maps EVerbosity to the Responses API text verbosity settings, and calls the Azure OpenAI Responses API to generate a single text result. The driver accepts either raw attachment content (data plus filename/mimeType) or an existing uploaded file reference. When content is provided it uploads the file using the Files API (purpose: assistants), converts common input types (File, Blob, Buffer, ArrayBuffer, Uint8Array, string) into a File/Blob, and can delete the uploaded file after the request. Prompts are built from optional system text, required user text, an input_file reference, and an optional formatted JSON block for tables. It extracts text from several possible response output shapes and throws InvalidOperationError if none is found. Key dependencies include AzureOpenAI from the openai SDK and shared errors/enums from ./entry and types from ./ChatWithAttachment.
 // ===End StrongAI Generated Comment===
+
+
 
 import { AzureOpenAI } from 'openai';
 import { EVerbosity, EModel, InvalidStateError, InvalidParameterError, InvalidOperationError } from './entry';

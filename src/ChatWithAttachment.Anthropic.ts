@@ -6,6 +6,11 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// This module provides an Anthropic Claude implementation of an IChatWithAttachmentDriver that supports inline attachments sent through the Anthropic Messages API. It exports AnthropicChatWithAttachment, which builds a single user message containing the user prompt plus optional table JSON and an optional inline attachment. Attachments are encoded as base64 documents for PDFs, base64 images for common image types, or inline text documents for text/* MIME types, and unsupported MIME types raise an InvalidParameterError. The driver selects a Claude model string from EModel and sets max_tokens based on EVerbosity. getModelResponse performs the API call using retryWithExponentialBackoff and converts the response content blocks into a single text string, surfacing InvalidOperationError when no text is returned and wrapping other failures as ConnectionError. uploadAttachment returns a synthetic reference for parity but does not persist data, and deleteAttachment is a no-op. Key dependencies include @anthropic-ai/sdk for the client and message block types, shared error types from entry, and driver helpers for retry logic.
+// ===End StrongAI Generated Comment===
+
+
 // @ts-ignore - @anthropic-ai/sdk is a peer dependency
 import Anthropic from '@anthropic-ai/sdk';
 import type {

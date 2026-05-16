@@ -5,6 +5,15 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// Factory module that creates an appropriate chat driver instance from a requested model and provider. It exports a single class, ChatDriverFactory, which implements IChatDriverFactory and returns an IChatDriver from its create(model, provider) method.
+// 
+// Provider selection is driven by the EModelProvider enum. If provider is kDefault, the factory chooses a driver based on NODE_ENV: GoogleGeminiChatDriver in development and OpenAIChatDriver in non-development environments. If provider is kAzureOpenAI, it returns AzureOpenAIChatDriver. If provider is kGoogleGemini, it returns GoogleGeminiChatDriver; this driver is expected to use a flash variant internally regardless of the model argument due to rate-limit constraints. If provider is kAnthropic, it returns AnthropicChatDriver. Any unrecognized provider falls back to OpenAIChatDriver.
+// 
+// Key dependencies are IChatDriver, IChatDriverFactory, EModelProvider, and EModel from ./entry, plus the provider-specific driver classes imported from the Chat.* modules.
+// ===End StrongAI Generated Comment===
+
+
 import { IChatDriver, IChatDriverFactory, EModelProvider, EModel } from './entry';
 import { OpenAIChatDriver } from './Chat.OpenAI';
 import { AzureOpenAIChatDriver } from './Chat.AzureOpenAI';
@@ -15,15 +24,6 @@ import { AnthropicChatDriver } from './Chat.Anthropic';
  * Factory class for creating chat drivers
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// Factory for creating chat driver instances based on a requested model provider. The module exports ChatDriverFactory, which implements IChatDriverFactory and exposes a single method: create(model, provider). This method returns an IChatDriver implementation chosen by provider and environment.
-// 
-// When provider is kDefault, the factory selects Google Gemini in development and OpenAI in other environments. The decision uses the NODE_ENV environment variable (development vs non-development). When provider is kAzureOpenAI, it returns an AzureOpenAIChatDriver. When provider is kGoogleGemini, it returns a GoogleGeminiChatDriver. For any other value, it falls back to OpenAIChatDriver.
-// 
-// The model argument is forwarded to each driver constructor. Note that GoogleGeminiChatDriver always uses a flash variant internally, ignoring the provided model, due to rate limit constraints on the pro tier.
-// 
-// Key imports include the IChatDriver and IChatDriverFactory interfaces and the EModelProvider and EModel enums from ./entry, which define the contract and selection inputs. Driver implementations are imported from Chat.OpenAI, Chat.AzureOpenAI, and Chat.GoogleGemini.
-// ===End StrongAI Generated Comment===
 
 export class ChatDriverFactory implements IChatDriverFactory {
    create(model: EModel, provider: EModelProvider): IChatDriver {

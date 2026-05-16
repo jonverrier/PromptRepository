@@ -15,15 +15,17 @@
 
 // Copyright (c) 2025, 2026 Jon Verrier
 
-// ===Start StrongAI Generated Comment (20260219)===
-// This module provides a small prompt repository system for storing, retrieving, and expanding AI prompt templates with typed parameters. It supports parameterized system and user prompts and enforces parameter requirements and types during expansion.
+// ===Start StrongAI Generated Comment (20260516)===
+// This module implements a small prompt repository and template expansion system for AI prompts. It stores prompt definitions with ids and optional system/user parameter specs, retrieves prompts by id, and expands prompt templates by replacing {name} placeholders with provided values.
 // 
-// It exports two repository implementations. PromptFileRepository loads prompts from a JSON file at construction and is only available in Node.js. It reads the file synchronously, looks up prompts by id, and expands system and user prompts with parameter substitution. PromptInMemoryRepository keeps a provided array of prompts in memory and offers the same lookup and expansion methods.
+// replacePromptPlaceholders expands a template using an optional IPromptParameterSpec list and a params object. It enforces required parameters, applies defaultValue for missing optional parameters, and validates types for kString, kNumber, and kEnum (including allowedValues). It throws InvalidParameterError when parameters are missing or invalid.
 // 
-// It also exports replacePromptPlaceholders, which replaces {name} placeholders in a template using a parameter spec. It enforces required parameters, applies default values for optional ones, and validates types: string, number, and enum with allowed values. It throws InvalidParameterError for invalid input.
+// PromptFileRepository implements IPromptRepository by loading an array of IPrompt objects from a JSON file at construction. It is Node-only and synchronously reads the file via node:fs (loaded conditionally). PromptInMemoryRepository implements IPromptRepository over an in-memory IPrompt array.
 // 
-// Key imports from ./entry include IPrompt, IPromptRepository, and IPromptParameterSpec for typing, throwIfUndefined to ensure a system prompt exists before expansion, and error types InvalidOperationError and InvalidParameterError. The Node fs module is conditionally required to avoid browser usage.
+// Key imports from ./entry provide the core types (IPrompt, IPromptRepository, IPromptParameterSpec), throwIfUndefined to require a system prompt during expansion, and InvalidOperationError/InvalidParameterError for consistent failures.
 // ===End StrongAI Generated Comment===
+
+
 
 
 import type * as fs from 'node:fs';

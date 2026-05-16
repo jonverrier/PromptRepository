@@ -6,6 +6,11 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// Concrete ChatDriver implementation for Anthropic’s Claude Messages API. It turns your internal chat format into Anthropic requests, sends them via the @anthropic-ai/sdk client, and returns plain text or constrained JSON results. The main export is AnthropicChatDriver, which selects a Claude model name from EModel, requires ANTHROPIC_API_KEY, and exposes standard chat methods plus tool-enabled variants. getModelResponse performs a non-streaming call with optional message history and optional tool functions. getStreamedModelResponse provides a simple pseudo-stream by chunking the final text. getModelResponseWithForcedTools and getStreamedModelResponseWithForcedTools enforce tool usage on the first round and add a stronger system instruction. getConstrainedModelResponse asks for JSON-only output matching a supplied schema, strips additionalProperties from the schema for compatibility, and returns a default value on parse or request failure. Key dependencies include ChatDriver for message building, retryWithExponentialBackoff/MAX_RETRIES for resilient API calls, and shared errors and enums from entry (EChatRole, EVerbosity, ConnectionError, InvalidOperationError, InvalidStateError).
+// ===End StrongAI Generated Comment===
+
+
 // @ts-ignore - @anthropic-ai/sdk is a peer dependency
 import Anthropic from '@anthropic-ai/sdk';
 import type {

@@ -7,7 +7,6 @@
 // Copyright (c) 2025, 2026 Jon Verrier
 
 import { expect } from 'expect';
-import { describe, it, beforeEach, afterEach } from 'mocha';
 import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, GoogleGeminiChatDriver, AnthropicChatDriver } from '../src/entry';
 import { TEST_TARGET_SUPPORTS_VERBOSITY } from './ChatTestConfig';
 import { GenericOpenAIChatDriver } from '../src/Chat.GenericOpenAI';
@@ -63,12 +62,12 @@ providers.forEach((provider, index) => {
     it('should successfully return text response with system prompt', async () => {
       const result = await chatDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
 
     it('should successfully return text response without system prompt', async () => {
       const result = await chatDriver.getModelResponse(undefined, 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
 
     it('should successfully return text response with message history', async () => {
       const messageHistory: IChatMessage[] = [
@@ -89,7 +88,7 @@ providers.forEach((provider, index) => {
       ];
       const result = await chatDriver.getModelResponse('You are helpful', 'What is my name?', EVerbosity.kMedium, messageHistory);
       expect(result.toLowerCase()).toContain('alice');
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
   });
 
   describe(`getStreamedModelResponse (${provider})`, () => {
@@ -103,7 +102,7 @@ providers.forEach((provider, index) => {
       }
       expect(result).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
       expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
 
     it('should successfully stream text response without system prompt', async () => {
       const iterator = chatDriver.getStreamedModelResponse(undefined, 'say Hi', EVerbosity.kMedium);
@@ -115,7 +114,7 @@ providers.forEach((provider, index) => {
       }
       expect(result).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
       expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
 
     it('should successfully stream text response with message history', async () => {
       const messageHistory: IChatMessage[] = [
@@ -142,7 +141,7 @@ providers.forEach((provider, index) => {
         if (result.value) fullText += result.value;
       }
       expect(fullText.toLowerCase()).toContain('bob');
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
 
     it('should stream long-form content in multiple chunks', async () => {
       const prompt = 'Write a haiku about artificial intelligence';
@@ -175,7 +174,7 @@ providers.forEach((provider, index) => {
 
       expect(fullText).toMatch(/[A-Za-z]/); // Contains letters
       expect(fullText.length).toBeGreaterThan(20); // Got enough content to verify streaming works
-    }).timeout(getTestTimeout(provider)); // 60 second timeout for haiku (GPT-5 can be slow)
+    }, getTestTimeout(provider)); // 60 second timeout for haiku (GPT-5 can be slow)
   });
 
   describe(`Constrained Model Response Tests (${provider})`, () => {
@@ -203,7 +202,7 @@ providers.forEach((provider, index) => {
       expect(result).toHaveProperty('age');
       expect(result.name).toBe('Bob');
       expect(result.age).toBe(42);
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
 
     it('should return constrained JSON response with message history', async () => {
       const schema = {
@@ -247,7 +246,7 @@ providers.forEach((provider, index) => {
       expect(result).toHaveProperty('age');
       expect(result.name).toBe('Charlie');
       expect(result.age).toBe(25);
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
 
     it('should return default value when response parsing fails', async () => {
       const schema = {
@@ -306,7 +305,7 @@ providers.forEach((provider, index) => {
           (chatDriver as any).openai.responses.create = originalCreate;
         }
       }
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
 
     it('should handle complex nested schema constraints', async () => {
       const schema = {
@@ -362,7 +361,7 @@ providers.forEach((provider, index) => {
         type: 'phone',
         value: '555-0123'
       });
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
 
     it('should log full prompts when content filter error occurs', async () => {
       const schema = {
@@ -466,16 +465,13 @@ providers.forEach((provider, index) => {
           (chatDriver as any).openai.responses.create = originalCreate;
         }
       }
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
   });
 
   describe(`Verbosity Level Tests (${provider})`, () => {
-    it('should return longer responses with high verbosity compared to low verbosity', async function() {
-      // Only run this test for OpenAI, as Azure only supports 'medium' verbosity
-      if (provider !== EModelProvider.kOpenAI) {
-        this.skip();
-        return;
-      }
+    (provider === EModelProvider.kOpenAI ? it : it.skip)(
+      'should return longer responses with high verbosity compared to low verbosity',
+      async () => {
 
       const systemPrompt = 'You are a helpful assistant that explains concepts clearly.';
       const userPrompt = 'Explain artificial intelligence.';
@@ -529,7 +525,7 @@ providers.forEach((provider, index) => {
       if (lowWordCount === highWordCount) {
         console.warn('WARNING: Both responses have same word count - current model may not differentiate verbosity levels');
       }
-    }).timeout(getTestTimeout(provider) * 2); // Double timeout for two API calls
+    }, getTestTimeout(provider) * 2); // Double timeout for two API calls
   });
 
   // Mini model tests for each provider
@@ -545,7 +541,7 @@ providers.forEach((provider, index) => {
     it('should successfully return simple text response', async () => {
       const result = await miniChatDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
       expect(result).toMatch(/(Hi|Hello)/);
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
 
     it('should successfully stream text response', async () => {
       const iterator = miniChatDriver.getStreamedModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium);
@@ -557,7 +553,7 @@ providers.forEach((provider, index) => {
       }
       expect(result).toMatch(/[A-Za-z]+/); // Expect at least one word (sequence of letters)
       expect(result.toLowerCase()).toMatch(/(hi|hello)/); // Check for hi or hello substring
-    }).timeout(getTestTimeout(provider));
+    }, getTestTimeout(provider));
   });
 });
 
@@ -625,7 +621,7 @@ describe(`Exponential Backoff Tests (${provider})`, () => {
       const elapsedTime = endTime - startTime;
       expect(elapsedTime).toBeGreaterThan(2500); // At least 2.5 seconds
       expect(elapsedTime).toBeLessThan(5000); // Less than 5 seconds
-   }).timeout(10000);
+   }, 10000);
 
    it('should retry on 429 errors for constrained responses', async () => {
       // Set up to fail 1 time then succeed
@@ -654,7 +650,7 @@ describe(`Exponential Backoff Tests (${provider})`, () => {
       const elapsedTime = endTime - startTime;
       expect(elapsedTime).toBeGreaterThan(800); // At least 800ms
       expect(elapsedTime).toBeLessThan(2000); // Less than 2 seconds
-   }).timeout(5000);
+   }, 5000);
 
    it('should throw error after max retries exceeded', async () => {
       // Set up to fail more than max retries (5)
@@ -672,7 +668,7 @@ describe(`Exponential Backoff Tests (${provider})`, () => {
       const elapsedTime = endTime - startTime;
       expect(elapsedTime).toBeGreaterThan(25000); // At least 25 seconds
       expect(elapsedTime).toBeLessThan(40000); // Less than 40 seconds
-   }).timeout(45000);
+   }, 45000);
 
    it('should not retry on non-429 errors', async () => {
       // Mock to throw a different error
@@ -685,7 +681,7 @@ describe(`Exponential Backoff Tests (${provider})`, () => {
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow(/API error.*Authentication failed|Authentication failed.*API error/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle content filter errors without retrying', async () => {
       // Mock to throw a content filter error
@@ -702,7 +698,7 @@ describe(`Exponential Backoff Tests (${provider})`, () => {
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow(/content filter.*triggered.*safety policies|safety policies.*content filter.*triggered/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle safety system errors without retrying', async () => {
       // Mock to throw a safety error
@@ -719,7 +715,7 @@ describe(`Exponential Backoff Tests (${provider})`, () => {
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow(/safety system.*triggered.*safety guidelines|safety guidelines.*safety system.*triggered/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle general refusal errors without retrying', async () => {
       // Mock to throw a general refusal error
@@ -736,7 +732,7 @@ describe(`Exponential Backoff Tests (${provider})`, () => {
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow(/refused request.*cannot process|cannot process.*refused request/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle 403 forbidden errors as refusals', async () => {
       // Mock to throw a 403 error
@@ -750,7 +746,7 @@ describe(`Exponential Backoff Tests (${provider})`, () => {
       await expect(
          mockDriver.getModelResponse('You are helpful', 'say Hi', EVerbosity.kMedium)
       ).rejects.toThrow(/refused request.*403.*Access forbidden|Access forbidden.*refused request.*403/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle streaming with exponential backoff', async () => {
       // Set up to fail 1 time then succeed
@@ -775,7 +771,7 @@ describe(`Exponential Backoff Tests (${provider})`, () => {
       const elapsedTime = endTime - startTime;
       expect(elapsedTime).toBeGreaterThan(800);
       expect(elapsedTime).toBeLessThan(2000);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle mid-stream errors gracefully', async () => {
       // Mock that returns some chunks then throws an error
@@ -848,7 +844,7 @@ describe(`Exponential Backoff Tests (${provider})`, () => {
       
       // Verify the interruption message is the last chunk
       expect(chunks[chunks.length - 1]).toContain('Sorry, it looks like the response was interrupted. Please try again.');
-   }).timeout(5000);
+   }, 5000);
    });
 });
 

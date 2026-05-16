@@ -6,6 +6,15 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// This module implements a concrete embedding driver that connects directly to OpenAI’s Embeddings API. It specializes the generic OpenAIModelEmbeddingDriver from ./Embed by providing native OpenAI configuration, including model selection and client initialization.
+// 
+// The main export is NativeOpenAIEmbeddingDriver. It extends the base OpenAI embedding driver and sets the provider to EModelProvider.kOpenAI. On construction it chooses a deploymentName (the OpenAI model name) based on the requested EModel. EModel.kLarge maps to text-embedding-3-large, while other sizes map to text-embedding-3-small. It overrides getModelName to return the selected deploymentName for use by the base embedding logic.
+// 
+// The constructor validates configuration by requiring the OPENAI_API_KEY environment variable; if it is missing it throws InvalidStateError from ./entry. When present, it creates an OpenAI SDK client (imported from openai) using the API key and stores it for requests.
+// ===End StrongAI Generated Comment===
+
+
 import OpenAI from 'openai';
 import { EModel, EModelProvider, InvalidStateError } from './entry';
 import { OpenAIModelEmbeddingDriver as OpenAIEmbeddingDriver } from './Embed';
@@ -20,19 +29,6 @@ import { OpenAIModelEmbeddingDriver as OpenAIEmbeddingDriver } from './Embed';
  * @property {OpenAI} openai - Instance of OpenAI API client
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// This module provides a concrete embedding driver that talks directly to OpenAI’s embedding API. It specializes a generic OpenAI embedding driver with configuration specific to native OpenAI access, including model name selection and client initialization.
-// 
-// The main export is the class NativeOpenAIEmbeddingDriver. It extends the base OpenAIModelEmbeddingDriver to set the provider to OpenAI and to choose an embedding model name based on the requested EModel. Large maps to text-embedding-3-large; other sizes map to text-embedding-3-small. It exposes deploymentName for the selected model and overrides getModelName to return it.
-// 
-// The constructor validates that the OPENAI_API_KEY environment variable is present. If missing, it throws InvalidStateError. When valid, it creates an OpenAI client instance and stores it for use by the base driver.
-// 
-// Key imports are:
-// - OpenAI from the openai SDK, used to send requests.
-// - EModel and EModelProvider from ./entry to select the model tier and declare the provider.
-// - InvalidStateError from ./entry for configuration validation.
-// - OpenAIModelEmbeddingDriver from ./Embed as the superclass providing core embedding logic.
-// ===End StrongAI Generated Comment===
 
 export class NativeOpenAIEmbeddingDriver extends OpenAIEmbeddingDriver {
    public deploymentName: string;

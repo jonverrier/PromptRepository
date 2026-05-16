@@ -6,13 +6,11 @@
  * used throughout the application for managing and retrieving LLM prompts.
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// This module defines the core types and interfaces for a prompt and chat system that works across multiple LLM providers. It standardizes models, providers, roles, verbosity, prompt templates, function calls, chat messages, and embedding workflows.
-// 
-// Key exports include enums for EModel, EModelProvider, EChatRole, and EVerbosity. It defines parameter typing via EParameterType and constants, plus IPromptParameterSpec and IPrompt for templated system and user prompts. IPromptRepository provides prompt lookup and expansion APIs. IChatMessage models unified chat history with tool and function call metadata. IChatDriver specifies methods for simple, streamed, forced-tool, and schema-constrained responses. Factory interfaces create chat and attachment-enabled drivers. IEmbeddingModelDriver and IEmbeddingDriverFactory cover embeddings. Chunk types (IChunk, IChunkStore) support vectorized content storage. Utility exports include cosine similarity, formatting helpers, and common validation functions.
-// 
-// Important dependencies: IFunction and related types power tool calling. IChatWithAttachmentDriver enables multimodal inputs. Concrete factories and drivers are re-exported for OpenAI, Azure OpenAI, and Google Gemini.
+// ===Start StrongAI Generated Comment (20260516)===
+// Core entry point for a provider-agnostic prompt, chat, tool-calling, and embedding system. It defines shared enums for model size (EModel), provider (EModelProvider), chat roles (EChatRole), and response verbosity (EVerbosity). It standardizes prompt templating via IPrompt and IPromptParameterSpec, plus the IPromptRepository contract for retrieving prompts and expanding system/user templates with parameters. It models persisted chat history with IQueryReturnable and IChatMessage, including legacy function_call and multi-tool tool_calls fields and Responses API output fields. It defines the IChatDriver interface for normal, streamed, forced-tool, and JSON-schema-constrained responses, and factory interfaces (IChatDriverFactory, IChatWithAttachmentDriverFactory) for creating drivers per model/provider. It also defines embedding abstractions (IEmbeddingModelDriver, IEmbeddingDriverFactory) and lightweight vector-store types (IChunk, IChunkStore). Key dependencies include IFunction for tool definitions and IChatWithAttachmentDriver for multimodal/attachment chat; multiple concrete repositories, drivers, factories, formatters, cosine similarity, and shared validation/errors are re-exported.
 // ===End StrongAI Generated Comment===
+
+
 
 import { IFunction } from './Function';
 import { IChatWithAttachmentDriver } from './ChatWithAttachment';

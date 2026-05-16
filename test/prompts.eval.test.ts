@@ -11,7 +11,6 @@
 // Copyright (c) 2025, 2026 Jon Verrier
 
 import { expect } from 'expect';
-import { describe, it } from 'mocha';
 import { IPrompt, IPromptRepository, EModel, EVerbosity, EModelProvider } from '../src/entry';
 import { PromptInMemoryRepository } from '../src/PromptRepository';
 import { CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS, TEST_TARGET_SUPPORTS_VERBOSITY } from './ChatTestConfig';
@@ -67,7 +66,7 @@ providers.forEach((provider, index) => {
          expect(response.toLowerCase()).toMatch(/welcome|greetings/);
          expect(response.split('Monaco').length).toBe(2); // Only one occurrence
          
-      }).timeout(getTestTimeout(provider));
+      }, getTestTimeout(provider));
 
       it('should generate same welcome pattern for Monaco Monaco', async () => {
          const prompt = promptRepo.getPrompt('template-prompt-002');
@@ -83,7 +82,7 @@ providers.forEach((provider, index) => {
          expect(response.toLowerCase()).toMatch(/welcome|greetings/);
          expect(response.split('Monaco').length).toBe(2); // Only one occurrence
          
-      }).timeout(getTestTimeout(provider));
+      }, getTestTimeout(provider));
 
       it('should generate same welcome pattern for Monaco Grand Prix', async () => {
          const prompt = promptRepo.getPrompt('template-prompt-002');
@@ -99,7 +98,7 @@ providers.forEach((provider, index) => {
          expect(response.toLowerCase()).toMatch(/welcome|greetings/);
          expect(response.split('Grand Prix').length).toBe(2); // Only one occurrence
          
-      }).timeout(getTestTimeout(provider));
+      }, getTestTimeout(provider));
 
       it('should generate different welcome message for Silverstone', async () => {
          const prompt = promptRepo.getPrompt('template-prompt-002');
@@ -118,6 +117,6 @@ providers.forEach((provider, index) => {
          expect(response).not.toContain('Monaco');
          expect(response).not.toContain('Monte Carlo');
 
-      }).timeout(getTestTimeout(provider));
+      }, getTestTimeout(provider));
    });
 });

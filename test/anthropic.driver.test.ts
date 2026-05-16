@@ -6,7 +6,6 @@
 // Copyright (c) 2025, 2026 Jon Verrier
 
 import { expect } from 'expect';
-import { describe, it, afterEach } from 'mocha';
 import { ChatDriverFactory, EModelProvider, EModel, InvalidStateError } from '../src/entry';
 import { AnthropicChatDriver } from '../src/Chat.Anthropic';
 import { EDataType, IFunction } from '../src/Function';

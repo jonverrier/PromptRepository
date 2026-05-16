@@ -20,7 +20,6 @@
 // ===End StrongAI Generated Comment===
 
 import { expect } from 'expect';
-import { describe, it } from 'mocha';
 import { renderChatMessageAsText, formatChatMessageTimestamp } from '../src/FormatChatMessage';
 import { EChatRole, IChatMessage, ChatMessageClassName } from '../src/entry';
 

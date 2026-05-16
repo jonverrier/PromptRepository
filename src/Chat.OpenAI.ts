@@ -6,6 +6,17 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// This module implements the OpenAI-backed chat driver used by the project’s chat framework. It specializes GenericOpenAIChatDriver with OpenAI-specific configuration and wires up an OpenAI API client instance.
+// 
+// The main export is OpenAIChatDriver. It extends GenericOpenAIChatDriver and selects a concrete GPT-5 family model name based on the provided EModel value. EModel.kLarge maps to gpt-5.2, and all other sizes map to gpt-5-mini. The constructor requires an API key to be present in the OPENAI_API_KEY environment variable and throws InvalidStateError when it is missing. When configured, it creates an OpenAI client from the openai package using that key.
+// 
+// OpenAIChatDriver overrides getModelName to supply the chosen model identifier to the base driver. It also overrides shouldUseToolMessages to enable tool messages, allowing tool-calling behavior supported by the Responses API.
+// 
+// Key dependencies include OpenAI, GenericOpenAIChatDriver, EModel, and InvalidStateError.
+// ===End StrongAI Generated Comment===
+
+
 import OpenAI from 'openai';
 import { EChatRole, InvalidStateError } from './entry';
 import { EModel, IChatMessage, IFunction } from './entry';
@@ -21,16 +32,6 @@ import { GenericOpenAIChatDriver } from './Chat.GenericOpenAI';
  * @property {OpenAI} openai - Instance of OpenAI API client
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// This module provides the OpenAI-backed chat driver used by the project’s chat framework. It specializes the generic OpenAI driver with concrete configuration for OpenAI’s GPT-5 family and wires up the OpenAI API client. The main export is OpenAIChatDriver, a subclass of GenericOpenAIChatDriver. Construct it with an EModel to choose the model size: large maps to gpt-5.2, otherwise gpt-5-mini (no gpt-5.2-mini exists). The driver enforces that an OpenAI API key is present in the OPENAI_API_KEY environment variable and throws InvalidStateError if it is missing. On creation, it initializes an OpenAI client instance with that key. It supplies the selected model name to the base class and indicates that tool messages are supported, enabling tool-calling via the Responses API.
-// 
-// Key dependencies include:
-// - OpenAI from the openai package for API calls.
-// - GenericOpenAIChatDriver, which provides the core chat flow and request/response handling this class customizes.
-// - EModel to select model tier.
-// - InvalidStateError for configuration validation failures.
-// - EChatRole, IChatMessage, and IFunction, which define roles, message shapes, and tool/function metadata used across the chat system.
-// ===End StrongAI Generated Comment===
 
 export class OpenAIChatDriver extends GenericOpenAIChatDriver {
    private model: string;

@@ -21,7 +21,6 @@
 // ===End StrongAI Generated Comment===
 
 import { expect } from 'expect';
-import { describe, it, before } from 'mocha';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -58,7 +57,7 @@ describe('PromptRepository', function () {
    let tempDir: string;
    let samplePromptsFile: string;
 
-   before(async function () {
+   beforeAll(async () => {
       // Create temporary directory and file
       tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'test-prompts-'));
       samplePromptsFile = path.join(tempDir, 'test_prompts.json');

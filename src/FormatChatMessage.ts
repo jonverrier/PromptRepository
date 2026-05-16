@@ -7,6 +7,17 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// Utilities for turning chat messages and their timestamps into readable, user-facing text. The module focuses on producing consistent labels for message originators and friendly date strings that prefer relative terms.
+// 
+// renderChatMessageAsText takes an IChatMessage and returns a single formatted text block. It chooses “User” or “Assistant” from the message role, formats the message timestamp, and then outputs a bracketed timestamp header followed by the originator label, the message content, and a trailing newline. It always requests the “full date” form for the timestamp.
+// 
+// formatChatMessageTimestamp formats a Date into “Today”, “Yesterday”, or a long weekday plus day and month, and always appends local time in two-digit hour and minute. When fullDate is true, Today/Yesterday also include the long date in parentheses. The function normalizes input via new Date(...) to tolerate Date-like values.
+// 
+// It depends on EChatRole and IChatMessage from ./entry to interpret roles and message shape.
+// ===End StrongAI Generated Comment===
+
+
 
 import { EChatRole, IChatMessage } from "./entry";
 
@@ -18,15 +29,6 @@ import { EChatRole, IChatMessage } from "./entry";
  * @returns Formatted string representation of the message
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// This module formats chat messages and their timestamps into concise, human-readable text. It exposes two functions.
-// 
-// renderChatMessageAsText builds a single text block for a chat line. It labels the originator as “User” or “Assistant” based on the EChatRole and appends the message content. It prefixes the line with a formatted timestamp in brackets and adds trailing newlines for readability. It always requests full date context from the timestamp formatter.
-// 
-// formatChatMessageTimestamp converts a Date into a friendly string. It detects Today and Yesterday relative to the current system date, otherwise shows a long weekday, two-digit day, and full month (en-US). It always appends the local time in HH:MM using two-digit hour and minute. When fullDate is true, Today and Yesterday include the full date in parentheses; otherwise only the relative label is shown. It normalizes the input with new Date(...) to tolerate Date-like inputs.
-// 
-// The module relies on EChatRole and IChatMessage from ./entry to interpret roles and ensure message shape.
-// ===End StrongAI Generated Comment===
 
 export function renderChatMessageAsText(message: IChatMessage): string {
    const originator = message.role === EChatRole.kUser ? "User" : "Assistant";
