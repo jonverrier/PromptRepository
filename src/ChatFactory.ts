@@ -9,6 +9,7 @@ import { IChatDriver, IChatDriverFactory, EModelProvider, EModel } from './entry
 import { OpenAIChatDriver } from './Chat.OpenAI';
 import { AzureOpenAIChatDriver } from './Chat.AzureOpenAI';
 import { GoogleGeminiChatDriver } from './Chat.GoogleGemini';
+import { AnthropicChatDriver } from './Chat.Anthropic';
 
 /**
  * Factory class for creating chat drivers
@@ -43,6 +44,9 @@ export class ChatDriverFactory implements IChatDriverFactory {
          // NOTE: GoogleGeminiChatDriver always uses flash model (gemini-3-flash-preview) regardless of model parameter
          // This is due to rate limit constraints - pro model only allows 250 requests/day
          return new GoogleGeminiChatDriver(model);
+      }
+      if (provider === EModelProvider.kAnthropic) {
+         return new AnthropicChatDriver(model);
       }
       return new OpenAIChatDriver(model);
    }

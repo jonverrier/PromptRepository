@@ -8,11 +8,12 @@
 
 import { expect } from 'expect';
 import { describe, it, beforeEach, afterEach } from 'mocha';
-import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, GoogleGeminiChatDriver } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, GoogleGeminiChatDriver, AnthropicChatDriver } from '../src/entry';
 import { TEST_TARGET_SUPPORTS_VERBOSITY } from './ChatTestConfig';
 import { GenericOpenAIChatDriver } from '../src/Chat.GenericOpenAI';
 import { MockOpenAIChatDriver } from './MockOpenAIChatDriver';
 import { MockGeminiChatDriver } from './MockGeminiChatDriver';
+import { MockAnthropicChatDriver } from './MockAnthropicChatDriver';
 
 import { CHAT_TEST_PROVIDERS, createChatDrivers, TEST_TIMEOUT_MS } from './ChatTestConfig';
 
@@ -39,7 +40,9 @@ const chatDrivers = createChatDrivers(EModel.kLarge);
 // The exponential backoff suite verifies retry logic on 429 errors, timing of backoff, and no-retry paths for authentication, content filter, safety, invalid request, and forbidden errors, including graceful handling of mid-stream failures.
 // ===End StrongAI Generated Comment===
 const getTestTimeout = (provider: EModelProvider): number => {
-   return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
+   return provider === EModelProvider.kGoogleGemini || provider === EModelProvider.kAnthropic
+      ? 120000
+      : TEST_TIMEOUT_MS;
 };
 
 // Create factory for mini model tests
@@ -275,6 +278,12 @@ providers.forEach((provider, index) => {
           }
         }));
         testDriver = mockDriver as any;
+      } else if (chatDriver && chatDriver instanceof AnthropicChatDriver) {
+        const mockDriver = new MockAnthropicChatDriver();
+        mockDriver.setMockSendMessage(async () => ({
+          content: [{ type: 'text', text: 'This is not valid JSON at all!' }]
+        }));
+        testDriver = mockDriver as any;
       }
 
       if (!testDriver) {
@@ -400,6 +409,18 @@ providers.forEach((provider, index) => {
           error.error = {
             type: 'content_filter',
             message: 'Content violates Google Gemini safety policies'
+          };
+          throw error;
+        });
+        testDriver = mockDriver as any;
+      } else if (chatDriver && chatDriver instanceof AnthropicChatDriver) {
+        const mockDriver = new MockAnthropicChatDriver();
+        mockDriver.setMockSendMessage(async () => {
+          const error: Error & { status?: number; error?: { type: string; message: string } } = new Error('Content filter triggered');
+          error.status = 400;
+          error.error = {
+            type: 'content_filter',
+            message: 'Content violates Anthropic safety policies'
           };
           throw error;
         });
@@ -549,6 +570,8 @@ function getProviderName(provider: EModelProvider): string {
          return 'Azure OpenAI';
       case EModelProvider.kGoogleGemini:
          return 'Google Gemini';
+      case EModelProvider.kAnthropic:
+         return 'Anthropic';
       case EModelProvider.kDefault:
          return process.env.NODE_ENV === 'development' ? 'Google Gemini' : 'OpenAI';
       default:
@@ -569,11 +592,13 @@ providers.forEach((provider, index) => {
    const providerName = getProviderName(provider);
 
 describe(`Exponential Backoff Tests (${provider})`, () => {
-   let mockDriver: MockOpenAIChatDriver | MockGeminiChatDriver;
+   let mockDriver: MockOpenAIChatDriver | MockGeminiChatDriver | MockAnthropicChatDriver;
 
    beforeEach(() => {
       if (provider === EModelProvider.kGoogleGemini) {
          mockDriver = new MockGeminiChatDriver();
+      } else if (provider === EModelProvider.kAnthropic) {
+         mockDriver = new MockAnthropicChatDriver();
       } else {
          mockDriver = new MockOpenAIChatDriver(provider);
       }

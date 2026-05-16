@@ -34,7 +34,9 @@ const chatDrivers = createChatDrivers(EModel.kLarge);
 // Key imports include Mocha’s describe and it, expect for assertions, and the chat driver API from ../src/entry (EModelProvider, EModel, EVerbosity). It relies on CHAT_TEST_PROVIDERS and createChatDrivers to instantiate drivers per provider. The tests use chatDriver.getModelResponseWithForcedTools and getStreamedModelResponseWithForcedTools, with provider-sensitive timeouts (longer for Google Gemini).
 // ===End StrongAI Generated Comment===
 const getTestTimeout = (provider: EModelProvider): number => {
-   return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
+   return provider === EModelProvider.kGoogleGemini || provider === EModelProvider.kAnthropic
+      ? 120000
+      : TEST_TIMEOUT_MS;
 };
 
 // Global execution tracking for testing
