@@ -1,6 +1,6 @@
 {
   "name": "@jonverrier/prompt-repository",
-  "version": "0.3.22",
+  "version": "0.3.23",
   "description": "Managing Prompts and standardised Unit Evals ",
   "main": "dist/src/entry.js",
   "types": "dist/src/entry.d.ts",
@@ -44,7 +44,7 @@
     "cover:json": "jest --selectProjects unit --coverage --coverageReporters=json --coverageDirectory=.nyc_output"
   },
   "dependencies": {
-    "@jonverrier/assistant-common": "^0.3.3"
+    "@jonverrier/assistant-common": "^0.3.4"
   },
   "peerDependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
