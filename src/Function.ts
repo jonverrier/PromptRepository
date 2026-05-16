@@ -7,27 +7,21 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// Defines shared types for LLM function calling in an OpenAI Responses API style. It standardizes how callable tools are described with JSON-schema-like metadata, how arguments are represented, and how calls and outputs are packaged for round-tripping between a model and an executor.
+// 
+// EDataType lists common schema data types (object, string, number, boolean, array). IFunctionArgs models a JSON-serializable argument bag used for both inputs and results. FnValidateFunctionArgs and FnExecuteFunction describe the expected validator and async executor signatures. IFunctionExecutionContext provides execution metadata such as callId, functionName, timestamp, and retry attempt.
+// 
+// ISchemaProperty and ISchema define input/output schemas with nested properties, arrays via items, required fields, and optional additionalProperties control. ILLMFunctionCall represents a model-emitted function_call with a name, JSON-string arguments, and optional call_id. IFunctionCallOutput represents function_call_output with a matching call_id and JSON-string output.
+// 
+// IFunction ties everything together as a callable contract. FunctionExecutionResult reports success with a result or failure with structured error details. No external imports are required.
+// ===End StrongAI Generated Comment===
+
+
 /**
  * Enum for basic data types used in function schemas
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// This module defines types and interfaces for LLM function calling compatible with the OpenAI Responses API. It standardizes how functions are described, validated, executed, and how their results are reported back to the model.
-// 
-// Main exports:
-// - EDataType enum lists JSON schema data types used in function schemas.
-// - IFunctionArgs models JSON-serializable argument objects accepted by functions.
-// - FnValidateFunctionArgs is a validator signature that returns sanitized args or throws.
-// - FnExecuteFunction is an async executor signature that returns a result payload.
-// - IFunctionExecutionContext provides metadata for execution attempts, including callId, functionName, timestamp, and retry attempt.
-// - ISchemaProperty and ISchema describe input and output JSON schemas, including nested properties, arrays, required fields, and additionalProperties.
-// - ILLMFunctionCall represents an LLM-emitted function_call with a name and JSON-encoded arguments, plus an optional call_id.
-// - IFunctionCallOutput represents function_call_output with the matching call_id and JSON-encoded result.
-// - IFunction defines a callable function contract with name, description, input and output schemas, validateArgs, and execute.
-// - FunctionExecutionResult is a discriminated union for success or structured error reporting.
-// 
-// This module has no external imports or dependencies.
-// ===End StrongAI Generated Comment===
 
 export enum EDataType {
    kObject = "object",

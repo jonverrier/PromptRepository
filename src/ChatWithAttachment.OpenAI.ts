@@ -6,13 +6,11 @@
  * executes prompts using the Responses API.
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// Provides an OpenAI-backed implementation of the IChatWithAttachmentDriver abstraction. It sends prompts through the OpenAI Responses API and optionally attaches a file and/or structured table data. The driver can create its own OpenAI client using the OPENAI_API_KEY environment variable or accept a preconfigured client. The default model is gpt-4.1-mini, but a custom model can be passed.
-// 
-// Main export: OpenAIChatWithAttachment. Its getModelResponse builds a Responses API input with optional system text, user text, an input_file reference, and formatted table JSON. It maps EVerbosity to OpenAI’s text verbosity settings and returns the first textual output found, throwing InvalidOperationError if none is present. It supports attachments as raw content or as an existing file reference. When uploading, uploadAttachment converts various data types to File/Blob, warns for non-PDF files, and creates a Files API object with purpose assistants. deleteAttachment removes uploaded files and is invoked automatically when deleteAfterUse is set. Helpers include isAttachmentContent, buildInput, formatTableJson, and extractTextFromOutput.
-// 
-// Key imports: OpenAI SDK, EVerbosity and error types (InvalidStateError, InvalidParameterError, InvalidOperationError), and chat/attachment type interfaces.
+// ===Start StrongAI Generated Comment (20260516)===
+// Implements an OpenAI-backed chat driver that supports sending prompts with optional file attachments and optional structured table data. This module provides OpenAIChatWithAttachment, an implementation of IChatWithAttachmentDriver that uses the OpenAI SDK Responses API to create a response and returns the first textual output found. The constructor accepts an existing OpenAI client or builds one from the OPENAI_API_KEY environment variable, and defaults the model to gpt-4.1-mini (configurable). getModelResponse builds the Responses API input from an optional system prompt, a user prompt, an optional input_file reference, and an optional table JSON payload rendered as readable text. It maps library EVerbosity values to OpenAI text verbosity settings and throws InvalidOperationError when no text is present. Attachments can be provided as raw content or as an existing file reference; raw content is uploaded via the Files API and may be auto-deleted afterward. Key dependencies include OpenAI from the openai package, EVerbosity and error types from entry, and attachment/table interfaces from ChatWithAttachment.
 // ===End StrongAI Generated Comment===
+
+
 
 import OpenAI from 'openai';
 import { EVerbosity, InvalidStateError, InvalidParameterError, InvalidOperationError } from './entry';

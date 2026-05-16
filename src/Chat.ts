@@ -7,6 +7,15 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// Provider-agnostic base infrastructure for chat-based LLM integrations. This module defines ChatDriver, an abstract class that implements IChatDriver and standardizes how concrete provider drivers request model output. ChatDriver is constructed with a model type (EModel) and requires subclasses to identify themselves via getProviderName and getModelName. It also provides shared message utilities: createUserMessage builds a user IChatMessage with role, content, timestamp, id, and a CSS-friendly className, and buildMessageArray appends a new user message to optional prior history.
+// 
+// Concrete drivers must implement the core request methods: getModelResponse for full text responses, getStreamedModelResponse for token streaming via AsyncIterator<string>, and corresponding “WithForcedTools” variants that require tool/function usage. getConstrainedModelResponse returns a typed value validated against a caller-supplied JSON schema and default value.
+// 
+// Key dependencies imported from ./entry include EChatRole and EVerbosity, plus the shared types IChatDriver, IChatMessage, IFunction, and EModel.
+// ===End StrongAI Generated Comment===
+
+
 import { EChatRole, EVerbosity } from './entry';
 import { IChatDriver, EModel, IChatMessage, IFunction } from './entry';
 
@@ -22,29 +31,6 @@ import { IChatDriver, EModel, IChatMessage, IFunction } from './entry';
  * Provider-specific implementations should inherit from this class.
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// This module defines a provider-agnostic base class for LLM chat integrations. It supplies a common interface and utilities that concrete drivers extend to talk to specific providers.
-// 
-// Main export: ChatDriver, an abstract class implementing IChatDriver. It is constructed with a modelType (EModel). Subclasses must implement getProviderName and getModelName to identify the provider and concrete model.
-// 
-// Core APIs that subclasses implement:
-// - getModelResponse: returns a full response as a string.
-// - getStreamedModelResponse: returns tokens via AsyncIterator<string>.
-// - getModelResponseWithForcedTools and getStreamedModelResponseWithForcedTools: same as above but require tool/function usage.
-// - getConstrainedModelResponse: returns a typed result validated against a JSON schema, with a caller-supplied default.
-// 
-// Utilities:
-// - createUserMessage builds an IChatMessage with role, content, timestamp, id, and a CSS-friendly class name.
-// - buildMessageArray merges optional history with a new user message.
-// 
-// Key dependencies from ./entry:
-// - EChatRole labels message roles.
-// - EVerbosity influences response detail.
-// - IChatDriver defines the driver contract.
-// - EModel identifies model families.
-// - IChatMessage describes chat messages.
-// - IFunction represents callable tools available to the model.
-// ===End StrongAI Generated Comment===
 
 export abstract class ChatDriver implements IChatDriver {
    constructor(protected modelType: EModel) {}

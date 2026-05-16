@@ -27,8 +27,7 @@
    "include": [
       "**/*.json",
       "src/**/*.ts",
-      "scripts/**/*.ts",
-      "test/**/*.ts"
+      "scripts/**/*.ts"
    ],
    "exclude": [
       "dist",

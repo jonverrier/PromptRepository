@@ -14,7 +14,9 @@
 - When adding a new provider or model, update the enums, factory switch statements, and documentation (`README.md`, `CodeReview.md`).
 
 ## Testing & QA
-- Mocha + `expect` tests should cover prompt expansion, parameter validation, error handling, and driver wiring for every supported provider.
+- **Jest** + `expect` (`jest.config.cjs`, `tsconfig.jest.json`). `describe` / `it` / `beforeAll` / `afterAll` are globals — do not import from `mocha`. Per-test timeouts: third argument to `it(...)`, not `.timeout()`.
+- Scripts: `npm test` (unit — all tests), `npm run test:ci` (prompt repo + prompts + makepromptids, no API keys), `npm run test:integration` (live LLM suites, `maxWorkers: 1`), `npm run test:mini` (function + multiple-tool-calling).
+- Tests should cover prompt expansion, parameter validation, error handling, and driver wiring for every supported provider.
 - Provide browser compatibility tests (e.g., using jsdom) for modules that claim dual-runtime support.
 - Keep golden prompt fixtures in `test/fixtures`; regenerate them intentionally when prompts change and include notes in the PR.
 

@@ -6,6 +6,15 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// Generic base support for chat drivers that talk to OpenAI-compatible APIs using the OpenAI Responses API. It centralizes request shaping, message conversion, tool/function calling, constrained JSON output, streaming behavior, and resilient error handling so provider-specific drivers only need to supply client setup and model naming.
+// 
+// Main export: GenericOpenAIChatDriver, an abstract class extending ChatDriver. It builds Responses API configs with createResponseConfig and createResponsesInputConfig, including verbosity mapping (and GPT‑5 reasoning effort). It converts message history into Responses input_list format via convertMessagesToInputList, and normalizes response text extraction with extractTextFromOutput. It implements robust tool execution with handleFunctionCall and a Responses-style tool loop in handleToolUseWithResponsesAPI, including forced tool usage and loop safeguards. Public methods provide non-streaming responses, simulated or iterator-based streaming responses, and JSON-schema constrained responses with parse fallbacks.
+// 
+// Key dependencies: the OpenAI SDK (responses.create), shared enums/interfaces and errors from ./entry, retryWithExponentialBackoff and MAX_RETRIES for retries, and the ChatDriver base class.
+// ===End StrongAI Generated Comment===
+
+
 import OpenAI from 'openai';
 import { EChatRole, EVerbosity, ConnectionError, InvalidOperationError } from './entry';
 import { IChatDriver, EModel, IChatMessage, IFunction, ILLMFunctionCall, IFunctionCallOutput, IFunctionCall } from './entry';
@@ -17,25 +26,6 @@ import { ChatDriver } from './Chat';
  * Used internally for OpenAI API communication
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// Provides a shared base for OpenAI‑compatible chat drivers (OpenAI and Azure OpenAI) using the Responses API. It centralizes auth, request shaping, tool/function calling, streaming, constrained JSON output, and robust retry/error handling.
-// 
-// Main export: GenericOpenAIChatDriver, an abstract class extending ChatDriver. Key methods:
-// - createResponseConfig and createResponsesInputConfig build Responses API payloads, including verbosity mapping and GPT‑5 reasoning effort.
-// - convertMessagesToInputList adapts history to input_list format.
-// - handleFunctionCall, processToolCalls, and processOpenAIToolCalls execute registered functions, validate args, and return function_call_output items.
-// - extractTextFromOutput normalizes text extraction from varied output shapes.
-// - handleToolUseLoop and handleToolUseLoopWithForcedTools manage multi‑tool flows; the latter encourages parallel tool calls.
-// - getModelResponse and getModelResponseWithForcedTools perform non‑streaming calls with retries.
-// - getStreamedModelResponse and getStreamedModelResponseWithForcedTools provide streaming or simulated chunking.
-// - getConstrainedModelResponse enforces a JSON schema and handles parsing fallbacks.
-// - handleToolUseWithResponsesAPI follows the official loop for function_call and function_call_output.
-// 
-// Relies on:
-// - OpenAI SDK for responses.create.
-// - Enums/interfaces and errors from ./entry (EChatRole, EVerbosity, IChatMessage, IFunction, IFunctionCall, EModel, ConnectionError, InvalidOperationError).
-// - retryWithExponentialBackoff and MAX_RETRIES from DriverHelpers.
-// ===End StrongAI Generated Comment===
 
 interface IOpenAIToolCall {
    id: string;
@@ -766,19 +756,6 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
       const executedFunctions = new Set<string>(); // Track executed functions to prevent infinite loops
 
       while (toolUseRounds < MAX_TOOL_USE_ROUNDS) {
-         // Step 2: The Responses API works differently than Chat Completions
-         // It expects all function calls to happen in a single request, not across multiple rounds
-         // If we already have function outputs, we should NOT continue the loop
-         const hasFunctionOutputs = inputList.some((item: any) => item.type === 'function_call_output');
-
-         if (hasFunctionOutputs) {
-
-            // Extract the function results and return a summary
-            const functionOutputs = inputList.filter((item: any) => item.type === 'function_call_output');
-            const summaries = functionOutputs.map((output: any) => `Function executed: ${output.output}`);
-            return `Function execution completed:\n${summaries.join('\n')}`;
-         }
-
          const shouldIncludeTools = functions && functions.length > 0;
 
          const config = this.createResponsesInputConfig(
@@ -915,12 +892,18 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
                }
             }
 
-            // Step 6: Add function call outputs to input_list
-            // Based on the error, the Responses API doesn't accept function_calls in assistant messages
-            // Let's try just adding the function outputs directly as the official example shows
+            // Step 6: Append model function_call items, then outputs (Responses API requires both on continuation)
+            for (const call of rawFunctionCalls) {
+               inputList.push({
+                  type: 'function_call',
+                  call_id: call.call_id,
+                  name: call.name,
+                  arguments: call.arguments ?? '{}'
+               });
+            }
             for (const result of functionResults) {
                inputList.push({
-                  type: "function_call_output",
+                  type: 'function_call_output',
                   call_id: result.call_id,
                   output: result.output
                });

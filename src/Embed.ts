@@ -6,6 +6,17 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// Shared embedding utilities for OpenAI and Azure OpenAI. This module provides a vector similarity helper and an abstract driver that standardizes how embedding models are called.
+// 
+// cosineSimilarity computes cosine similarity for two numeric embedding vectors. It validates that both vectors are the same length and non-empty. It returns 0 when either vector has zero magnitude. It throws InvalidParameterError for invalid inputs.
+// 
+// OpenAIModelEmbeddingDriver is an abstract base class implementing IEmbeddingModelDriver. It stores the driven model type (EModel) and provider (EModelProvider), and requires subclasses to supply a deploymentName, a configured OpenAI or AzureOpenAI client, and getModelName. Its embed method calls the embeddings API to convert text into an embedding vector. It uses retryWithExponentialBackoff with MAX_RETRIES and validates that a response contains embedding data. Failures are rethrown or wrapped as ConnectionError or InvalidOperationError with provider-specific messages.
+// 
+// Key dependencies include the OpenAI/AzureOpenAI SDK clients, model/provider enums and driver interfaces from entry, and retry utilities from DriverHelpers.
+// ===End StrongAI Generated Comment===
+
+
 import OpenAI, { AzureOpenAI } from 'openai';
 import { EModel, EModelProvider, IEmbeddingModelDriver, InvalidParameterError, InvalidOperationError, ConnectionError } from './entry';
 import { retryWithExponentialBackoff, MAX_RETRIES } from './DriverHelpers';
@@ -21,15 +32,6 @@ import { retryWithExponentialBackoff, MAX_RETRIES } from './DriverHelpers';
  * @throws Error if vectors have different lengths
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// Provides shared embedding functionality for OpenAI and Azure OpenAI. Exposes a cosineSimilarity function and an abstract base driver for embedding models. Use this module to compute vector similarity and to implement concrete drivers that call the embeddings API with retries and robust error handling.
-// 
-// cosineSimilarity compares two numeric vectors. It validates equal length and non-empty input. It returns the cosine similarity, or 0 if any vector has zero magnitude. It throws InvalidParameterError on invalid inputs.
-// 
-// OpenAIModelEmbeddingDriver is an abstract class that implements IEmbeddingModelDriver. It tracks the deployment/model name, the model type (EModel), and the provider (EModelProvider). Subclasses must provide getModelName and a populated OpenAI or AzureOpenAI client. The embed method sends text to the embeddings API using retryWithExponentialBackoff and MAX_RETRIES. It validates the response and returns the first embedding vector. It converts underlying failures into ConnectionError or InvalidOperationError with provider-specific messages.
-// 
-// Key imports: OpenAI and AzureOpenAI clients, EModel/EModelProvider enums, IEmbeddingModelDriver interface, custom errors, and retry utilities.
-// ===End StrongAI Generated Comment===
 
 export function cosineSimilarity(embedding1: number[], embedding2: number[]): number {
    if (embedding1.length !== embedding2.length) {

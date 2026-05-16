@@ -645,17 +645,24 @@ When Cursor adds MCP prompt support, the plan is to surface these as native MCP 
 
 ## Testing Strategy
 
-This project uses a tiered testing approach to balance comprehensive testing with CI/CD efficiency:
+This project uses **Jest** (`jest.config.cjs`, `tsconfig.jest.json`) with a tiered approach to balance comprehensive testing with CI/CD efficiency. Assertions use the standalone `expect` package.
 
 ### Local Development (Full Test Suite)
 ```bash
-npm test                    # Run all tests (requires OpenAI API key)
-npm run test:integration    # Run only integration tests (requires API key)
+npm test                    # unit project — all tests (many need API keys)
+npm run test:integration    # integration project — live LLM suites (serial)
+npm run test:mini           # mini project — function + multiple-tool-calling
+```
+
+Run one file:
+
+```bash
+npx jest --selectProjects unit test/[TestFile].test.ts
 ```
 
 ### CI/CD (Basic Unit Tests)
 ```bash
-npm run test:ci            # Run unit tests only (no API key required)
+npm run test:ci            # ci project — no API key required
 ```
 
 **Test Categories:**
@@ -664,12 +671,13 @@ npm run test:ci            # Run unit tests only (no API key required)
   - Parameter validation and templating
   - String sanitization
   - ID generation utilities
-- **Integration Tests** (`test:integration`): Full LLM interactions
+- **Integration Tests** (`test:integration`): Full LLM interactions (serial)
   - Text responses with OpenAI/Azure OpenAI
   - Embedding generation
   - Function calling
   - Streaming responses with tool support
   - Complex multi-tool scenarios
+- **Mini** (`test:mini`): Smaller live-LLM subset (function calling + multiple-tool-calling)
 
 The GitHub Actions workflow runs only the unit tests to avoid requiring API keys in CI/CD, while developers run the full test suite locally before pushing to main.
 

@@ -5,22 +5,11 @@
  * optional file attachments alongside the conversation prompts.
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// Defines an abstract contract for chat drivers that can include optional file attachments and structured table JSON alongside prompts. The module focuses on normalizing how callers pass raw files, reference previously uploaded files, and supply high‑fidelity table data.
-// 
-// Main exports:
-// - ChatAttachmentInput: a union type that accepts either inline file content or a provider reference.
-// - IChatTableJson: describes extracted table data with a name, arbitrary JSON payload, and optional description.
-// - IChatAttachmentContent: models an inline file with filename, MIME type, and data (ArrayBuffer, Buffer, Uint8Array, or string), plus a deleteAfterUse hint that defaults to true.
-// - IChatAttachmentReference: identifies an already uploaded file by provider id, with an optional deleteAfterUse hint that defaults to false.
-// - IChatWithAttachmentDriver: an abstract base with three methods:
-//   - getModelResponse(systemPrompt, userPrompt, verbosity, attachment?, tableJson?): returns a response string.
-//   - uploadAttachment(attachment): uploads inline content and returns a reference.
-//   - deleteAttachment(attachmentId): removes a previously uploaded file.
-// 
-// Key import:
-// - EVerbosity from ./entry controls response verbosity for getModelResponse. Implementations must handle upload lifecycle and optional cleanup.
+// ===Start StrongAI Generated Comment (20260516)===
+// This module defines a small contract for chat driver implementations that can accept optional file attachments and optional structured table JSON alongside a prompt. It standardizes two ways of supplying attachments. ChatAttachmentInput is a union that allows either inline file data or a reference to a previously uploaded file. IChatAttachmentContent describes an inline attachment with a filename, MIME type, and data payload (ArrayBuffer, Buffer, Uint8Array, or string), plus an optional deleteAfterUse hint that typically implies cleanup after the request. IChatAttachmentReference identifies an uploaded attachment by provider-specific id and can also request optional cleanup. IChatTableJson carries higher-fidelity tabular data extracted from documents, with a name, arbitrary JSON data, and an optional description. The IChatWithAttachmentDriver abstract class defines three required operations: getModelResponse to run a chat turn with optional attachment and table data, uploadAttachment to turn inline content into a reference, and deleteAttachment to remove remote files. It depends on EVerbosity from ./entry to express response verbosity.
 // ===End StrongAI Generated Comment===
+
+
 
 import { EVerbosity } from './entry';
 

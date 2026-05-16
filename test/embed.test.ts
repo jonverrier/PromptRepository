@@ -20,7 +20,6 @@
 // ===End StrongAI Generated Comment===
 
 import { expect } from 'expect';
-import { describe, it, beforeEach, afterEach } from 'mocha';
 import { EmbeddingDriverFactory, EModelProvider, EModel, CosineSimilarity } from '../src/entry';
 import { OpenAIModelEmbeddingDriver } from '../src/Embed';
 
@@ -94,7 +93,7 @@ providers.forEach((provider, index) => {
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
       expect(typeof result[0]).toBe('number');
-    }).timeout(TEST_TIMEOUT_MS);
+    }, TEST_TIMEOUT_MS);
 
     it('should successfully return embedding for longer text', async () => {
       const longText = 'This is a longer piece of text that should still be successfully embedded by the OpenAI embedding model. It contains multiple sentences and should produce a meaningful vector representation.';
@@ -102,7 +101,7 @@ providers.forEach((provider, index) => {
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
       expect(typeof result[0]).toBe('number');
-    }).timeout(TEST_TIMEOUT_MS);
+    }, TEST_TIMEOUT_MS);
 
     it('should successfully return embedding for text with special characters', async () => {
       const specialText = 'Hello! How are you? I hope you are doing well. 😊 This includes émojis and spéciål characters.';
@@ -110,7 +109,7 @@ providers.forEach((provider, index) => {
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
       expect(typeof result[0]).toBe('number');
-    }).timeout(TEST_TIMEOUT_MS);
+    }, TEST_TIMEOUT_MS);
 
     it('should return different embeddings for different texts', async () => {
       const text1 = 'This is about artificial intelligence and machine learning.';
@@ -128,7 +127,7 @@ providers.forEach((provider, index) => {
       // Embeddings should be different (not identical)
       const areIdentical = embedding1.every((val, i) => val === embedding2[i]);
       expect(areIdentical).toBe(false);
-    }).timeout(TEST_TIMEOUT_MS);
+    }, TEST_TIMEOUT_MS);
 
               it('should return highly similar embeddings for identical text', async () => {
        const text = 'This text should produce consistent embeddings.';
@@ -147,7 +146,7 @@ providers.forEach((provider, index) => {
        
        // Cosine similarity should be very close to 1.0 for identical text (allowing for floating point variations)
        expect(cosineSimilarity).toBeGreaterThan(0.999);
-     }).timeout(TEST_TIMEOUT_MS);
+     }, TEST_TIMEOUT_MS);
 
     it('should have correct driver properties', () => {
       expect(typeof embeddingDriver.deploymentName).toBe('string');
@@ -161,14 +160,14 @@ providers.forEach((provider, index) => {
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
       expect(typeof result[0]).toBe('number');
-    }).timeout(TEST_TIMEOUT_MS);
+    }, TEST_TIMEOUT_MS);
 
     it('should handle single character input', async () => {
       const result = await embeddingDriver.embed('a');
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
       expect(typeof result[0]).toBe('number');
-    }).timeout(TEST_TIMEOUT_MS);
+    }, TEST_TIMEOUT_MS);
   });
 
   // Mini model tests for each provider
@@ -180,7 +179,7 @@ providers.forEach((provider, index) => {
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
       expect(typeof result[0]).toBe('number');
-    }).timeout(TEST_TIMEOUT_MS);
+    }, TEST_TIMEOUT_MS);
 
     it('should have correct mini model properties', () => {
       expect(typeof miniEmbeddingDriver.deploymentName).toBe('string');
@@ -205,7 +204,7 @@ providers.forEach((provider, index) => {
       }
       // For Azure, deployment names are different but dimensions might be the same
       expect(embeddingDriver.deploymentName).not.toBe(miniEmbeddingDriver.deploymentName);
-    }).timeout(TEST_TIMEOUT_MS);
+    }, TEST_TIMEOUT_MS);
   });
 });
 
@@ -236,7 +235,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       const elapsedTime = endTime - startTime;
       expect(elapsedTime).toBeGreaterThan(2500); // At least 2.5 seconds
       expect(elapsedTime).toBeLessThan(5000); // Less than 5 seconds
-   }).timeout(10000);
+   }, 10000);
 
    it('should throw error after max retries exceeded', async () => {
       // Set up to fail more than max retries (5)
@@ -254,7 +253,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       const elapsedTime = endTime - startTime;
       expect(elapsedTime).toBeGreaterThan(25000); // At least 25 seconds
       expect(elapsedTime).toBeLessThan(40000); // Less than 40 seconds
-   }).timeout(45000);
+   }, 45000);
 
    it('should not retry on non-429 errors', async () => {
       // Mock to throw a different error
@@ -267,7 +266,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       await expect(
          mockDriver.embed('test text')
       ).rejects.toThrow(/API error.*Authentication failed|Authentication failed.*API error/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle content filter errors without retrying', async () => {
       // Mock to throw a content filter error
@@ -284,7 +283,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       await expect(
          mockDriver.embed('test text')
       ).rejects.toThrow(/content filter.*triggered.*safety policies|safety policies.*content filter.*triggered/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle safety system errors without retrying', async () => {
       // Mock to throw a safety error
@@ -301,7 +300,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       await expect(
          mockDriver.embed('test text')
       ).rejects.toThrow(/safety system.*triggered.*safety guidelines|safety guidelines.*safety system.*triggered/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle general refusal errors without retrying', async () => {
       // Mock to throw a general refusal error
@@ -318,7 +317,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       await expect(
          mockDriver.embed('test text')
       ).rejects.toThrow(/refused request.*cannot process|cannot process.*refused request/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle 403 forbidden errors as refusals', async () => {
       // Mock to throw a 403 error
@@ -332,7 +331,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       await expect(
          mockDriver.embed('test text')
       ).rejects.toThrow(/refused request.*403.*Access forbidden|Access forbidden.*refused request.*403/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle empty embedding response', async () => {
       // Mock to return empty data array
@@ -345,7 +344,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       await expect(
          mockDriver.embed('test text')
       ).rejects.toThrow(/embedding.*API error.*No embedding data|No embedding data.*embedding.*API error/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should handle malformed embedding response', async () => {
       // Mock to return response without data property
@@ -358,7 +357,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       await expect(
          mockDriver.embed('test text')
       ).rejects.toThrow(/embedding.*API error.*No embedding data|No embedding data.*embedding.*API error/i);
-   }).timeout(5000);
+   }, 5000);
 
    it('should retry exactly once on 429 error', async () => {
       // Set up to fail 1 time then succeed
@@ -375,7 +374,7 @@ describe('Embedding Exponential Backoff Tests', () => {
       const elapsedTime = endTime - startTime;
       expect(elapsedTime).toBeGreaterThan(800); // At least 800ms
       expect(elapsedTime).toBeLessThan(2000); // Less than 2 seconds
-   }).timeout(5000);
+   }, 5000);
 });
 
 describe('Embedding Factory Tests', () => {

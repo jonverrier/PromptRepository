@@ -6,13 +6,11 @@
  * and executes prompts using the Gemini API.
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// Provides a Google Gemini implementation of a chat driver that supports inline attachments. The module’s purpose is to adapt the IChatWithAttachmentDriver abstraction to Gemini by base64-encoding attachments and invoking the Gemini text generation API.
-// 
-// Main export: GoogleGeminiChatWithAttachment. It initializes a GoogleGenerativeAI client using the GOOGLE_GEMINI_API_KEY or an injected client. It always targets the flash model (gemini-3-flash-preview) to avoid pro model rate limits. getModelResponse builds a single prompt by merging system and user text, optionally appends formatted table JSON, and adds one inline attachment as base64. It maps EVerbosity to Gemini generationConfig (temperature and maxOutputTokens) and executes requests with retryWithExponentialBackoff and MAX_RETRIES. It validates that only inline attachments are used, returns text output, and wraps failures in ConnectionError. uploadAttachment encodes data to base64 and returns a placeholder reference for API parity; deleteAttachment is a no-op.
-// 
-// Key imports: GoogleGenerativeAI from @google/generative-ai, enums and errors (EVerbosity, EModel, InvalidStateError, InvalidParameterError, InvalidOperationError, ConnectionError) from entry, shared types from ChatWithAttachment, and retry utilities from DriverHelpers.
+// ===Start StrongAI Generated Comment (20260516)===
+// Implements an IChatWithAttachmentDriver for Google Gemini. It adapts the library’s chat-and-attachment abstraction to the Gemini Generative AI API by building a single prompt and optionally embedding one attachment as inline base64 data. The main export is GoogleGeminiChatWithAttachment. The constructor creates a GoogleGenerativeAI client from an injected client or the GOOGLE_GEMINI_API_KEY environment variable, and always targets the flash model (gemini-3-flash-preview) to avoid pro model rate limits. getModelResponse merges the system prompt and user prompt into one text part (Gemini has no system role), optionally appends formatted table JSON, adds an inlineData part for an attachment, maps EVerbosity to generationConfig (temperature and maxOutputTokens), and calls generateContent with retryWithExponentialBackoff and MAX_RETRIES. It rejects attachment references (inline content only) and wraps unexpected failures in ConnectionError. uploadAttachment base64-encodes content for API parity, and deleteAttachment is a no-op. Key dependencies include @google/generative-ai, shared enums/errors from entry, and types from ChatWithAttachment.
 // ===End StrongAI Generated Comment===
+
+
 
 // @ts-ignore - @google/generative-ai is a peer dependency
 import { GoogleGenerativeAI } from '@google/generative-ai';

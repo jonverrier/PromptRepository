@@ -9,7 +9,6 @@
 // Copyright (c) 2025, 2026 Jon Verrier
 
 import { expect } from 'expect';
-import { describe, it } from 'mocha';
 import { ChatDriverFactory, EModelProvider, EModel, EVerbosity } from '../src/entry';
 import { IFunction, EDataType, IFunctionArgs } from '../src/Function';
 
@@ -326,7 +325,7 @@ const testMultipleToolCalling = async (
       
       // Verify response is substantial
       expect(result.length).toBeGreaterThan(50);
-   }).timeout(getTestTimeout(provider));
+   }, getTestTimeout(provider));
 
    // Test streaming response
    it(`${testName} (getStreamedModelResponseWithForcedTools)`, async () => {
@@ -370,7 +369,7 @@ const testMultipleToolCalling = async (
       
       // Verify response is substantial
       expect(fullText.length).toBeGreaterThan(50);
-   }).timeout(getTestTimeout(provider));
+   }, getTestTimeout(provider));
 };
 
 // Run tests for each provider

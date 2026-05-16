@@ -5,6 +5,11 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
+// ===Start StrongAI Generated Comment (20260516)===
+// This module defines a small factory that constructs embedding model drivers without exposing provider-specific details to callers. It exports EmbeddingDriverFactory, which implements the IEmbeddingDriverFactory contract. The factory’s create(model, provider) method returns an IEmbeddingModelDriver for the requested model and hosting provider. It selects the concrete implementation based on the EModelProvider enum: when the provider is kAzureOpenAI, it instantiates AzureOpenAIEmbeddingDriver; otherwise it instantiates NativeOpenAIEmbeddingDriver for direct OpenAI usage. The requested EModel value is passed through to the driver constructor so each driver can map the model choice to its own API configuration. Key dependencies come from ./entry, including the IEmbeddingModelDriver return type, the IEmbeddingDriverFactory interface implemented by the factory, and the EModel and EModelProvider enums used to express the selection inputs. The provider-specific driver classes encapsulate all API integration and configuration differences.
+// ===End StrongAI Generated Comment===
+
+
 import { IEmbeddingModelDriver, IEmbeddingDriverFactory, EModelProvider, EModel } from './entry';
 import { NativeOpenAIEmbeddingDriver } from './Embed.OpenAI';
 import { AzureOpenAIEmbeddingDriver } from './Embed.AzureOpenAI';
@@ -14,13 +19,6 @@ import { AzureOpenAIEmbeddingDriver } from './Embed.AzureOpenAI';
  * Supports both Azure OpenAI and direct OpenAI providers
  */
 
-// ===Start StrongAI Generated Comment (20260219)===
-// This module provides a simple factory for constructing embedding model drivers. Its goal is to hide provider-specific details and let callers request an embedding driver by model and provider only.
-// 
-// The main export is EmbeddingDriverFactory, which implements the IEmbeddingDriverFactory interface from the shared entry module. Call create(model, provider) to receive an IEmbeddingModelDriver. The factory chooses the correct concrete driver based on the EModelProvider value. If the provider is Azure OpenAI, it returns an AzureOpenAIEmbeddingDriver. Otherwise, it returns a NativeOpenAIEmbeddingDriver for direct OpenAI access.
-// 
-// The module depends on several key imports. From ./entry, it relies on IEmbeddingModelDriver for the returned interface, IEmbeddingDriverFactory for the factory contract, and the EModel and EModelProvider enums to capture the requested model size and provider. It also imports the concrete driver classes AzureOpenAIEmbeddingDriver and NativeOpenAIEmbeddingDriver, which contain provider-specific logic, configuration, and API integration. The factory passes the EModel through unchanged, allowing each driver to map model size appropriately.
-// ===End StrongAI Generated Comment===
 
 export class EmbeddingDriverFactory implements IEmbeddingDriverFactory {
    /**

@@ -5,7 +5,6 @@
  */
 // Copyright (c) 2025, 2026 Jon Verrier
 
-import { describe, it, after } from 'mocha';
 import { expect } from 'expect';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -62,7 +61,7 @@ const createTestFile = (filename: string, content: string): string => {
 /**
  * Clean up temporary test files after all tests complete
  */
-after(() => {
+afterAll(() => {
    testFileNames.forEach(filename => {
       const filePath = path.join(os.tmpdir(), filename);
       try {
@@ -95,14 +94,14 @@ providers.forEach((provider, index) => {
          expect(result).toBeDefined();
          expect(typeof result).toBe('string');
          expect(result.length).toBeGreaterThan(0);
-      }).timeout(getTestTimeout(provider));
+      }, getTestTimeout(provider));
 
       it('should return text response with system prompt', async () => {
          const result = await driver.getModelResponse('You are helpful', 'Say hello', EVerbosity.kMedium);
          expect(result).toBeDefined();
          expect(typeof result).toBe('string');
          expect(result.length).toBeGreaterThan(0);
-      }).timeout(getTestTimeout(provider));
+      }, getTestTimeout(provider));
 
       it('should handle table JSON without attachment', async () => {
          const tableJson: IChatTableJson = {
@@ -123,7 +122,7 @@ providers.forEach((provider, index) => {
 
          expect(result).toBeDefined();
          expect(typeof result).toBe('string');
-      }).timeout(getTestTimeout(provider));
+      }, getTestTimeout(provider));
    });
 });
 

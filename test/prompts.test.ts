@@ -14,7 +14,6 @@
 // ===End StrongAI Generated Comment===
 
 import { expect } from 'expect';
-import { describe, it } from 'mocha';
 import { IPrompt, IPromptParameterSpec, ParameterTypeString, ParameterTypeNumber, ParameterTypeEnum } from '../src/entry';
 import prompts from '../src/Prompts.json';
 
