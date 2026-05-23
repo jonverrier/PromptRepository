@@ -1,6 +1,8 @@
 # PromptRepository
 
-A framework for managing, testing, and evaluating Large Language Model (LLM) prompts. Part of the [StrongAI Gym Assistant](https://strongtech.ai/) suite. Built to help you create more reliable and robust AI applications through systematic prompt engineering, validation, and testing.
+A standalone npm library (`@jonverrier/prompt-repository`) for managing, testing, and evaluating Large Language Model (LLM) prompts. It was developed for the [Strong AI](https://strongtech.ai/) fitness-coaching platform and is reused by other open-source tools in that ecosystem (C4-Auto, Ripstop, and downstream applications). You can adopt it in any TypeScript or browser project without the rest of Strong AI.
+
+Built to help you create more reliable and robust AI applications through systematic prompt engineering, validation, and testing.
 
 The repo also demonstrates a technique I think will become much more common - bundling a framework with prompts to generate code to use the framework.
 
@@ -275,7 +277,7 @@ PromptRepository supports file attachments and structured table JSON data for en
 | Google Gemini | Inline base64 only | Yes | No attachment references |
 | Anthropic | Inline PDF, images (`jpeg`/`png`/`gif`/`webp`), `text/*` documents | Yes | No Files API or attachment references in v1 |
 
-Production ingest today typically passes **`tableJson` only** (no file attachment). See `AssistantBuild/issues/promptrepository-chat-with-attachment-interface-cleanup.md`.
+When tabular data is already extracted (e.g. by a document-ingest pipeline), callers can pass **`tableJson` only** and omit file attachments for better fidelity and simpler requests.
 
 ### File Attachments
 
