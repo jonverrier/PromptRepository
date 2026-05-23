@@ -29,7 +29,15 @@ module.exports = {
          testMatch: [
             '**/promptrepository.test.ts',
             '**/prompts.test.ts',
-            '**/makepromptids.test.ts'
+            '**/makepromptids.test.ts',
+            '**/ChatDriverFactory.test.ts',
+            '**/ChatWithAttachmentDriverFactory.test.ts',
+            '**/embed.factory.test.ts',
+            '**/anthropic.driver.test.ts',
+            '**/anthropic.chatwithattachment.test.ts',
+            '**/Chat.GenericOpenAI.toolUse.test.ts',
+            '**/ChatWithAttachment.OpenAI.test.ts',
+            '**/formatchatmessage.test.ts'
          ],
          transform: tsJestTransform,
          setupFilesAfterEnv: ['<rootDir>/test/setup/jest.timeout.ci.js']

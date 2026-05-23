@@ -7,7 +7,9 @@
 // Copyright (c) 2025, 2026 Jon Verrier
 
 import { expect } from 'expect';
-import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity, GoogleGeminiChatDriver, AnthropicChatDriver } from '../src/entry';
+import { ChatDriverFactory, EModelProvider, EModel, EChatRole, IChatMessage, ChatMessageClassName, IFunction, EVerbosity } from '../src/entry';
+import { GoogleGeminiChatDriver } from '../src/Chat.GoogleGemini';
+import { AnthropicChatDriver } from '../src/Chat.Anthropic';
 import { TEST_TARGET_SUPPORTS_VERBOSITY } from './ChatTestConfig';
 import { GenericOpenAIChatDriver } from '../src/Chat.GenericOpenAI';
 import { MockOpenAIChatDriver } from './MockOpenAIChatDriver';

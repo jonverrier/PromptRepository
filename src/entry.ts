@@ -55,18 +55,12 @@ export enum EVerbosity {
 
 export { PromptFileRepository, PromptInMemoryRepository } from "./PromptRepository";
 export { ChatDriverFactory } from "./ChatFactory";
-export { GoogleGeminiChatDriver } from "./Chat.GoogleGemini";
-export { AnthropicChatDriver } from "./Chat.Anthropic";
 export { EmbeddingDriverFactory } from "./EmbedFactory";
 export { cosineSimilarity as CosineSimilarity } from "./Embed";
 export { throwIfUndefined, throwIfNull, throwIfFalse, InvalidParameterError, InvalidOperationError, ConnectionError, InvalidStateError, sanitizeInputString, sanitizeOutputString } from "@jonverrier/assistant-common";
 export { formatChatMessageTimestamp, renderChatMessageAsText } from "./FormatChatMessage";
 export { IFunction, IFunctionArgs, EDataType, ILLMFunctionCall, IFunctionCallOutput, IFunctionExecutionContext, FunctionExecutionResult } from "./Function";
 export { IChatWithAttachmentDriver, IChatAttachmentContent, IChatAttachmentReference, ChatAttachmentInput, IChatTableJson } from "./ChatWithAttachment";
-export { OpenAIChatWithAttachment } from "./ChatWithAttachment.OpenAI";
-export { AzureOpenAIChatWithAttachment } from "./ChatWithAttachment.AzureOpenAI";
-export { GoogleGeminiChatWithAttachment } from "./ChatWithAttachment.GoogleGemini";
-export { AnthropicChatWithAttachment } from "./ChatWithAttachment.Anthropic";
 export { ChatWithAttachmentDriverFactory } from "./ChatWithAttachmentFactory";
 
 /**
