@@ -26,7 +26,7 @@
     "start": "ts-node entry.ts",
     "build": "tsc -b",
     "prepublishOnly": "npm run build",
-    "generate-docs": "c4-auto --dir ./src --files \"*.ts\" --one-month --c4component --c4context --rollup",
+    "generate-docs": "auto-doc --dir ./src --files \"*.ts\" --one-month --c4component --c4context --rollup",
     "dev": "npm run build && npm run watch",
     "make_prompt_ids": "ts-node scripts/MakePromptIds.ts",
     "watch": "tsc -b -w",
@@ -55,7 +55,7 @@
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@google/generative-ai": "^0.21.0",
-    "@jonverrier/c4-auto": "^0.2.2",
+    "@jonverrier/auto-doc": "^1.0.1",
     "@types/jest": "^29.5.14",
     "@types/node": "^24.0.10",
     "expect": "^29.7.0",
