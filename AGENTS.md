@@ -77,5 +77,5 @@ npm run test:mini      # smaller live-LLM subset
 ## Related Packages
 
 - **AssistantCommon** (`@jonverrier/assistant-common`) — shared error types and utilities (dependency).
-- **C4-Auto** (`@jonverrier/c4-auto`) — automated C4 documentation CLI using this library for LLM calls.
+- **AutoDoc** (`@jonverrier/auto-doc`) — automated C4 documentation CLI using this library for LLM calls.
 - **Ripstop** (`@jonverrier/ripstop`) — Git guardrails CLI; uses assistant-common error types transitively.

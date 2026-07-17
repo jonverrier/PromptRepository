@@ -13,6 +13,20 @@ const LIST_MEMORIES_CALL_ID = 'call_list_memories';
 const SAVE_MEMORY_CALL_ID = 'call_save_memory';
 
 describe('GenericOpenAIChatDriver tool use loop', () => {
+   const originalOpenAiKey = process.env.OPENAI_API_KEY;
+
+   beforeAll(() => {
+      process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? 'test-openai-key';
+   });
+
+   afterAll(() => {
+      if (originalOpenAiKey !== undefined) {
+         process.env.OPENAI_API_KEY = originalOpenAiKey;
+      } else {
+         delete process.env.OPENAI_API_KEY;
+      }
+   });
+
    let apiRound = 0;
    let listMemoriesCalls = 0;
    let saveMemoryCalls = 0;

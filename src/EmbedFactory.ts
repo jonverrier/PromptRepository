@@ -10,7 +10,7 @@
 // ===End StrongAI Generated Comment===
 
 
-import { IEmbeddingModelDriver, IEmbeddingDriverFactory, EModelProvider, EModel } from './entry';
+import { IEmbeddingModelDriver, IEmbeddingDriverFactory, EModelProvider, EModel, InvalidParameterError } from './entry';
 import { NativeOpenAIEmbeddingDriver } from './Embed.OpenAI';
 import { AzureOpenAIEmbeddingDriver } from './Embed.AzureOpenAI';
 
@@ -29,9 +29,15 @@ export class EmbeddingDriverFactory implements IEmbeddingDriverFactory {
     * @returns {IEmbeddingModelDriver} An embedding driver instance
     */
    create(model: EModel, provider: EModelProvider): IEmbeddingModelDriver {
-      if (provider === EModelProvider.kAzureOpenAI) {
-         return new AzureOpenAIEmbeddingDriver(model);
+      switch (provider) {
+         case EModelProvider.kOpenAI:
+            return new NativeOpenAIEmbeddingDriver(model);
+         case EModelProvider.kAzureOpenAI:
+            return new AzureOpenAIEmbeddingDriver(model);
+         default:
+            throw new InvalidParameterError(
+               `EmbeddingDriverFactory does not support provider: ${provider}. Use kOpenAI or kAzureOpenAI.`
+            );
       }
-      return new NativeOpenAIEmbeddingDriver(model);
    }
 } 
