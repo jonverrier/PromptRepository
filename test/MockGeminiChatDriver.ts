@@ -67,7 +67,7 @@ export class MockGeminiChatDriver extends GoogleGeminiChatDriver {
       messageHistory?: IChatMessage[],
       functions?: IFunction[]
    ): Promise<string> {
-      const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers');
+      const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers.js');
       
       // If custom mock is set, use it (this handles error cases from setMockCreate)
       if (this.mockGenerateContent) {
@@ -177,7 +177,7 @@ export class MockGeminiChatDriver extends GoogleGeminiChatDriver {
          // Otherwise, use shouldFail logic for exponential backoff testing
          // The error must be thrown inside the retry function so it gets wrapped with provider name
          try {
-            const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers');
+            const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers.js');
             
             await retryWithExponentialBackoff(async () => {
                if (self.shouldFail && self.failCount < self.maxFailures) {
@@ -230,7 +230,7 @@ export class MockGeminiChatDriver extends GoogleGeminiChatDriver {
       messageHistory?: IChatMessage[],
       functions?: IFunction[]
    ): Promise<T> {
-      const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers');
+      const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers.js');
       
       // If mock is set, use it
       if (this.mockGenerateContent) {
