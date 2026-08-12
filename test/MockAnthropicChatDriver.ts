@@ -90,7 +90,7 @@ export class MockAnthropicChatDriver extends AnthropicChatDriver {
       messageHistory?: IChatMessage[],
       functions?: IFunction[]
    ): Promise<string> {
-      const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers');
+      const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers.js');
 
       const result = await retryWithExponentialBackoff(async () => {
          const response = await this.invokeMockOrDefault();
@@ -115,7 +115,7 @@ export class MockAnthropicChatDriver extends AnthropicChatDriver {
 
       return (async function* () {
          try {
-            const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers');
+            const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers.js');
 
             if (self.mockMessagesCreate) {
                try {
@@ -169,7 +169,7 @@ export class MockAnthropicChatDriver extends AnthropicChatDriver {
       messageHistory?: IChatMessage[],
       functions?: IFunction[]
    ): Promise<T> {
-      const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers');
+      const { retryWithExponentialBackoff, MAX_RETRIES } = await import('../src/DriverHelpers.js');
 
       if (this.mockMessagesCreate) {
          try {

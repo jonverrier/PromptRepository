@@ -113,7 +113,7 @@ export class MockOpenAIChatDriver extends GenericOpenAIChatDriver {
       functions?: IFunction[]
    ): Promise<T> {
       // Use retry wrapper like the base class - import retryWithExponentialBackoff
-      const { retryWithExponentialBackoff } = await import('../src/DriverHelpers');
+      const { retryWithExponentialBackoff } = await import('../src/DriverHelpers.js');
       
       const response = await retryWithExponentialBackoff(async () => {
          return (this as any).openai.responses.create({ 

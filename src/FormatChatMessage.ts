@@ -21,6 +21,8 @@
 
 import { EChatRole, IChatMessage } from "./entry";
 
+const TIMESTAMP_LOCALE = 'en-GB';
+
 /**
  * Creates a text representation of a chat message including originator,
  * content, and timestamp.
@@ -54,9 +56,13 @@ export const formatChatMessageTimestamp = (timestamp: Date, fullDate: boolean = 
     const isToday = date.toDateString() === now.toDateString();
     const isYesterday = date.toDateString() === yesterday.toDateString();
 
-    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const time = date.toLocaleTimeString(TIMESTAMP_LOCALE, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
     
-    const fullDateStr = date.toLocaleDateString('en-US', { 
+    const fullDateStr = date.toLocaleDateString(TIMESTAMP_LOCALE, {
         weekday: 'long',
         day: '2-digit',
         month: 'long'

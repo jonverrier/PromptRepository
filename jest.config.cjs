@@ -5,7 +5,10 @@
 
 /** @type {import('jest').Config} */
 const tsJestTransform = {
-   '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.jest.json' }]
+   '^.+\\.ts$': ['ts-jest', {
+      tsconfig: '<rootDir>/tsconfig.jest.json',
+      diagnostics: { ignoreCodes: [151002] }
+   }]
 };
 
 /** @type {import('jest').Config} */
