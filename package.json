@@ -45,7 +45,7 @@
     "cover:json": "jest --selectProjects unit --coverage --coverageReporters=json --coverageDirectory=.nyc_output"
   },
   "dependencies": {
-    "@jonverrier/assistant-common": "^0.3.4"
+    "@jonverrier/assistant-common": "^0.3.5"
   },
   "peerDependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
