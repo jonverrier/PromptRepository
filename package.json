@@ -22,6 +22,9 @@
   },
   "author": "Jon Verrier",
   "license": "MIT",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "start": "ts-node entry.ts",
     "build": "tsc -b",
