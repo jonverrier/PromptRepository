@@ -1,6 +1,6 @@
 {
   "name": "@jonverrier/prompt-repository",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Managing Prompts and standardised Unit Evals ",
   "main": "dist/src/entry.js",
   "types": "dist/src/entry.d.ts",
@@ -33,7 +33,7 @@
     "dev": "npm run build && npm run watch",
     "make_prompt_ids": "ts-node scripts/MakePromptIds.ts",
     "watch": "tsc -b -w",
-    "clean": "rimraf dist",
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
     "test": "jest --selectProjects unit",
     "test:ci": "jest --selectProjects ci",
     "test:integration": "jest --selectProjects integration",
