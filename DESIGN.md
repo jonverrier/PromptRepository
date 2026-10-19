@@ -48,7 +48,7 @@ OpenAI native and Azure OpenAI share **`GenericOpenAIChatDriver`** because both 
 
 They must **not** import other vendor adapters (e.g. `Chat.Anthropic.ts` must not import `Chat.OpenAI.ts`).
 
-**Factories** (`ChatFactory.ts`, `EmbedFactory.ts`, `ChatWithAttachmentFactory.ts`) are the only modules that import all vendor implementations and select one at runtime.
+**Factories** (`ChatFactory.ts`, `EmbedFactory.ts`) are the only modules that import all vendor implementations and select one at runtime.
 
 ### Runtime provider switching
 
@@ -70,7 +70,7 @@ There is no global singleton provider inside the library. **Applications choose 
 Published surface is **`entry.ts`** (compiled to `dist/src/entry.js`). Consumers use:
 
 - Interfaces: `IChatDriver`, `IChatDriverFactory`, `IPromptRepository`, …
-- Factories: `ChatDriverFactory`, `EmbeddingDriverFactory`, `ChatWithAttachmentDriverFactory`
+- Factories: `ChatDriverFactory`, `EmbeddingDriverFactory`
 - Enums: `EModel`, `EModelProvider`, `EVerbosity`, `EChatRole`
 - Prompt repos: `PromptInMemoryRepository`, `PromptFileRepository`
 
@@ -91,21 +91,19 @@ flowchart TB
   subgraph L5["Layer 5 — Composition"]
     CF[ChatDriverFactory]
     EAF[EmbeddingDriverFactory]
-    CAF[ChatWithAttachmentDriverFactory]
   end
 
   subgraph L4["Layer 4 — Vendor adapters"]
-    OAI[Chat.OpenAI / Embed.OpenAI / ChatWithAttachment.OpenAI]
-    AZ[Chat.AzureOpenAI / Embed.AzureOpenAI / ChatWithAttachment.AzureOpenAI]
-    GEM[Chat.GoogleGemini / ChatWithAttachment.GoogleGemini]
-    ANT[Chat.Anthropic / ChatWithAttachment.Anthropic]
+    OAI[Chat.OpenAI / Embed.OpenAI]
+    AZ[Chat.AzureOpenAI / Embed.AzureOpenAI]
+    GEM[Chat.GoogleGemini]
+    ANT[Chat.Anthropic]
   end
 
   subgraph L3["Layer 3 — Shared driver bases"]
     CD[ChatDriver]
     GOAI[GenericOpenAIChatDriver]
     OME[OpenAIModelEmbeddingDriver]
-    CWA[IChatWithAttachmentDriver]
   end
 
   subgraph L2["Layer 2 — Contracts & prompt templating"]
@@ -133,10 +131,10 @@ flowchart TB
 | Layer | Responsibility | Key modules |
 |-------|----------------|-------------|
 | **1 — Infrastructure** | Retries, formatting helpers, shared errors | `DriverHelpers.ts`, `FormatChatMessage.ts`, AssistantCommon |
-| **2 — Contracts** | Interfaces, enums, prompt JSON expansion | `entry.ts`, `PromptRepository.ts`, `Function.ts`, `ChatWithAttachment.ts` (types) |
+| **2 — Contracts** | Interfaces, enums, prompt JSON expansion | `entry.ts`, `PromptRepository.ts`, `Function.ts` |
 | **3 — Shared bases** | Vendor-neutral or OpenAI-Responses–shared logic | `Chat.ts`, `Chat.GenericOpenAI.ts`, `Embed.ts` |
-| **4 — Vendor adapters** | Thin SDK wiring + model/deployment mapping | `Chat.*.ts`, `Embed.*.ts`, `ChatWithAttachment.*.ts` |
-| **5 — Composition** | Runtime provider selection | `ChatFactory.ts`, `EmbedFactory.ts`, `ChatWithAttachmentFactory.ts` |
+| **4 — Vendor adapters** | Thin SDK wiring + model/deployment mapping | `Chat.*.ts`, `Embed.*.ts` |
+| **5 — Composition** | Runtime provider selection | `ChatFactory.ts`, `EmbedFactory.ts` |
 
 **Dependency rule:** Layer 4 modules depend on Layer 2–3 and their SDK only. Layer 5 is the only place that knows about all vendors.
 
@@ -144,7 +142,7 @@ flowchart TB
 
 ## Driver families
 
-The library exposes **three parallel driver stacks**. They share enums and factories but **not** a common inheritance root (see [Known tensions](#known-tensions)).
+The library exposes **two parallel driver stacks**. They share enums and factories but **not** a common inheritance root (see [Known tensions](#known-tensions)).
 
 ### Chat (`IChatDriver`)
 
@@ -166,13 +164,7 @@ Primary API for multi-turn chat, streaming, forced tool use, and JSON-schema con
 | Google Gemini | `GoogleGeminiChatDriver` | `ChatDriver` |
 | Anthropic | `AnthropicChatDriver` | `ChatDriver` |
 
-### Attachments (`IChatWithAttachmentDriver`)
-
-Single-turn chat with optional file upload and table JSON. Separate hierarchy from `IChatDriver`; used for document/spreadsheet extraction flows.
-
-**Factory:** `ChatWithAttachmentDriverFactory.create(model, provider)` — same `EModelProvider` values and `kDefault` behaviour as chat.
-
-OpenAI and Azure attachment drivers follow the same pattern as chat (Responses + Files API) but are **not yet** refactored onto a shared generic base.
+File and PDF attachments are not part of this library. Callers that need structured table context format it into the user prompt and use `IChatDriver`.
 
 ### Embeddings (`IEmbeddingModelDriver`)
 
@@ -270,7 +262,6 @@ Personality / CLI / test config
 | `entry.ts` | Public interfaces, enums, re-exports |
 | `PromptRepository.ts` | In-memory and file-backed prompt repos |
 | `Function.ts` | Tool/function definitions (`IFunction`) |
-| `ChatWithAttachment.ts` | Attachment driver interface and types |
 
 ### Layer 3 — Shared bases
 
@@ -284,10 +275,10 @@ Personality / CLI / test config
 
 | Module | Provider |
 |--------|----------|
-| `Chat.OpenAI.ts`, `Embed.OpenAI.ts`, `ChatWithAttachment.OpenAI.ts` | OpenAI |
-| `Chat.AzureOpenAI.ts`, `Embed.AzureOpenAI.ts`, `ChatWithAttachment.AzureOpenAI.ts` | Azure OpenAI |
-| `Chat.GoogleGemini.ts`, `ChatWithAttachment.GoogleGemini.ts` | Gemini |
-| `Chat.Anthropic.ts`, `ChatWithAttachment.Anthropic.ts` | Anthropic |
+| `Chat.OpenAI.ts`, `Embed.OpenAI.ts` | OpenAI |
+| `Chat.AzureOpenAI.ts`, `Embed.AzureOpenAI.ts` | Azure OpenAI |
+| `Chat.GoogleGemini.ts` | Gemini |
+| `Chat.Anthropic.ts` | Anthropic |
 
 ### Layer 5 — Composition
 
@@ -295,7 +286,6 @@ Personality / CLI / test config
 |--------|------|
 | `ChatFactory.ts` | `ChatDriverFactory` |
 | `EmbedFactory.ts` | `EmbeddingDriverFactory` |
-| `ChatWithAttachmentFactory.ts` | `ChatWithAttachmentDriverFactory` |
 
 ---
 
@@ -319,8 +309,6 @@ Documented gaps between the **target design** (thin vendor layer, uniform switch
 |---------|--------|
 | **Uneven adapter depth** | OpenAI/Azure chat are thin; Gemini and Anthropic reimplement tool loops, streaming, and constrained JSON on `ChatDriver` (~hundreds of lines each). |
 | **OpenAI-centric message model** | `IChatMessage` and `IFunction` follow OpenAI Responses API shapes; Gemini/Anthropic adapters filter or map at the boundary. |
-| **Separate attachment hierarchy** | `IChatWithAttachmentDriver` does not extend `IChatDriver`; OpenAI/Azure attachment code is largely duplicated. |
-| **`EModel` mapping inconsistency** | Chat vs attachment drivers may map `kLarge`/`kMini` to different model families (e.g. gpt-5.* vs gpt-4.1* on OpenAI path). |
 | **Gemini ignores `EModel` for chat** | `GoogleGeminiChatDriver` uses a fixed flash model (rate-limit workaround); `EModel` is accepted but not fully honoured. |
 | **Azure heuristics in generic layer** | Some Azure-specific behaviour is inferred via model name prefixes inside `GenericOpenAIChatDriver` rather than an explicit provider flag. |
 | **`kDefault` magic** | Dev/prod split is hidden in factories; embedding factory does not participate. |
@@ -328,7 +316,7 @@ Documented gaps between the **target design** (thin vendor layer, uniform switch
 | **Streaming fidelity** | OpenAI path may complete a full tool loop then simulate word-chunk streaming; Anthropic pseudo-streams final text. |
 | **`entry.ts` breadth** | Contracts, re-exports, and AssistantCommon passthrough live in one module. |
 
-These are acceptable for current product needs but are the main areas for incremental refactors (shared attachment base, neutral tool-call representation, centralised model registry).
+These are acceptable for current product needs but are the main areas for incremental refactors (neutral tool-call representation, centralised model registry).
 
 ---
 

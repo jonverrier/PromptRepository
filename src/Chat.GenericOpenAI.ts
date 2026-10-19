@@ -184,9 +184,9 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
          }
       };
 
-      // Add thinking time for GPT-5 models (one level below verbosity)
+      // Add thinking time for GPT-5 and GPT-6 models (one level below verbosity)
       const modelName = this.getModelName();
-      if (modelName.startsWith('gpt-5')) {
+      if (modelName.startsWith('gpt-5') || modelName.startsWith('gpt-6')) {
          config.reasoning = {
             effort: thinkingTimeMap[verbosity]
          };
@@ -259,9 +259,9 @@ export abstract class GenericOpenAIChatDriver extends ChatDriver {
          config.instructions = systemPrompt;
       }
 
-      // Add thinking time for GPT-5 models
+      // Add thinking time for GPT-5 and GPT-6 models
       const modelName = this.getModelName();
-      if (modelName.startsWith('gpt-5')) {
+      if (modelName.startsWith('gpt-5') || modelName.startsWith('gpt-6')) {
          config.reasoning = {
             effort: thinkingTimeMap[verbosity]
          };

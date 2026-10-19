@@ -38,6 +38,9 @@ const getTestTimeout = (provider: EModelProvider): number => {
    return provider === EModelProvider.kGoogleGemini ? 120000 : TEST_TIMEOUT_MS;
 };
 
+// The prompt asks for "Welcome to the {LOCATION} Grand Prix". Models often paraphrase that.
+const WELCOME_PHRASE = /welcome|greetings|\bgreet\b|delighted|\bpleased\b|\bglad\b|\bhello\b/;
+
 // Run tests for each provider
 providers.forEach((provider, index) => {
    const chatDriver = chatDrivers[index];
@@ -63,7 +66,7 @@ providers.forEach((provider, index) => {
          
          // The response should contain 'Monaco' but not duplicate these words
          expect(response).toContain('Monaco');
-         expect(response.toLowerCase()).toMatch(/welcome|greetings/);
+         expect(response.toLowerCase()).toMatch(WELCOME_PHRASE);
          expect(response.split('Monaco').length).toBe(2); // Only one occurrence
          
       }, getTestTimeout(provider));
@@ -79,7 +82,7 @@ providers.forEach((provider, index) => {
          
          // Should follow same pattern as Monaco test since Monte Carlo is the same location
          expect(response).toContain('Monaco');
-         expect(response.toLowerCase()).toMatch(/welcome|greetings/);
+         expect(response.toLowerCase()).toMatch(WELCOME_PHRASE);
          expect(response.split('Monaco').length).toBe(2); // Only one occurrence
          
       }, getTestTimeout(provider));
@@ -95,7 +98,7 @@ providers.forEach((provider, index) => {
          
          // Should follow same pattern as Monaco test since Monte Carlo is the same location
          expect(response).toContain('Monaco');
-         expect(response.toLowerCase()).toMatch(/welcome|greetings/);
+         expect(response.toLowerCase()).toMatch(WELCOME_PHRASE);
          expect(response.split('Grand Prix').length).toBe(2); // Only one occurrence
          
       }, getTestTimeout(provider));
@@ -111,7 +114,7 @@ providers.forEach((provider, index) => {
          
          // Should contain Silverstone-specific content
          expect(response).toContain('Silverstone');
-         expect(response.toLowerCase()).toMatch(/welcome|greetings|delighted/);
+         expect(response.toLowerCase()).toMatch(WELCOME_PHRASE);
          expect(response.split('Silverstone').length).toBe(2); // Only one occurrence
          // Verify it's different from Monaco/Monte Carlo responses
          expect(response).not.toContain('Monaco');

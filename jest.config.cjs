@@ -11,6 +11,11 @@ const tsJestTransform = {
    }]
 };
 
+// TypeScript Node16 imports use .js specifiers. Jest resolves those to the .ts sources.
+const moduleNameMapper = {
+   '^(\\.{1,2}/.*)\\.js$': '$1'
+};
+
 /** @type {import('jest').Config} */
 module.exports = {
    projects: [
@@ -21,6 +26,7 @@ module.exports = {
          roots: ['<rootDir>/test'],
          testMatch: ['**/*.test.ts'],
          transform: tsJestTransform,
+         moduleNameMapper,
          collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
          setupFilesAfterEnv: ['<rootDir>/test/setup/jest.timeout.unit.js']
       },
@@ -34,15 +40,13 @@ module.exports = {
             '**/prompts.test.ts',
             '**/makepromptids.test.ts',
             '**/ChatDriverFactory.test.ts',
-            '**/ChatWithAttachmentDriverFactory.test.ts',
             '**/embed.factory.test.ts',
             '**/anthropic.driver.test.ts',
-            '**/anthropic.chatwithattachment.test.ts',
             '**/Chat.GenericOpenAI.toolUse.test.ts',
-            '**/ChatWithAttachment.OpenAI.test.ts',
             '**/formatchatmessage.test.ts'
          ],
          transform: tsJestTransform,
+         moduleNameMapper,
          setupFilesAfterEnv: ['<rootDir>/test/setup/jest.timeout.ci.js']
       },
       {
@@ -54,10 +58,10 @@ module.exports = {
             '**/chat.test.ts',
             '**/embed.test.ts',
             '**/function.test.ts',
-            '**/prompts.eval.test.ts',
-            '**/chatwithattachment.integration.test.ts'
+            '**/prompts.eval.test.ts'
          ],
          transform: tsJestTransform,
+         moduleNameMapper,
          setupFilesAfterEnv: ['<rootDir>/test/setup/jest.timeout.integration.js'],
          maxWorkers: 1
       },
@@ -71,6 +75,7 @@ module.exports = {
             '**/multiple-tool-calling.test.ts'
          ],
          transform: tsJestTransform,
+         moduleNameMapper,
          setupFilesAfterEnv: ['<rootDir>/test/setup/jest.timeout.mini.js'],
          maxWorkers: 1
       }

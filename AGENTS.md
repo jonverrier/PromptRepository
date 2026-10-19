@@ -8,7 +8,7 @@ PromptRepository is a publishable TypeScript library that provides:
 
 - Prompt storage and template expansion (`PromptInMemoryRepository`, `PromptFileRepository`)
 - Provider-agnostic chat and embedding drivers (OpenAI, Azure OpenAI, Google Gemini, Anthropic)
-- Tool/function calling, file attachments, and table JSON support
+- Tool/function calling
 - Bundled meta-prompts for generating unit tests and evals for your own prompts
 
 The library was built for the Strong AI platform and is consumed by C4-Auto, Ripstop, Assistant, and other packages — but its public API is general-purpose.
