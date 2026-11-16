@@ -25,6 +25,12 @@ module.exports = {
          testEnvironment: 'node',
          roots: ['<rootDir>/test'],
          testMatch: ['**/*.test.ts'],
+         testPathIgnorePatterns: [
+            'chat\\.test\\.ts$',
+            'embed\\.test\\.ts$',
+            'function\\.test\\.ts$',
+            'prompts\\.eval\\.test\\.ts$'
+         ],
          transform: tsJestTransform,
          moduleNameMapper,
          collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],

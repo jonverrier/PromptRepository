@@ -44,7 +44,7 @@
     "verify-main": "bash scripts/verify-main.sh",
     "pre-commit-check": "bash scripts/pre-commit-check.sh",
     "pre-push-check": "bash scripts/pre-push-check.sh",
-    "cover": "jest --selectProjects unit --coverage --coverageReporters=html text lcov",
+    "cover": "jest --selectProjects unit --coverage --coverageReporters=html --coverageReporters=text --coverageReporters=lcov",
     "cover:json": "jest --selectProjects unit --coverage --coverageReporters=json --coverageDirectory=.nyc_output"
   },
   "dependencies": {
